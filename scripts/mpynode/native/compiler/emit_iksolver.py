@@ -206,8 +206,10 @@ def _ik_generic_local_hint(t):
     """C++ shape of a generic input's ``in_a<ident>`` local (PORT comment)."""
     return {
         "double3": "double[3]; .x==[0]", "euler": "double[3], RADIANS",
+        "position": "double[3], CENTIMETRES",
         "color": "float[3] RGB", "float2": "float[2]",
         "quaternion": "double[4] {x,y,z,w}", "doubleAngle": "double, RADIANS",
+        "doubleLinear": "double, CENTIMETRES",
         "time": "double, seconds", "string": "MString; .asChar()",
         "matrix": "MMatrix; m(row,col)",
     }.get(t, t)

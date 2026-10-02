@@ -13,13 +13,19 @@ Every list of attr types is derived from :data:`ATTR_TYPES`:
 The table is in dialog order, so ``double`` -- Maya's own "Float" -- comes
 first everywhere a list is shown. A stored name is Maya's attribute type for
 the plug when that type alone describes it (``double``, ``long``,
-``doubleAngle``, ``matrix``, ``float2``, and ``double3`` with plain double
-children). ``euler``, ``color``, ``hex`` and ``python`` are our own words:
-Maya tells those apart only by their child type or a flag, or has no type for
-them. ``quaternion`` is our word for Maya's ``double4``.
+``doubleAngle``, ``doubleLinear``, ``matrix``, ``float2``, and ``double3``
+with plain double children). ``euler``, ``position``, ``color``, ``hex`` and
+``python`` are our own words: Maya tells those apart only by their child type
+or a flag, or has no type for them. ``quaternion`` is our word for Maya's
+``double4``.
+
+The unit types read and write Maya's INTERNAL units, whatever the scene's UI
+units: ``doubleAngle`` / ``euler`` in radians, ``doubleLinear`` / ``position``
+in centimetres (at linear unit m, a translate of 1.5 reads 150.0).
 
 Retired names are rejected, never aliased: :data:`RETIRED` maps each one to
-its replacement so the error can say what to type instead.
+its replacement so the error can say what to type instead, and
+:data:`RETIRED_HINTS` adds a second choice where there is one.
 
 This module imports nothing from Maya itself, but importing it through the
 ``mpynode._common`` package does (the package ``__init__`` needs Maya).
@@ -61,12 +67,20 @@ ATTR_TYPES: tuple[AttrType, ...] = (
              "on / off", 0),
     AttrType("doubleAngle", {"at": "doubleAngle"},
              "angle, code reads radians", 0),
+    # Maya's distance (like translateX): connects to translate channels with
+    # no unitConversion node, and the code reads internal centimetres.
+    AttrType("doubleLinear", {"at": "doubleLinear"},
+             "distance, code reads cm", 0),
     # -- compounds and matrices
     AttrType("double3", {"at": "double3"},
              "3 doubles, no unit (Maya's Vector)", 1),
     # parent compound; the X/Y/Z children are doubleAngle.
     AttrType("euler", {"at": "double3"},
              "3 angles like rotate, radians", 1),
+    # parent compound; the X/Y/Z children are doubleLinear, like translate, so
+    # it wires to and from translate with no unitConversion node at any unit.
+    AttrType("position", {"at": "double3"},
+             "3 distances like translate, cm", 1),
     # Maya's numeric matrix (kMatrixAttribute, like multMatrix.matrixIn):
     # reads as identity until set. Scenes saved before 2026-10 carry a typed
     # ``-dt matrix`` plug instead; readers take both, and every compute write
@@ -143,6 +157,12 @@ RETIRED: dict[str, str] = {
     "float3":  "color",
 }
 
+# Retired name -> a second replacement worth naming, appended to the error in
+# parentheses. Only the error uses it; RETIRED alone still maps the old name.
+RETIRED_HINTS: dict[str, str] = {
+    "vector": "or 'position' for a distance, like translate",
+}
+
 
 def add_attr_kwargs() -> dict[str, dict]:
     """``{name: cmds.addAttr kwargs}`` for every accepted type (fresh dicts)."""
@@ -160,11 +180,14 @@ def dialog_label(name: str) -> str:
 def unknown_type_message(attr_type) -> str:
     """The error text for a name that is not in the table.
 
-    A retired name gets its replacement; anything else gets the valid names.
+    A retired name gets its replacement, plus its :data:`RETIRED_HINTS` entry
+    when it has one; anything else gets the valid names.
     """
     new = RETIRED.get(attr_type) if isinstance(attr_type, str) else None
     if new is not None:
-        return "attr_type %r was renamed: use %r" % (attr_type, new)
+        msg  = "attr_type %r was renamed: use %r" % (attr_type, new)
+        hint = RETIRED_HINTS.get(attr_type)
+        return "%s (%s)" % (msg, hint) if hint else msg
     return "attr_type %r not supported; valid: %s" % (
         attr_type, sorted(ALL_NAMES))
 

@@ -18,10 +18,11 @@ is_array}}``) and the node's Python compute source, it emits the C++ that:
      construct, or a declared output is never written.
 
 Supported I/O (numeric only -- everything nd:: can represent bit-faithfully):
-  * scalar   : float/double/long/bool/enum/doubleAngle/time
-  * 1-D array: float/double/long/bool/enum/doubleAngle/time     -> nd shape (N,)
-  * vector   : double3/euler                                     -> nd shape (3,)
-  * vec array: double3/euler multi (std::vector<MVector>)        -> nd shape (N,3)
+  * scalar   : float/double/long/bool/enum/doubleAngle/doubleLinear/time
+  * 1-D array: the same scalar types                -> nd shape (N,)
+  * vector   : double3/euler/position               -> nd shape (3,)
+  * vec array: double3/euler/position multi
+               (std::vector<MVector>)               -> nd shape (N,3)
 Unsupported (matrix/string/hex/quaternion/float2/color, matrix arrays, meshes,
 nurbs) reject -- those keep the existing AI-porter path with zero regression.
 
@@ -48,6 +49,7 @@ from mpynode._common.interface.morph_method_interface import (WEIGHT_PLUG,
 # nd element dtype for each Maya attr type (only numeric types map).
 _ND_DTYPE = {
     "float": "double", "double": "double", "doubleAngle": "double", "time": "double",
+    "doubleLinear": "double",
     "long": "int64", "enum": "int64",
     "bool": "bool",
 }
@@ -58,9 +60,10 @@ _ND_CTYPE = {"double": "double", "int64": "int64_t", "bool": "bool"}
 _MAYA_CTYPE = {
     "float": "float", "double": "double", "long": "int", "bool": "bool",
     "enum": "short", "doubleAngle": "double", "time": "double",
+    "doubleLinear": "double",
 }
 # Types carried as a 3-component vector (double3 scalar / std::vector<MVector>).
-_VEC_TYPES = ("double3", "euler")
+_VEC_TYPES = ("double3", "euler", "position")
 
 # ---- geometry-INPUT read surface (Phase 6). A typed geo INPUT (mesh/
 # nurbsCurve/nurbsSurface) is handed to compute() as ``in_<member>`` (an MFn*)
@@ -495,6 +498,8 @@ def _scalar_output_lines(m, val):
         return ["%s.setShort((short)(%s));" % (h, e)]
     if t == "doubleAngle":
         return ["%s.setMAngle(MAngle((double)(%s)));" % (h, e)]
+    if t == "doubleLinear":
+        return ["%s.setMDistance(MDistance((double)(%s)));" % (h, e)]
     if t == "time":
         return ["%s.setMTime(MTime((double)(%s)));" % (h, e)]
     raise UnsupportedSpec("nd_lower: output %r type %r not liftable"
@@ -4047,8 +4052,9 @@ def lower_transform(spec):
     matrix_inputs = {
         plug for plug, meta in (spec.get("inputs") or {}).items()
         if meta.get("type") == "matrix" and not meta.get("is_array")}
-    # Generic scalar inputs (float/double3/euler/color/quaternion/float2/
-    # doubleAngle/time/enum/string) the scaffold exposes as ``in_a<ident>``
+    # Generic scalar inputs (float/double3/euler/position/color/quaternion/
+    # float2/doubleAngle/doubleLinear/time/enum/string) the scaffold exposes as
+    # ``in_a<ident>``
     # locals. Reuse emit_transform's collector so the member names + type
     # filter are a single source of truth (the read local + this bind must
     # agree). _materialise_input lifts every one except string (-> raises ->

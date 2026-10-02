@@ -68,8 +68,10 @@ _NORM_TYPE = {
     "long":        {"cat": "scalar", "fn": "MFnNumericAttribute", "data": "kInt", "cpp": "int", "read": "asInt", "portable": True},
     "bool":        {"cat": "scalar", "fn": "MFnNumericAttribute", "data": "kBoolean", "cpp": "bool", "read": "asBool", "portable": True},
     "doubleAngle": {"cat": "unit", "fn": "MFnUnitAttribute", "data": "kAngle", "cpp": "double", "read": "asMAngle", "portable": True},
-    "time":        {"cat": "unit", "fn": "MFnUnitAttribute", "data": "kTime", "cpp": "double", "read": "asMTime", "portable": True},
-    "double3":     {"cat": "vector", "fn": "MFnNumericAttribute", "data": "k3Double", "cpp": "double[3]", "read": "asDouble3", "portable": True},
+    # doubleLinear: a distance unit attr (like translateX); reads internal cm.
+    "doubleLinear": {"cat": "unit", "fn": "MFnUnitAttribute", "data": "kDistance", "cpp": "double", "read": "asMDistance", "portable": True},
+    "time":         {"cat": "unit", "fn": "MFnUnitAttribute", "data": "kTime", "cpp": "double", "read": "asMTime", "portable": True},
+    "double3":      {"cat": "vector", "fn": "MFnNumericAttribute", "data": "k3Double", "cpp": "double[3]", "read": "asDouble3", "portable": True},
     # float2 (mPyFile uvCoord/uvFilterSize) MUST stay a genuine float2 so it
     # connects to place2dTexture.outUV.
     "float2": {"cat": "vector2", "fn": "MFnNumericAttribute", "data": "k2Float", "cpp": "float[2]", "read": "asFloat2", "portable": True},
@@ -77,6 +79,8 @@ _NORM_TYPE = {
     # material.color + Arnold, unlike a plain double3.
     "color": {"cat": "color", "fn": "MFnNumericAttribute", "data": "color", "cpp": "float[3]", "read": "asFloat3", "portable": True},
     "euler": {"cat": "vector", "fn": "MFnUnitAttribute*3", "data": "kAngle*3", "cpp": "double[3]", "read": "asDouble3", "portable": True},
+    # position: like euler with 3 distance children (like translate), cm.
+    "position": {"cat": "vector", "fn": "MFnUnitAttribute*3", "data": "kDistance*3", "cpp": "double[3]", "read": "asDouble3", "portable": True},
     # quaternion: Maya's numeric double4 (X/Y/Z/W children, W default 1), like
     # decomposeMatrix.outputQuat; read with asDouble4, written with set4Double.
     "quaternion":   {"cat": "quaternion", "fn": "MFnNumericAttribute", "data": "k4Double", "cpp": "double[4]", "read": "asDouble4", "portable": True},
@@ -842,7 +846,7 @@ def __getattr__(name):
 # Maya attributeType (cmds.attributeQuery -attributeType) -> native spec type.
 # 'typed' (string) and 'float3' (color vs double3) are resolved separately.
 _MAYA_ATTR_TO_SPEC = {
-    "float": "float", "double": "double", "doubleLinear": "double",
+    "float": "float", "double": "double", "doubleLinear": "doubleLinear",
     "long": "long", "short": "long", "byte": "long", "bool": "bool",
     "enum": "enum", "doubleAngle": "doubleAngle", "time": "time",
     "float2":  "float2",

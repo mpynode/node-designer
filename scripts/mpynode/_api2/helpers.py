@@ -452,11 +452,15 @@ def read_plug_value(plug: om.MPlug, attr_type: str, data_block=None) -> Any:
             ],
             dtype=np.float64,
         )
-    # doubleAngle / euler / enum
+    # doubleAngle / doubleLinear / euler / position / enum
     if attr_type == "doubleAngle":
         # doubleAngle stored in radians internally; asDouble returns radians.
         return plug.asDouble()
-    if attr_type == "euler":
+    if attr_type == "doubleLinear":
+        # doubleLinear stored in centimetres internally; asDouble returns cm
+        # whatever the scene's linear unit (1 m reads 100.0).
+        return plug.asDouble()
+    if attr_type in ("euler", "position"):
         return np.array(
             [
                 plug.child(0).asDouble(),
@@ -686,10 +690,11 @@ def _write_value_to_handle(
             # legacy generic compound: no numeric accessor, write each child.
             for i, attr in enumerate(child_attrs):
                 handle.child(attr).setDouble(float(v[i]))
-    # doubleAngle / euler / enum write side.
-    elif attr_type == "doubleAngle":
+    # doubleAngle / doubleLinear / euler / position / enum write side, in
+    # internal units (radians, centimetres).
+    elif attr_type in ("doubleAngle", "doubleLinear"):
         handle.setDouble(float(value))
-    elif attr_type == "euler":
+    elif attr_type in ("euler", "position"):
         v = np.asarray(value, dtype=np.float64).flatten()
         if v.size < 3:
             v = np.pad(v, (0, 3 - v.size))
@@ -889,9 +894,9 @@ def write_multi_plug_value(
 
     Type contract for ``values``:
       * scalar types (float / double / long / bool / string / doubleAngle /
-        enum / time / python) \u2014 1D iterable of scalars, e.g.
-        ``[1.0, 2.0, 3.0]`` or ``np.array([1.0, 2.0, 3.0])``
-      * double3 / euler \u2014 iterable of 3-element vectors, e.g.
+        doubleLinear / enum / time / python) \u2014 1D iterable of scalars,
+        e.g. ``[1.0, 2.0, 3.0]`` or ``np.array([1.0, 2.0, 3.0])``
+      * double3 / euler / position \u2014 iterable of 3-element vectors, e.g.
         ``[[1,2,3], np.array([4,5,6])]``
       * matrix \u2014 iterable of 4x4 matrices, e.g.
         ``[np.eye(4), np.eye(4) * 2]``
@@ -934,14 +939,15 @@ def write_multi_plug_value(
 def array_gap_default(attr_obj, attr_type: str):
     """Per-element default used to fill unconnected logical-index gaps when
     reading a NON-sparse array input. Matrices -> identity, quaternions ->
-    [0,0,0,1], double3/euler/color -> zeros(3), numeric -> the attribute's
-    ``defaultValue`` (``addAttr dv=..``), string -> "", and
+    [0,0,0,1], double3/euler/position/color -> zeros(3), numeric -> the
+    attribute's ``defaultValue`` (``addAttr dv=..``; radians / centimetres for
+    the unit types), string -> "", and
     python / mesh / nurbsCurve / nurbsSurface -> None (gap-fill ill-defined)."""
     if attr_type == "matrix":
         return [[1.0 if r == c else 0.0 for c in range(4)] for r in range(4)]
     if attr_type == "quaternion":
         return [0.0, 0.0, 0.0, 1.0]
-    if attr_type in ("double3", "euler", "color"):
+    if attr_type in ("double3", "euler", "position", "color"):
         return [0.0, 0.0, 0.0]
     if attr_type == "float2":
         return [0.0, 0.0]
@@ -958,6 +964,11 @@ def array_gap_default(attr_obj, attr_type: str):
     if attr_type == "doubleAngle":
         try:
             return om.MFnUnitAttribute(attr_obj).default.asRadians()
+        except Exception:
+            return 0.0
+    if attr_type == "doubleLinear":
+        try:
+            return om.MFnUnitAttribute(attr_obj).default.asCentimeters()
         except Exception:
             return 0.0
     if attr_type == "time":
@@ -1069,18 +1080,20 @@ def read_user_inputs_dict(
       * Matrix input: ``MatrixView`` (numpy-transparent:
         ``np.asarray(M)`` -> (4,4); also ``.translation()/.rotation()``)
       * MULTI scalar input (``is_array=True``):
-        - float/double/doubleAngle/time \u2192 ``np.ndarray (n,)`` dtype float64
+        - float/double/doubleAngle/doubleLinear/time \u2192 ``np.ndarray (n,)``
+          dtype float64
         - long/enum \u2192 ``np.ndarray (n,)`` dtype int64
         - bool \u2192 ``np.ndarray (n,)`` dtype bool
         - string \u2192 ``list[str]``  (numpy string arrays are awkward)
-      * MULTI double3 / euler input: ``np.ndarray (n, 3)`` dtype float64
+      * MULTI double3 / euler / position input: ``np.ndarray (n, 3)`` dtype
+        float64
       * MULTI matrix input: ``MatrixArrayView`` (numpy-transparent:
         ``np.asarray(M)`` -> (n,4,4); ``M[i]`` -> single view;
         ``M.translation()`` -> (n,3))
       * MULTI python / mesh / nurbsCurve / nurbsSurface input: ``list``
         (heterogeneous types, can't stack)
 
-    Numerical compound multis (double3 / euler / matrix)
+    Numerical compound multis (double3 / euler / position / matrix)
     are now stacked into a single numpy ndarray instead of a Python list of
     per-element ndarrays. The build path also avoids constructing the
     per-element ndarrays \u2014 raw scalar lists are collected and cast in one
@@ -1140,7 +1153,7 @@ def read_user_inputs_dict(
         # raw python lists per element and cast once, avoiding the per-element
         # np.array() that read_plug_value would do. ``_read_multi`` densifies a
         # non-sparse array (length max_logical+1, gaps = the attr default).
-        if attr_type in ("double3", "euler", "color"):
+        if attr_type in ("double3", "euler", "position", "color"):
             values = _read_multi(
                 plug, attr_obj, attr_type, sparse,
                 lambda e: [
@@ -1205,7 +1218,8 @@ def read_user_inputs_dict(
             plug, attr_obj, attr_type, sparse,
             lambda e: read_plug_value(e, attr_type, data_block=data_block),
         )
-        if attr_type in ("float", "double", "doubleAngle", "time"):
+        if attr_type in ("float", "double", "doubleAngle", "doubleLinear",
+                         "time"):
             out[name] = (
                 np.asarray(values, dtype=np.float64)
                 if values
@@ -1230,8 +1244,9 @@ def read_user_inputs_dict(
 
 def _read_handle_value(handle, attr_type, attr_obj=None):
     """Read a single ``MDataHandle`` by USER ``attr_type`` -- thread-safe
-    (no plug access). Returns a Python scalar, a 3-list (double3/euler/color),
-    a 4-list (quaternion), a 4x4 nested list (matrix), or ``None`` on failure.
+    (no plug access). Returns a Python scalar, a 3-list
+    (double3/euler/position/color), a 4-list (quaternion), a 4x4 nested list
+    (matrix), or ``None`` on failure.
 
     This is the data-handle analogue of the plug read in
     :func:`read_user_inputs_dict`; it is used on the worker-thread compute
@@ -1253,6 +1268,11 @@ def _read_handle_value(handle, attr_type, attr_obj=None):
         if attr_type == "doubleAngle":
             try:
                 return float(handle.asAngle().asRadians())
+            except Exception:
+                return float(handle.asDouble())
+        if attr_type == "doubleLinear":
+            try:
+                return float(handle.asDistance().asCentimeters())
             except Exception:
                 return float(handle.asDouble())
         if attr_type == "time":
@@ -1282,9 +1302,10 @@ def _read_handle_value(handle, attr_type, attr_obj=None):
             return bool(handle.asBool())
         if attr_type in ("string", "hex", "python"):
             return handle.asString()
-        if attr_type in ("double3", "euler"):
+        if attr_type in ("double3", "euler", "position"):
             # double3 numeric compound (euler XYZ children are doubleAngle,
-            # stored as raw radian doubles -- matches the plug read).
+            # stored as raw radian doubles; position XYZ are doubleLinear, raw
+            # centimetre doubles -- matches the plug read).
             try:
                 return [float(x) for x in handle.asDouble3()]
             except Exception:
@@ -1361,7 +1382,7 @@ def _cast_datablock_multi(values, attr_type):
     """Cast a dense per-element list (read via data handles) into the SAME
     numpy container :func:`read_user_inputs_dict` produces, so
     ``self.<array>`` is byte-for-byte identical on the worker-thread path."""
-    if attr_type in ("double3", "euler", "color"):
+    if attr_type in ("double3", "euler", "position", "color"):
         return (
             np.asarray(values, dtype=np.float64)
             if values
@@ -1382,7 +1403,7 @@ def _cast_datablock_multi(values, attr_type):
             else np.zeros((0, 4, 4), dtype=np.float64)
         )
         return MatrixArrayView(stacked)
-    if attr_type in ("float", "double", "doubleAngle", "time"):
+    if attr_type in ("float", "double", "doubleAngle", "doubleLinear", "time"):
         return (
             np.asarray(values, dtype=np.float64)
             if values
@@ -1413,9 +1434,10 @@ def read_user_inputs_dict_from_datablock(
     where ``MFnDependencyNode.findPlug`` may crash.
 
     Type contract MATCHES :func:`read_user_inputs_dict` exactly (scalars ->
-    Python primitives; double3/euler/color -> ``np.ndarray (3,)``; matrix ->
-    ``MatrixView``; multi scalar -> ``np.ndarray (n,)``; multi double3/euler/
-    color -> ``np.ndarray (n, 3)``; multi matrix -> ``MatrixArrayView``), so
+    Python primitives; double3/euler/position/color -> ``np.ndarray (3,)``;
+    matrix -> ``MatrixView``; multi scalar -> ``np.ndarray (n,)``; multi
+    double3/euler/position/color -> ``np.ndarray (n, 3)``; multi matrix ->
+    ``MatrixArrayView``), so
     ``self.<input>`` behaves identically on the main and worker threads. This
     is the C2 (dense input seeding) base-contract guarantee for the file node.
 
@@ -1454,7 +1476,8 @@ def read_user_inputs_dict_from_datablock(
             val = _read_handle_value(handle, attr_type, attr_obj)
             if val is None:
                 continue
-            if attr_type in ("double3", "euler", "color", "quaternion"):
+            if attr_type in ("double3", "euler", "position", "color",
+                             "quaternion"):
                 out[name] = np.asarray(val, dtype=np.float64)
             elif attr_type == "matrix":
                 from mpynode._common.plugs.promoted_types import MatrixView

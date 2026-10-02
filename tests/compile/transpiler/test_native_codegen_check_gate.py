@@ -455,8 +455,9 @@ class TestDefaultValueContract(unittest.TestCase):
     contract: the compiled node must do exactly what the interpreted node does
     (``wrappers._mpy_node.add_input_attr``), measured on a live node 2026-09-14:
 
-        honoured : float double long bool enum doubleAngle(RADIANS) color(inputs)
-        ignored  : double3 euler float2 quaternion string time
+        honoured : float double long bool enum doubleAngle(RADIANS)
+                   doubleLinear(CENTIMETRES) color(inputs)
+        ignored  : double3 euler position float2 quaternion string time
 
     Honouring a default the Python side ignores would make the two nodes
     disagree on a fresh scene -- exactly what ``time`` did (compiled 2.0 vs
@@ -467,13 +468,15 @@ class TestDefaultValueContract(unittest.TestCase):
     HONOURED = {
         "float": (1.5, "1.5"), "double": (2.5, "2.5"), "long": (7, ", 7);"),
         "bool": (True, "true"), "enum": (1, '"p", 1);'),
-        "doubleAngle": (0.5, "kAngle, 0.5);"),
-        "color":       ([0.2, 0.55, 0.2], "setDefault(0.2f, 0.55f, 0.2f);"),
+        "doubleAngle":  (0.5, "kAngle, 0.5);"),
+        "doubleLinear": (150.0, "kDistance, 150.0);"),
+        "color":        ([0.2, 0.55, 0.2], "setDefault(0.2f, 0.55f, 0.2f);"),
     }
     # distinctive literals that must NOT appear anywhere in initialize()
     IGNORED = {
         "double3":    ([1.25, 2.5, 3.75], ("1.25", "3.75")),
         "euler":      ([0.11, 0.22, 0.33], ("0.11", "0.22", "0.33")),
+        "position":   ([0.61, 0.62, 0.63], ("0.61", "0.62", "0.63")),
         "float2":     ([0.125, 0.875], ("0.125", "0.875")),
         "quaternion": ([0.11, 0.22, 0.33, 0.44], ("0.11", "0.22", "0.44")),
         "string":     ("zzhelloqq", ("zzhelloqq",)),

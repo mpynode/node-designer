@@ -161,7 +161,9 @@ def _generic_local_hint(t):
     return {
         "float": "double", "double": "double", "long": "int", "bool": "bool",
         "enum": "short", "doubleAngle": "double, RADIANS", "time": "double, seconds",
+        "doubleLinear": "double, CENTIMETRES",
         "double3": "double[3]; .x==[0]", "euler": "double[3], RADIANS",
+        "position": "double[3], CENTIMETRES",
         "color": "float[3] RGB", "float2": "float[2]",
         "quaternion": "double[4] {x,y,z,w}", "string": "MString; .asChar()",
     }.get(t, t)
@@ -207,8 +209,9 @@ def _desired_local_body(cls, mcls, matrix_inputs, generic_inputs,
     # back-ref is synced -- return the plain TRS, Maya recomputes once whole.
     for _plug, local in matrix_inputs:
         L.append("    MMatrix %s;" % local)
-    # Generic scalar inputs (float/double3/euler/color/quaternion/float2/
-    # doubleAngle/time/enum/string) into their ``in_a<ident>`` locals
+    # Generic scalar inputs (float/double3/euler/position/color/quaternion/
+    # float2/doubleAngle/doubleLinear/time/enum/string) into their
+    # ``in_a<ident>`` locals
     # (defaulted; assigned inside the same plug-valid guard as the matrix
     # inputs).
     for gm in generic_inputs:
@@ -445,8 +448,8 @@ def _transform_node_methods(cls, mcls, type_name, matrix_inputs, generic_inputs)
         L.append('            if (pn == "%s") trig = true;' % nm)
     # a generic compound input's child (offsetX) resolves to its parent (offset).
     for gm in generic_inputs:
-        if gm["meta"]["type"] in ("double3", "euler", "color", "quaternion",
-                                  "float2"):
+        if gm["meta"]["type"] in ("double3", "euler", "position", "color",
+                                  "quaternion", "float2"):
             L.append('            if (pn == "%s") trig = true;' % gm["plug"])
     L.append("        }")
     L.append("    }")

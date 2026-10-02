@@ -172,9 +172,10 @@ float()/int() (write `abs(np.dot(a, b))`, NOT `abs(float(np.dot(a, b)))`;
 `length = np.linalg.norm(v)`, NOT `float(np.linalg.norm(v))`). Reading
 `self.<input>` gives:
     double/float -> float   long -> int           bool -> bool
-    doubleAngle -> float (rad)   time -> float
+    doubleAngle -> float (rad)   doubleLinear -> float (cm)   time -> float
     enum -> EnumInt (an int; .name() gives the field label)
     string/hex -> str       double3 -> numpy (3,)  euler -> numpy (3,) rad
+    position -> numpy (3,) cm
     quaternion -> numpy (4,) [x,y,z,w]   color -> numpy (3,) [r,g,b]
     float2 -> numpy (2,) [u,v]
     matrix -> MatrixView ((4,4) row-major, numpy-transparent)
@@ -232,6 +233,9 @@ ATTRIBUTE TYPES (for add_input / add_output)
     double4 (X/Y/Z/W), reads/writes as numpy (4,), default identity
     [0,0,0,1]. "float2": 2 floats (U/V children), reads/writes as numpy
     (2,).
+  * "position" for anything wired to or from translate or a point (3
+    distances, reads cm); "euler" for rotate; "double3" for a unitless
+    3-vector such as a direction or scale.
   * Array outputs are pre-seeded mutable (N,...) buffers, so you can
     slice-assign: `self.outMatrices[:, 3, :3] = positions`.
 
@@ -431,9 +435,10 @@ dtype+shape); and wrapping a numpy scalar used only in math -- write
 `abs(np.dot(a,b))` not `abs(float(np.dot(a,b)))`, `np.linalg.norm(v)` not
 `float(np.linalg.norm(v))`. Reading `self.<input>` gives:
     double/float -> float   long -> int           bool -> bool
-    doubleAngle -> float (rad)   time -> float
+    doubleAngle -> float (rad)   doubleLinear -> float (cm)   time -> float
     enum -> EnumInt (an int; .name() gives the field label)
     string/hex -> str       double3 -> numpy (3,)  euler -> numpy (3,) rad
+    position -> numpy (3,) cm
     quaternion -> numpy (4,) [x,y,z,w]   color -> numpy (3,) [r,g,b]
     float2 -> numpy (2,) [u,v]
     matrix -> MatrixView ((4,4) row-major, numpy-transparent)
@@ -484,6 +489,9 @@ ATTRIBUTE TYPES (for inputs / outputs)
   * "color": float3 (R/G/B) flagged usedAsColor; reads/writes as numpy (3,).
     "quaternion": double4 (X/Y/Z/W), numpy (4,), default [0,0,0,1].
     "float2": 2 floats (U/V), numpy (2,).
+  * "position" for anything wired to or from translate or a point (3
+    distances, reads cm); "euler" for rotate; "double3" for a unitless
+    3-vector such as a direction or scale.
 
 NAMING -- plug / attribute names are camelCase, lowercase first letter
 (`noiseAmount`, `driverMatrix`, `outValue`); NEVER snake_case, leading capital,

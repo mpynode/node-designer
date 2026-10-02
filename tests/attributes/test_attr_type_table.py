@@ -35,6 +35,15 @@ _OLD_TO_NEW = {
     "float3":  "color",
 }
 
+# The second choice the error names for a retired name, when it has one.
+_HINTS = {"vector": " (or 'position' for a distance, like translate)"}
+
+
+def _renamed(old):
+    """The error text for the retired name ``old``."""
+    return "attr_type %r was renamed: use %r%s" % (
+        old, _OLD_TO_NEW[old], _HINTS.get(old, ""))
+
 
 def _qt_available() -> bool:
     try:
@@ -76,6 +85,11 @@ class TestTheTable(unittest.TestCase):
         for old, new in attr_types.RETIRED.items():
             self.assertNotIn(old, attr_types.ALL_NAMES)
             self.assertIn(new, attr_types.ALL_NAMES)
+        # A hint only ever adds to a retired name's message.
+        self.assertLessEqual(set(attr_types.RETIRED_HINTS),
+                             set(attr_types.RETIRED))
+        # vector maps to double3 alone: a v1 scene still upgrades to double3.
+        self.assertEqual(attr_types.upgrade_legacy_name("vector"), "double3")
 
     def test_plugs_created_are_unchanged(self):
         # Commit 1 renames the stored vocabulary only: long is still -at long,
@@ -143,7 +157,10 @@ class TestTheTable(unittest.TestCase):
         from mpynode._common import attr_types
 
         self.assertEqual(attr_types.unknown_type_message("vector"),
-                         "attr_type 'vector' was renamed: use 'double3'")
+                         "attr_type 'vector' was renamed: use 'double3' (or "
+                         "'position' for a distance, like translate)")
+        self.assertEqual(attr_types.unknown_type_message("angle"),
+                         "attr_type 'angle' was renamed: use 'doubleAngle'")
         msg = attr_types.unknown_type_message("banana")
         self.assertIn("'banana' not supported; valid:", msg)
         for name in attr_types.ALL_NAMES:
@@ -166,18 +183,14 @@ class TestRetiredNamesRaise(_MayaBase):
         for old, new in _OLD_TO_NEW.items():
             with self.assertRaises(ValueError) as cm:
                 self.node.add_input_attr("x_" + old, old)
-            self.assertEqual(
-                str(cm.exception),
-                "attr_type %r was renamed: use %r" % (old, new))
+            self.assertEqual(str(cm.exception), _renamed(old))
             self.assertFalse(mc.objExists(self.node.get_name() + ".x_" + old))
 
     def test_add_output_attr_names_the_replacement(self):
         for old, new in _OLD_TO_NEW.items():
             with self.assertRaises(ValueError) as cm:
                 self.node.add_output_attr("y_" + old, old)
-            self.assertEqual(
-                str(cm.exception),
-                "attr_type %r was renamed: use %r" % (old, new))
+            self.assertEqual(str(cm.exception), _renamed(old))
 
     def test_unknown_name_lists_the_valid_ones(self):
         with self.assertRaises(ValueError) as cm:
@@ -197,9 +210,7 @@ class TestRetiredNamesRaise(_MayaBase):
         for old, new in _OLD_TO_NEW.items():
             with self.assertRaises(ValueError) as cm:
                 read_plug_value(plug, old)
-            self.assertEqual(
-                str(cm.exception),
-                "attr_type %r was renamed: use %r" % (old, new))
+            self.assertEqual(str(cm.exception), _renamed(old))
         self.assertEqual(list(read_plug_value(plug, "double3")),
                          [0.0, 0.0, 0.0])
 
@@ -218,9 +229,7 @@ class TestRetiredNamesRaise(_MayaBase):
             with self.assertRaises(ValueError) as cm:
                 read_user_inputs_dict_from_datablock(
                     None, node_obj, {"v": {"attr_type": old}})
-            self.assertEqual(
-                str(cm.exception),
-                "attr_type %r was renamed: use %r" % (old, new))
+            self.assertEqual(str(cm.exception), _renamed(old))
 
     def test_mpn_restore_rejects_before_creating_anything(self):
         # A retired name in an .mpn payload raises before the node or any
@@ -283,15 +292,13 @@ class TestCompilePathHint(unittest.TestCase):
                     "outputs": {}}
             with self.assertRaises(UnsupportedSpec) as cm:
                 _check(spec)
-            self.assertEqual(
-                str(cm.exception),
-                "attr 'x': attr_type %r was renamed: use %r" % (old, new))
+            self.assertEqual(str(cm.exception), "attr 'x': " + _renamed(old))
 
     def test_normalize_attr_note(self):
         from mpynode.native.spec.spec_extractor import normalize_attr
 
         self.assertEqual(normalize_attr({"attr_type": "vector"})["note"],
-                         "attr_type 'vector' was renamed: use 'double3'")
+                         _renamed("vector"))
         self.assertEqual(normalize_attr({"attr_type": "banana"})["note"],
                          "unknown attr_type 'banana' -- no native mapping")
         self.assertNotIn("note", normalize_attr({"attr_type": "double3"}))

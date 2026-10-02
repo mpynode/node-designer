@@ -158,8 +158,9 @@ def read_multi_plug_values(node_name: str, attr: str, meta: dict):
 
     ``cmds.getAttr`` on a typed multi PARENT raises ("compound with mixed
     type elements"), so we enumerate the logical indices and read each
-    element. Vector/euler elements are stacked into an ``(n, 3)`` numpy
-    array (matching what the expression sees); other types return a list.
+    element. Vector/euler/position elements are stacked into an ``(n, 3)``
+    numpy array (matching what the expression sees); other types return a
+    list.
     """
     atype = (meta or {}).get("attr_type", "")
     # Values aren't readable (and evaluating them is expensive), but each
@@ -214,7 +215,7 @@ def read_multi_plug_values(node_name: str, attr: str, meta: dict):
     # read_user_inputs_dict. An EMPTY input returns a 0-length array of the
     # right shape/dtype -- NOT a bare list -- so Type/Size still read
     # numpy.ndarray[float64] / (0, 3) rather than list / 0.
-    if atype in ("double3", "euler", "color"):
+    if atype in ("double3", "euler", "position", "color"):
         try:
             import numpy as _np
 
@@ -241,7 +242,7 @@ def read_multi_plug_values(node_name: str, attr: str, meta: dict):
             return vals
     # Scalar numeric multis mirror read_user_inputs_dict's type contract so
     # the Watch shows the SAME array AND dtype the expression sees:
-    #   float / double / doubleAngle / time -> float64
+    #   float / double / doubleAngle / doubleLinear / time -> float64
     #   long / enum                         -> int64
     #   bool                                -> bool
     # string / python / geometry stay Python lists (numpy can't stack them).
@@ -249,7 +250,8 @@ def read_multi_plug_values(node_name: str, attr: str, meta: dict):
     try:
         import numpy as _np
 
-        if atype in ("float", "double", "doubleAngle", "time"):
+        if atype in ("float", "double", "doubleAngle", "doubleLinear",
+                     "time"):
             return (_np.asarray(vals, dtype=_np.float64)
                     if vals else _np.zeros(0, dtype=_np.float64))
         if atype in ("long", "enum"):
@@ -278,12 +280,29 @@ def _angle_ui_to_radians(value):
         return value
 
 
+def _distance_ui_to_cm(value):
+    """Convert a distance read via ``cmds.getAttr`` (which returns the current
+    UI linear unit) into CENTIMETRES, so the Watch shows the SAME value the
+    expression sees (``read_plug_value`` reads distances via
+    ``plug.asDouble()`` = internal cm). At linear unit m a getAttr of 1.5 shows
+    150.0. Never raises -- falls back to the raw value."""
+    try:
+        import maya.api.OpenMaya as _om
+
+        return _om.MDistance(
+            float(value), _om.MDistance.uiUnit()).asCentimeters()
+    except Exception:
+        return value
+
+
 def reshape_plug_value(value, meta: dict):
     """Reshape a raw ``cmds.getAttr`` value for nicer Watch display so an
     input/output reads like the expression sees it: a ``matrix`` becomes a
-    4x4 numpy array, a ``double3`` / ``euler`` a (3,) array. ``doubleAngle`` / ``euler``
-    values are converted from the UI angular unit (degrees) to RADIANS so they
-    match what the expression reads (``plug.asDouble()``). Scalars, strings, and
+    4x4 numpy array, a ``double3`` / ``euler`` / ``position`` a (3,) array.
+    ``doubleAngle`` / ``euler`` values are converted from the UI angular unit
+    (degrees) to RADIANS, and ``doubleLinear`` / ``position`` values from the
+    UI linear unit to CENTIMETRES, so they match what the expression reads
+    (``plug.asDouble()``). Scalars, strings, and
     array (multi) plugs pass through unchanged. Pure + defensive."""
     try:
         meta = meta or {}
@@ -297,9 +316,12 @@ def reshape_plug_value(value, meta: dict):
         if atype == "doubleAngle":
             # The expression sees radians; cmds.getAttr gave the UI unit.
             return _angle_ui_to_radians(value)
+        if atype == "doubleLinear":
+            # The expression sees centimetres; cmds.getAttr gave the UI unit.
+            return _distance_ui_to_cm(value)
         if atype == "matrix":
             return _np.array(value, dtype=float).reshape(4, 4)
-        if atype in ("double3", "euler", "color"):
+        if atype in ("double3", "euler", "position", "color"):
             # cmds.getAttr returns [(x, y, z)] for a double3 / float3.
             flat = (
                 value[0]
@@ -310,6 +332,11 @@ def reshape_plug_value(value, meta: dict):
                 # Each component is an angle -> UI unit to radians.
                 return _np.array(
                     [_angle_ui_to_radians(x) for x in flat], dtype=float
+                ).reshape(3)
+            if atype == "position":
+                # Each component is a distance -> UI unit to centimetres.
+                return _np.array(
+                    [_distance_ui_to_cm(x) for x in flat], dtype=float
                 ).reshape(3)
             return _np.array(flat, dtype=float).reshape(3)
         if atype in ("quaternion", "float2"):

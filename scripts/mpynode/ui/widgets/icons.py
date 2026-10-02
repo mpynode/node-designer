@@ -176,8 +176,8 @@ def get_node_type_icon(
 #
 # RGB tuples carried over from the pre-refactor ATTR_COLOR_MAP (which no
 # longer exists in ui/node_designer.py), extended to cover the full type
-# list: doubleAngle / euler / enum / time / python / mesh / nurbsCurve /
-# nurbsSurface.
+# list: doubleAngle / doubleLinear / euler / position / enum / time / python /
+# mesh / nurbsCurve / nurbsSurface.
 ATTR_COLOR_DARK_GREEN = (0, 128, 1)
 ATTR_COLOR_GREEN      = (80, 230, 80)
 ATTR_COLOR_BLUE       = (128, 230, 230)
@@ -198,13 +198,15 @@ ATTR_TYPE_COLORS: dict[str, tuple[int, int, int]] = {
     "float2":     ATTR_COLOR_GREEN,
     "double3":    ATTR_COLOR_GREEN,
     "euler":      ATTR_COLOR_GREEN,
+    "position":   ATTR_COLOR_GREEN,
     "color":      ATTR_COLOR_GREEN,
     "quaternion": ATTR_COLOR_BLUE,
     # Specials
-    "doubleAngle": ATTR_COLOR_BLUE,
-    "matrix":      ATTR_COLOR_GREY_BLUE,
-    "time":        ATTR_COLOR_GREEN,
-    "enum":        ATTR_COLOR_BROWN,
+    "doubleAngle":  ATTR_COLOR_BLUE,
+    "doubleLinear": ATTR_COLOR_BLUE,
+    "matrix":       ATTR_COLOR_GREY_BLUE,
+    "time":         ATTR_COLOR_GREEN,
+    "enum":         ATTR_COLOR_BROWN,
     # Strings + Python + hex
     "string": ATTR_COLOR_YELLOW,
     "python": ATTR_COLOR_YELLOW,

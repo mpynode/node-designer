@@ -7,10 +7,11 @@ from mpynode.native.compiler.kernels import (file_texture_cpp, nd_io_cpp,
 from .spec_model import (_check, _geo_kind, _spec_has_hex,
                          _spec_has_nurbs_curve, _spec_has_mesh,
                          _spec_has_nurbs_surface, _spec_has_packed,
+                         _spec_has_distance,
                          LOWERED_GUARD_INCLUDE,
                          MESH_INTERSECTOR_INCLUDE)
 from .emit_attr import (_INCLUDES, _create_lines, _members, _pick_path_input,
-                        PACKED_INCLUDES)
+                        PACKED_INCLUDES, DISTANCE_INCLUDE)
 from . import emit_geo_io
 from .emit_hex import _HEX_CPP
 from .nd_runtime import _nd_runtime_cpp
@@ -406,6 +407,10 @@ def _generate_cpp_impl(spec: dict, for_port: bool = False) -> str:
         for _inc in PACKED_INCLUDES:
             if _inc not in includes:
                 includes.append(_inc)
+    # doubleLinear attr: its read (asDistance) and writes (setMDistance) need
+    # MDistance. Gated so every other node's frag stays byte-identical.
+    if _spec_has_distance(spec) and DISTANCE_INCLUDE not in includes:
+        includes.append(DISTANCE_INCLUDE)
     # nurbsSurface INPUT: MFnNurbsSurface + point/param arrays.
     if _spec_has_nurbs_surface(spec):
         for _inc in ("maya/MFnNurbsSurface.h", "maya/MPoint.h",

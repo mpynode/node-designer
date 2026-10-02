@@ -65,6 +65,12 @@ from mpynode.ui.qt_wrapper import (
 _ATTR_TYPE_GROUPS = _attr_types.DIALOG_GROUPS
 ALL_ATTR_TYPES    = _attr_types.DIALOG_NAMES
 
+# The unit the numeric subframe's Min / Max / Default are typed in, for the
+# unit types: Maya's INTERNAL unit, which is what addAttr -min/-max/-dv take
+# and what the code reads, whatever the scene's UI units. Plain numbers have
+# no unit.
+_NUMERIC_UNIT = {"doubleAngle": "radians", "doubleLinear": "cm"}
+
 # Last attr type selected in the dialog this session (module-global; resets on
 # Maya restart). Used as the default type when the dialog re-opens.
 _LAST_SELECTED_TYPE = None
@@ -291,8 +297,9 @@ class NDAddAttrDialog(QDialog):
             return self._make_numeric_subframe(attr_type, is_int=False)
         if attr_type == "long":
             return self._make_numeric_subframe(attr_type, is_int=True)
-        if attr_type == "doubleAngle":
-            # doubleAngle uses numeric subframe (radians).
+        if attr_type in ("doubleAngle", "doubleLinear"):
+            # doubleAngle / doubleLinear use the numeric subframe, values in
+            # internal units (radians / cm) -- see _NUMERIC_UNIT.
             return self._make_numeric_subframe(attr_type, is_int=False)
         if attr_type == "bool":
             return self._make_bool_subframe()
@@ -301,7 +308,7 @@ class NDAddAttrDialog(QDialog):
         if attr_type == "time":
             # time has its own subframe with auto-connect option.
             return self._make_time_subframe()
-        # double3 / matrix / string / euler / python /
+        # double3 / matrix / string / euler / position / python /
         # mesh / nurbsCurve / nurbsSurface — blank
         w      = QWidget(self)
         layout = QVBoxLayout(w)
@@ -358,9 +365,15 @@ class NDAddAttrDialog(QDialog):
         grid.setVerticalSpacing(4)
         grid.setHorizontalSpacing(6)
         grid.setContentsMargins(0, 0, 0, 0)
-        grid.addWidget(QLabel("Min:", w),     0, 0)
-        grid.addWidget(QLabel("Max:", w),     1, 0)
-        grid.addWidget(QLabel("Default:", w), 2, 0)
+        # "Min (cm):" for a unit type, "Min:" for a plain number.
+        unit          = _NUMERIC_UNIT.get(attr_type)
+        tail          = " (%s):" % unit if unit else ":"
+        min_label     = QLabel("Min" + tail,     w)
+        max_label     = QLabel("Max" + tail,     w)
+        default_label = QLabel("Default" + tail, w)
+        grid.addWidget(min_label,     0, 0)
+        grid.addWidget(max_label,     1, 0)
+        grid.addWidget(default_label, 2, 0)
         min_edit     = QLineEdit(w)
         max_edit     = QLineEdit(w)
         default_edit = QLineEdit(w)
@@ -375,10 +388,13 @@ class NDAddAttrDialog(QDialog):
         outer.addLayout(grid)
         outer.addStretch(1)  # absorb extra vertical space
 
-        w._min_edit     = min_edit
-        w._max_edit     = max_edit
-        w._default_edit = default_edit
-        w._is_int       = is_int
+        w._min_edit      = min_edit
+        w._max_edit      = max_edit
+        w._default_edit  = default_edit
+        w._is_int        = is_int
+        w._min_label     = min_label
+        w._max_label     = max_label
+        w._default_label = default_label
         return w
 
     def _make_bool_subframe(self) -> QWidget:
@@ -506,8 +522,8 @@ class NDAddAttrDialog(QDialog):
             # time subframe.
             auto_connect_time = sub._auto_connect_check.isChecked()
         elif sub is not None and hasattr(sub, "_min_edit"):
-            # numeric subframe (double / float / long / doubleAngle): read
-            # min / max / default.
+            # numeric subframe (double / float / long / doubleAngle /
+            # doubleLinear): read min / max / default.
             is_int = bool(getattr(sub, "_is_int", False))
 
             def _parse(text, field):

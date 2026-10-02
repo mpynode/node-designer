@@ -1651,9 +1651,10 @@ class TestAttrTypeGrouping(unittest.TestCase):
         self.assertEqual(
             _ATTR_TYPE_GROUPS,
             (
-                ("double", "float", "long", "bool", "doubleAngle"),
-                ("double3", "euler", "matrix", "quaternion", "color",
-                 "float2"),
+                ("double", "float", "long", "bool", "doubleAngle",
+                 "doubleLinear"),
+                ("double3", "euler", "position", "matrix", "quaternion",
+                 "color", "float2"),
                 ("string", "enum", "hex", "python"),
                 ("mesh", "nurbsCurve", "nurbsSurface"),
                 ("time",),
@@ -1702,8 +1703,9 @@ class TestAttrTypeGrouping(unittest.TestCase):
                 items,
                 [
                     "double", "float", "long", "bool", "doubleAngle",
-                    "double3", "euler", "matrix", "quaternion", "color",
-                    "float2",
+                    "doubleLinear",
+                    "double3", "euler", "position", "matrix", "quaternion",
+                    "color", "float2",
                     "string", "enum", "hex", "python",
                     "mesh", "nurbsCurve", "nurbsSurface", "time",
                 ],

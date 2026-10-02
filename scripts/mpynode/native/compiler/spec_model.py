@@ -14,6 +14,9 @@ _SUPPORTED = {
     "float2", "color",
     # quaternion: Maya's numeric double4 (X/Y/Z/W children, W default 1).
     "quaternion",
+    # distances, in internal cm: doubleLinear (kDistance unit attr, like
+    # translateX) and position (3 doubleLinear children, like translate).
+    "doubleLinear", "position",
     # nurbsCurve INPUT: a kNurbsCurve typed attr read into an MFnNurbsCurve so the
     # ported compute can call curve queries in pure C++ (spine). Scalar only (NOT
     # in _ARRAY_OK); parity is loose/skipped (depends on the connected curve).
@@ -40,7 +43,7 @@ _GEO_INPUT_ONLY = {"mesh", "nurbsCurve", "nurbsSurface"}
 # Geometry and python remain non-array.
 _ARRAY_OK = {"float", "double", "long", "bool", "double3", "euler", "matrix",
              "doubleAngle", "time", "enum", "string", "hex", "color", "quaternion",
-             "float2"}
+             "float2", "doubleLinear", "position"}
 
 # float2 arrays are carried as std::vector<MFloatVector> (u=.x, v=.y, .z unused)
 # -- reuses the color-array machinery (no new include) with a 2-component
@@ -49,7 +52,8 @@ _CPP = {"float": "float", "double": "double", "long": "int", "bool": "bool",
         "enum": "short", "doubleAngle": "double", "time": "double",
         "double3": "MVector", "euler": "MVector", "matrix": "MMatrix",
         "string": "MString", "hex": "MString", "color": "MFloatVector",
-        "quaternion": "MQuaternion", "float2": "MFloatVector"}
+        "quaternion": "MQuaternion", "float2": "MFloatVector",
+        "doubleLinear": "double", "position": "MVector"}
 
 def _spec_has_hex(spec):
     """True if any user attr (input or output) is a `hex` type -- gates emission
@@ -70,6 +74,12 @@ def _spec_has_nurbs_surface(spec):
     """True if any user attr is a `nurbsSurface` -- gates the MFnNurbsSurface
     includes for the surface INPUT read."""
     return any(m["meta"].get("type") == "nurbsSurface" for m in _members(spec))
+
+def _spec_has_distance(spec):
+    """True if any user attr is a `doubleLinear` -- gates the MDistance include
+    its read (asDistance) and writes (setMDistance) need. A position reads and
+    writes as a double3, so it needs none."""
+    return any(m["meta"].get("type") == "doubleLinear" for m in _members(spec))
 
 def _spec_has_packed(spec):
     """True if any user attr is a `packed` (typed-array) input -- gates the

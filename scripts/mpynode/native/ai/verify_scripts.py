@@ -105,12 +105,13 @@ def _verify_script_deformer(spec: dict) -> str:
     if t == "bool": return random.choice([0, 1])
     if t == "long": return random.randint(-3, 3)
     if t == "enum": return random.randint(0, 1)
-    if t in ("double3", "euler"): return [random.uniform(-2, 2) for _ in range(3)]
+    if t in ("double3", "euler", "position"):
+        return [random.uniform(-2, 2) for _ in range(3)]
     return random.uniform(-2, 2)
 
 
 def _set(node, attr, t, v):
-    if t in ("double3", "euler"):
+    if t in ("double3", "euler", "position"):
         cmds.setAttr(node + "." + attr, v[0], v[1], v[2], type="double3")
     else:
         cmds.setAttr(node + "." + attr, v)
@@ -346,12 +347,13 @@ def _verify_script_scalar(spec: dict) -> str:
     if t == "bool": return random.choice([0, 1])
     if t == "long": return random.randint(-10, 10)
     if t == "enum": return random.randint(0, 1)
-    if t in ("double3", "euler"): return [random.uniform(-5, 5) for _ in range(3)]
+    if t in ("double3", "euler", "position"):
+        return [random.uniform(-5, 5) for _ in range(3)]
     return random.uniform(-5, 5)
 
 
 def _set(node, attr, t, v):
-    if t in ("double3", "euler"):
+    if t in ("double3", "euler", "position"):
         cmds.setAttr(node + "." + attr, v[0], v[1], v[2], type="double3")
     else:
         cmds.setAttr(node + "." + attr, v)

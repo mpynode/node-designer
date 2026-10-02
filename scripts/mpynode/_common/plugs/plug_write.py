@@ -313,6 +313,29 @@ def _write_via_geom_iter(geom_iter, value, compute_ctx=None) -> None:
         compute_ctx["geometry_committed"] = True
 
 
+def _setattr_units(attr_mobject: "om.MObject", value: Any) -> Any:
+    """``value`` in the units ``cmds.setAttr`` takes for this attribute.
+
+    A distance reads in Maya's internal centimetres whatever the scene's
+    linear unit (``plug_read._read_unit_plug``), and an expression writes it
+    back in the same units, but setAttr takes UI units: at linear unit m, the
+    100.0 a 1 m distance reads would land as 100 m. A DYNAMIC distance (a
+    user ``doubleLinear`` / ``position`` attr) is converted from centimetres
+    here; every other value passes through unchanged. Built-in distance plugs
+    (translate, ...) keep their setAttr-in-UI-units behaviour on purpose: that
+    is a separate change. The conversion is exact at cm, so nothing changes in
+    a cm scene.
+    """
+    if (
+        attr_mobject.hasFn(om.MFn.kUnitAttribute)
+        and om.MFnUnitAttribute(attr_mobject).unitType()
+        == om.MFnUnitAttribute.kDistance
+        and om.MFnAttribute(attr_mobject).isDynamic()
+    ):
+        return om.MDistance.internalToUI(float(value))
+    return value
+
+
 def _write_plug_init_time(
     plug:         "om.MPlug",
     attr_mobject: "om.MObject",
@@ -322,6 +345,11 @@ def _write_plug_init_time(
 
     Dispatch on the attribute type to pick the right setAttr signature.
     Raises a clear AttributeError if the write isn't supported.
+
+    Despite the name, this is also the compute-time output path of the api1
+    mPyTransform and mPyIkSolver, whose expressions run with no datablock. A
+    user distance attr arrives in internal centimetres, like every read of
+    one, and is converted to UI units for setAttr (``_setattr_units``).
     """
     plug_name = plug.name()
 
@@ -341,7 +369,12 @@ def _write_plug_init_time(
             om.MFnNumericData.k4Double,
         ):
             try:
-                mc.setAttr(plug_name, *value)
+                # A position's children are distances, like translate's.
+                args = list(value)
+                for i in range(min(len(args), plug.numChildren())):
+                    child   = plug.child(i).attribute()
+                    args[i] = _setattr_units(child, args[i])
+                mc.setAttr(plug_name, *args)
                 return
             except Exception as exc:
                 raise AttributeError(f"setAttr({plug_name!r}, {value!r}) failed: {exc}")
@@ -355,7 +388,7 @@ def _write_plug_init_time(
     # ---- unit attribute (angle/distance/time) ----
     if attr_mobject.hasFn(om.MFn.kUnitAttribute):
         try:
-            mc.setAttr(plug_name, value)
+            mc.setAttr(plug_name, _setattr_units(attr_mobject, value))
             return
         except Exception as exc:
             raise AttributeError(f"setAttr({plug_name!r}, {value!r}) failed: {exc}")

@@ -214,18 +214,26 @@ def _validate_packed(name, attr_type, is_array, sparse):
         )
 
 # Child-axis suffixes for compound attrs whose children are renamed alongside
-# the parent (double3/euler XYZ, quaternion XYZW, color RGB).
+# the parent (double3/euler/position XYZ, quaternion XYZW, color RGB).
 _COMPOUND_CHILD_AXES = {
     "double3":    ("X", "Y", "Z"),
     "euler":      ("X", "Y", "Z"),
+    "position":   ("X", "Y", "Z"),
     "quaternion": ("X", "Y", "Z", "W"),
     "color":      ("R", "G", "B"),
     "float2":     ("U", "V"),
 }
 
 # Scalar numeric types that accept min/max/default via cmds.addAttr. Compound,
-# bool, enum, string, geometry and time don't take these here.
-_NUMERIC_LIMIT_TYPES = ("float", "double", "long", "doubleAngle")
+# bool, enum, string, geometry and time don't take these here. The unit types
+# take them in INTERNAL units: radians for doubleAngle, centimetres for
+# doubleLinear (addAttr -dv/-min/-max ignore the scene's UI units).
+_NUMERIC_LIMIT_TYPES = ("float", "double", "long", "doubleAngle",
+                        "doubleLinear")
+
+# The unit child type of each 3-unit compound: an euler's X/Y/Z are angles like
+# rotate's, a position's are distances like translate's.
+_UNIT_TRIPLE_CHILD = {"euler": "doubleAngle", "position": "doubleLinear"}
 
 
 def _apply_numeric_limits(kwargs, attr_type, min_value, max_value, default_value):
@@ -827,9 +835,10 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
         and re-adding the attribute.
 
         ``min_value`` / ``max_value`` / ``default_value`` apply to scalar
-        numeric types (float / double / long / doubleAngle). They map to
-        ``cmds.addAttr`` minValue / maxValue / defaultValue (hard limits +
-        unconnected value); each is optional (None = unset). Ignored for
+        numeric types (float / double / long / doubleAngle / doubleLinear).
+        They map to ``cmds.addAttr`` minValue / maxValue / defaultValue (hard
+        limits + unconnected value), in internal units for the unit types
+        (radians, centimetres); each is optional (None = unset). Ignored for
         non-numeric types. ``default_value`` alone also applies to ``enum``
         (starting field index) and ``bool``. Ignored when ``packed``.
 
@@ -890,14 +899,15 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
                     parent        = name,
                     keyable       = True,
                 )
-        # euler is double3 with doubleAngle children.
-        elif attr_type == "euler":
+        # euler is double3 with doubleAngle children, position double3 with
+        # doubleLinear children.
+        elif attr_type in _UNIT_TRIPLE_CHILD:
             for axis in ("X", "Y", "Z"):
                 mc.addAttr(
                     self._name,
                     longName      = name + axis,
                     shortName     = name + axis,
-                    attributeType = "doubleAngle",
+                    attributeType = _UNIT_TRIPLE_CHILD[attr_type],
                     parent        = name,
                     keyable       = True,
                 )
@@ -1111,14 +1121,15 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
                     writable      = False,
                     readable      = True,
                 )
-        # euler is double3 with doubleAngle children.
-        elif attr_type == "euler":
+        # euler is double3 with doubleAngle children, position double3 with
+        # doubleLinear children.
+        elif attr_type in _UNIT_TRIPLE_CHILD:
             for axis in ("X", "Y", "Z"):
                 mc.addAttr(
                     self._name,
                     longName      = name + axis,
                     shortName     = name + axis,
-                    attributeType = "doubleAngle",
+                    attributeType = _UNIT_TRIPLE_CHILD[attr_type],
                     parent        = name,
                     keyable       = False,
                     writable      = False,

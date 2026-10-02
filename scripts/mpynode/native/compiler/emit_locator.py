@@ -148,10 +148,12 @@ def _loc_color_default(val):
 # into the draw via the shared findPlug readers and the same Inputs-POD
 # marshalling: the remaining scalar types, ARRAYS of any type, and geometry.
 # element count for the compound (C-array) generic types (scalar/matrix absent).
-_LOC_GENERIC_ARITY = {"double3": 3, "euler": 3, "quaternion": 4, "float2": 2}
+_LOC_GENERIC_ARITY = {"double3": 3, "euler": 3, "position": 3,
+                      "quaternion": 4, "float2": 2}
 # element C-type for those compounds (float2 is float; the rest double).
 _LOC_GENERIC_ELEM = {"double3": "double", "euler": "double",
-                     "quaternion": "double", "float2": "float"}
+                     "position": "double", "quaternion": "double",
+                     "float2": "float"}
 
 def _loc_generic_inputs(spec):
     """Generic (non-scalar/string/color/mesh) user INPUT attrs wired into the
@@ -220,7 +222,9 @@ def _loc_generic_hint(t):
     """C++ shape of a generic input's ``in_a<ident>`` local (PORT comment)."""
     return {
         "double": "double", "doubleAngle": "double, RADIANS", "time": "double, seconds",
+        "doubleLinear": "double, CENTIMETRES",
         "double3": "double[3]; .x==[0]", "euler": "double[3], RADIANS",
+        "position": "double[3], CENTIMETRES",
         "quaternion": "double[4] {x,y,z,w}", "float2": "float[2]",
         "matrix": "MMatrix; m(row,col)",
     }.get(t, t)

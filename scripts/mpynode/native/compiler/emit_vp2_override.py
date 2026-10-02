@@ -123,6 +123,11 @@ class _Input:
         value semantics)."""
         if self.is_time:
             return "asMTime().value()"
+        # A doubleLinear reads asDistance() off the data handle, but MPlug
+        # spells it asMDistance(); both return an MDistance, so the
+        # .asCentimeters() after it is unchanged.
+        if self.read.startswith("asDistance()"):
+            return "asMDistance()" + self.read[len("asDistance()"):]
         return self.read  # asString()/asInt()/asFloat()/asDouble()/asBool()
 
     @property

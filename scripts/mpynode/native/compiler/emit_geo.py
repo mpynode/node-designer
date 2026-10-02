@@ -7,7 +7,7 @@ from .spec_model import (PORT_BEGIN, PORT_END, _GEO_INFO, _spec_has_hex,
 from .emit_attr import (_array_read_lines, _create_lines, _image_read_hint_lines,
                         _image_read_lines, _members, _out_handle_default,
                         _out_setclean, _pick_path_input, _read_line,
-                        _setter_hint, PACKED_INCLUDES)
+                        _setter_hint, PACKED_INCLUDES, DISTANCE_INCLUDE)
 from .emit_hex import _HEX_CPP
 from .nd_runtime import _nd_runtime_cpp
 from mpynode.native.compiler.kernels import nd_io_cpp, file_texture_cpp
@@ -44,7 +44,8 @@ _GEO_INCLUDES_KIND = {
 # name (see _generate_geo_cpp) -- the fail-LOUD convention of the locator and
 # iksolver input gates.
 _GEO_SCALAR_OUT_TYPES = frozenset(
-    ("float", "double", "long", "bool", "enum", "matrix", "string", "doubleAngle", "time"))
+    ("float", "double", "long", "bool", "enum", "matrix", "string",
+     "doubleAngle", "time", "doubleLinear"))
 
 def _geo_build_lines(kind, info):
     """C++ that turns the filled buffers into the geo data MObject `newData`.
@@ -305,6 +306,12 @@ def _generate_geo_cpp(spec: dict, kind: str, for_port: bool = False) -> str:
     # every other generator's includes are unchanged.
     if any(m["meta"]["type"] == "quaternion" for m in in_members + out_members):
         includes.append("maya/MQuaternion.h")
+    # A doubleLinear reads with asDistance() and writes with setMDistance(),
+    # and MDistance is only forward-declared by the Maya headers above. Gated,
+    # so every other generator's includes are unchanged.
+    if any(m["meta"]["type"] == "doubleLinear"
+           for m in in_members + out_members):
+        includes.append(DISTANCE_INCLUDE)
     # A SINGLE geo INPUT is read by emit_attr._read_line as `MFn<Kind> in_<m>`,
     # and emit_geo_io.kinds_in_spec deliberately skips it (it needs no Nd<Kind>
     # struct), so its MFn* header is requested here. Keying only on the

@@ -33,6 +33,12 @@ PACKED_INCLUDES = [
     "maya/MDoubleArray.h", "maya/MIntArray.h",
 ]
 
+# The header a `doubleLinear` attr's read (asDistance) and writes
+# (setMDistance) need. NOT in _INCLUDES: appended only when the spec has one
+# (spec_model._spec_has_distance), so every other node's frag stays
+# byte-identical. A `position` reads and writes as a double3 and needs none.
+DISTANCE_INCLUDE = "maya/MDistance.h"
+
 # `packed` array INPUT -> (MFnData enum, MFn*ArrayData class, M*Array class).
 # Element type stays double/int, so _CPP and every downstream consumer of
 # `std::vector<T> in_<member>` is unchanged -- only the plug KIND and the read
@@ -179,15 +185,19 @@ def _create_lines(m):
         L.append("    %s = nAttr.create(%s, %s, %s, %s, %s);"
                   % (mem, a, a, cx, cy, cz))
         L += _flags("nAttr", is_out)
-    elif t == "euler":
-        # Like vector (double3 X/Y/Z) but the children are doubleAngle
-        # (MFnUnitAttribute kAngle), matching the Python wrapper's euler and
-        # Maya's own rotate. The parent stays numeric, so reads/writes and flags
-        # go through nAttr like double3; values flow as radians.
+    elif t in ("euler", "position"):
+        # Like vector (double3 X/Y/Z) but the children are unit attrs: euler's
+        # are doubleAngle (MFnUnitAttribute kAngle), like Maya's own rotate;
+        # position's are doubleLinear (kDistance), like translate. Both match
+        # the Python wrapper. The parent stays numeric, so reads/writes and
+        # flags go through nAttr like double3; values flow in internal units
+        # (radians, centimetres).
+        unit = "kAngle" if t == "euler" else "kDistance"
         cx, cy, cz = mem + "X", mem + "Y", mem + "Z"
         for cm, ax in ((cx, "X"), (cy, "Y"), (cz, "Z")):
             L.append('    MObject %s = uAttr.create("%s%s", "%s%s", '
-                     'MFnUnitAttribute::kAngle, 0.0);' % (cm, plug, ax, plug, ax))
+                     'MFnUnitAttribute::%s, 0.0);'
+                     % (cm, plug, ax, plug, ax, unit))
         L.append("    %s = nAttr.create(%s, %s, %s, %s, %s);"
                   % (mem, a, a, cx, cy, cz))
         L += _flags("nAttr", is_out)
@@ -246,8 +256,9 @@ def _create_lines(m):
             L.append("    nAttr.setDefault(%s);"
                      % ", ".join("%rf" % c for c in _cdv))
         L += _flags("nAttr", is_out)
-    elif t in ("doubleAngle", "time"):
-        unit = "kAngle" if t == "doubleAngle" else "kTime"
+    elif t in ("doubleAngle", "doubleLinear", "time"):
+        unit = {"doubleAngle": "kAngle", "doubleLinear": "kDistance",
+                "time": "kTime"}[t]
         # doubleAngle: the recorded default is honoured, in RADIANS, on both
         # sides -- the MFnUnitAttribute default is internal units here, and the
         # interpreted node's `cmds.addAttr -dv` on a doubleAngle is radians too
@@ -257,8 +268,11 @@ def _create_lines(m):
         # scalar time plug is auto-connected to time1 anyway), so a recorded
         # time default is ignored here as well -- honouring it read 2.0 where
         # the Python node read 0.0. No shipped template records one;
-        # byte-identical.
-        dflt = _num_default(meta, float, "0.0") if t == "doubleAngle" else "0.0"
+        # byte-identical. doubleLinear: like doubleAngle, in internal
+        # CENTIMETRES on both sides (`cmds.addAttr -dv` on a doubleLinear is cm
+        # whatever the scene's linear unit).
+        dflt = (_num_default(meta, float, "0.0")
+                if t in ("doubleAngle", "doubleLinear") else "0.0")
         L.append("    %s = uAttr.create(%s, %s, MFnUnitAttribute::%s, %s);"
                   % (mem, a, a, unit, dflt))
         L += _flags("uAttr", is_out)
@@ -313,13 +327,13 @@ def _create_lines(m):
     return L
 
 def _fn_for(t):
-    # euler's parent compound, float2, color and quaternion (double4) all go
-    # through nAttr (euler's children are angles, but the compound + array/flag
-    # calls are numeric).
+    # euler's and position's parent compound, float2, color and quaternion
+    # (double4) all go through nAttr (euler's children are angles and
+    # position's distances, but the compound + array/flag calls are numeric).
     if t in ("float", "double", "long", "bool", "double3", "euler",
-             "float2", "color", "quaternion"):
+             "position", "float2", "color", "quaternion"):
         return "nAttr"
-    if t in ("doubleAngle", "time"):
+    if t in ("doubleAngle", "doubleLinear", "time"):
         return "uAttr"
     if t == "matrix":
         return "mAttr"
@@ -380,9 +394,10 @@ def _read_line(m, src="data"):
         ctype = {"float": "float", "double": "double", "long": "int", "bool": "bool",
                  "enum": "short", "matrix": "MMatrix", "string": "MString"}[t]
         return "    const %s %s = %s.inputValue(%s).%s();" % (ctype, v, src, mem, rd[t])
-    if t in ("double3", "euler"):
-        # euler reads identically to vector: asDouble3() on an angle compound
-        # returns Maya's internal radians (matching .asAngle().asRadians()).
+    if t in ("double3", "euler", "position"):
+        # euler and position read identically to vector: asDouble3() on a unit
+        # compound returns Maya's internal units -- radians for euler (matching
+        # .asAngle().asRadians()), centimetres for position.
         return "    const double3& %s = %s.inputValue(%s).asDouble3();" % (v, src, mem)
     if t == "float2":
         # 2-float compound (uvCoord); access components as in_<m>[0]/[1].
@@ -396,6 +411,9 @@ def _read_line(m, src="data"):
                 % (v, src, mem))
     if t == "doubleAngle":
         return "    const double %s = %s.inputValue(%s).asAngle().asRadians();" % (v, src, mem)
+    if t == "doubleLinear":
+        return ("    const double %s = %s.inputValue(%s).asDistance()"
+                ".asCentimeters();" % (v, src, mem))
     if t == "time":
         return "    const double %s = %s.inputValue(%s).asTime().value();" % (v, src, mem)
     return ""
@@ -409,11 +427,13 @@ def _read_plug_decl(m):
     inside a plug-valid guard while the local stays visible + defaulted when the
     read is deferred (scene load). Local SHAPES match _read_line exactly, so
     nd_lower._materialise_input binds either path identically. Scalar (non-array)
-    leaf / numeric-compound / matrix / string / doubleAngle / time types."""
+    leaf / numeric-compound / matrix / string / doubleAngle / doubleLinear /
+    time types."""
     mem, t = m["member"], m["meta"]["type"]
     v = "in_" + mem
-    if t in ("float", "double", "doubleAngle", "time"):
-        return "    double %s = 0.0;" % v       # angle radians / time value
+    if t in ("float", "double", "doubleAngle", "doubleLinear", "time"):
+        # angle radians / distance cm / time value
+        return "    double %s = 0.0;" % v
     if t == "long":
         return "    int %s = 0;" % v
     if t == "bool":
@@ -422,7 +442,7 @@ def _read_plug_decl(m):
         return "    short %s = 0;" % v
     if t in ("string", "hex"):
         return "    MString %s;" % v
-    if t in ("double3", "euler"):
+    if t in ("double3", "euler", "position"):
         return "    double %s[3] = {0.0, 0.0, 0.0};" % v
     if t == "color":
         return "    float %s[3] = {0.0f, 0.0f, 0.0f};" % v
@@ -440,10 +460,10 @@ def _read_plug_assign(m, plug_expr):
     """Assign ``in_<member>`` from an MPlug ``plug_expr`` (the findPlug read).
 
     Mirrors _read_line's per-type accessors, but off a plug: scalar leaf types
-    via MPlug::asX(); numeric compounds (double3/euler/color/float2/quaternion)
-    via child(i).asDouble()/asFloat() (no asDouble3/asDouble4 on a plug);
-    matrix via getValue + MFnMatrixData; doubleAngle/time via
-    asMAngle()/asMTime().
+    via MPlug::asX(); numeric compounds (double3/euler/position/color/float2/
+    quaternion) via child(i).asDouble()/asFloat() (no asDouble3/asDouble4 on a
+    plug); matrix via getValue + MFnMatrixData; doubleAngle/doubleLinear/time
+    via asMAngle()/asMDistance()/asMTime().
     Indent-2 (goes inside a ``if (_st) { ... }`` plug-valid guard)."""
     mem, t = m["member"], m["meta"]["type"]
     v = "in_" + mem
@@ -457,9 +477,11 @@ def _read_plug_assign(m, plug_expr):
         return "        %s = nd_hex_decode(%s.asString());" % (v, p)
     if t == "doubleAngle":
         return "        %s = %s.asMAngle().asRadians();" % (v, p)
+    if t == "doubleLinear":
+        return "        %s = %s.asMDistance().asCentimeters();" % (v, p)
     if t == "time":
         return "        %s = %s.asMTime().value();" % (v, p)
-    if t in ("double3", "euler"):
+    if t in ("double3", "euler", "position"):
         return ("        %s[0] = %s.child(0).asDouble(); "
                 "%s[1] = %s.child(1).asDouble(); "
                 "%s[2] = %s.child(2).asDouble();"
@@ -504,7 +526,7 @@ def _elem_plug_read_expr(t, p):
     special-cases it."""
     if t == "hex":
         return "nd_hex_decode(%s.asString())" % p
-    if t in ("double3", "euler"):
+    if t in ("double3", "euler", "position"):
         return ("MVector(%s.child(0).asDouble(), %s.child(1).asDouble(), "
                 "%s.child(2).asDouble())" % (p, p, p))
     if t == "color":
@@ -522,7 +544,8 @@ def _elem_plug_read_expr(t, p):
         "float": "%s.asFloat()", "double": "%s.asDouble()",
         "long": "%s.asInt()", "bool": "%s.asBool()", "enum": "%s.asShort()",
         "string": "%s.asString()", "doubleAngle": "%s.asMAngle().asRadians()",
-        "time": "%s.asMTime().value()",
+        "doubleLinear": "%s.asMDistance().asCentimeters()",
+        "time":         "%s.asMTime().value()",
     }[t] % p
 
 def _read_plug_array_assign(m, plug_expr):
@@ -613,10 +636,15 @@ def findplug_family_extras(generics):
                    ("float2", "maya/MFloatVector.h"),
                    ("quaternion", "maya/MQuaternion.h"),
                    ("double3", "maya/MVector.h"), ("euler", "maya/MVector.h"),
+                   ("position", "maya/MVector.h"),
                    ("matrix", "maya/MFnMatrixData.h"),
                    ("string", "maya/MString.h"), ("hex", "maya/MString.h")):
         if t in arr_types:
             incs.append(hdr)
+    # doubleLinear (single or array): the findPlug read is asMDistance(). Gated
+    # so every other frag in these families stays byte-identical.
+    if "doubleLinear" in types:
+        incs.append(DISTANCE_INCLUDE)
     # packed (typed-array) input: _read_plug_array_assign reads it whole through
     # MFn*ArrayData. Gated on an actual packed attr so every other frag in these
     # families stays byte-identical.
@@ -774,11 +802,13 @@ _OUT_DEFAULT = {
     "matrix": "%s.setMMatrix(MMatrix());",
     "string": '%s.setString("");', "hex": '%s.setString("");',
     "doubleAngle": "%s.setMAngle(MAngle(0.0));", "time": "%s.setMTime(MTime(0.0));",
-    "double3":    "%s.set3Double(0.0, 0.0, 0.0);",
-    "euler":      "%s.set3Double(0.0, 0.0, 0.0);",
-    "float2":     "%s.set2Float(0.0f, 0.0f);",
-    "color":      "%s.set3Float(0.0f, 0.0f, 0.0f);",
-    "quaternion": "%s.set4Double(0.0, 0.0, 0.0, 1.0);",
+    "doubleLinear": "%s.setMDistance(MDistance(0.0));",
+    "double3":      "%s.set3Double(0.0, 0.0, 0.0);",
+    "euler":        "%s.set3Double(0.0, 0.0, 0.0);",
+    "position":     "%s.set3Double(0.0, 0.0, 0.0);",
+    "float2":       "%s.set2Float(0.0f, 0.0f);",
+    "color":        "%s.set3Float(0.0f, 0.0f, 0.0f);",
+    "quaternion":   "%s.set4Double(0.0, 0.0, 0.0, 1.0);",
 }
 
 def _out_handle_default(m):
@@ -806,13 +836,15 @@ def _setter_hint(m):
         "bool": "h_%s.setBool(<bool>)", "enum": "h_%s.setShort(<short>)",
         "matrix": "h_%s.setMMatrix(<MMatrix>)",
         "string": "h_%s.setString(<MString>)", "hex": "h_%s.setString(<MString>)",
-        "doubleAngle": "h_%s.setMAngle(MAngle(<radians>))",
-        "time":        "h_%s.setMTime(MTime(<seconds>))",
-        "double3":     "h_%s.set3Double(<x>, <y>, <z>)",
-        "euler":       "h_%s.set3Double(<rx>, <ry>, <rz>)  // radians",
-        "float2":      "h_%s.set2Float(<u>, <v>)",
-        "color":       "h_%s.set3Float(<r>, <g>, <b>)  // 0..1 linear color",
-        "quaternion":  "h_%s.set4Double(<x>, <y>, <z>, <w>)",
+        "doubleAngle":  "h_%s.setMAngle(MAngle(<radians>))",
+        "doubleLinear": "h_%s.setMDistance(MDistance(<cm>))",
+        "time":         "h_%s.setMTime(MTime(<seconds>))",
+        "double3":      "h_%s.set3Double(<x>, <y>, <z>)",
+        "euler":        "h_%s.set3Double(<rx>, <ry>, <rz>)  // radians",
+        "position":     "h_%s.set3Double(<x>, <y>, <z>)  // centimetres",
+        "float2":       "h_%s.set2Float(<u>, <v>)",
+        "color":        "h_%s.set3Float(<r>, <g>, <b>)  // 0..1 linear color",
+        "quaternion":   "h_%s.set4Double(<x>, <y>, <z>, <w>)",
     }[t]
     return call % mem
 
@@ -838,8 +870,10 @@ def _elem_read_expr(t):
         "long": "eh.asInt()", "bool": "eh.asBool()",
         "enum": "eh.asShort()", "matrix": "eh.asMatrix()",
         "doubleAngle": "eh.asAngle().asRadians()", "time": "eh.asTime().value()",
-        "double3": "MVector(eh.asDouble3())",
-        "euler":   "MVector(eh.asDouble3())",
+        "doubleLinear": "eh.asDistance().asCentimeters()",
+        "double3":      "MVector(eh.asDouble3())",
+        "euler":        "MVector(eh.asDouble3())",
+        "position":     "MVector(eh.asDouble3())",
     }[t]
 
 def _elem_set_stmt(t, val):
@@ -848,12 +882,14 @@ def _elem_set_stmt(t, val):
     `hex` re-encodes the plain-text buffer to space-separated hex on write
     (mirrors the single-hex finalize). `quaternion` writes the element's
     double4 (x, y, z, w)."""
-    if t in ("double3", "euler"):
+    if t in ("double3", "euler", "position"):
         return "eh.set3Double((%s).x, (%s).y, (%s).z);" % (val, val, val)
     if t == "matrix":
         return "eh.setMMatrix(%s);" % val
     if t == "doubleAngle":
         return "eh.setMAngle(MAngle(%s));" % val
+    if t == "doubleLinear":
+        return "eh.setMDistance(MDistance(%s));" % val
     if t == "time":
         return "eh.setMTime(MTime(%s));" % val
     if t == "enum":
@@ -876,12 +912,12 @@ def _elem_set_stmt(t, val):
 
 def _array_gap_default_cpp(meta):
     """C++ literal for a dense-array gap slot, mirroring
-    ``_api2.helpers.array_gap_default`` (matrix=identity, double3/euler=zero,
-    numeric=the addAttr default value)."""
+    ``_api2.helpers.array_gap_default`` (matrix=identity,
+    double3/euler/position=zero, numeric=the addAttr default value)."""
     t = meta["type"]
     if t == "matrix":
         return "MMatrix()"
-    if t in ("double3", "euler"):
+    if t in ("double3", "euler", "position"):
         return "MVector()"
     if t == "long":
         return _num_default(meta, int, "0")
@@ -899,7 +935,8 @@ def _array_gap_default_cpp(meta):
         return "MFloatVector(0.0f, 0.0f, 0.0f)"
     if t == "quaternion":
         return "MQuaternion()"
-    # float / double / doubleAngle (radians) -- dv recorded for numeric types.
+    # float / double / doubleAngle (radians) / doubleLinear (cm) -- dv recorded
+    # for numeric types.
     return _num_default(meta, float, "0.0")
 
 def _array_read_lines(m, src="data"):

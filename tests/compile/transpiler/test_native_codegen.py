@@ -1789,8 +1789,9 @@ class TestEulerGeneratedVerifyScripts(unittest.TestCase):
     def test_scalar_verify_script_samples_and_sets_euler_like_double3(self):
         from mpynode.native.ai import porter
         script = porter._verify_script_scalar(self._scalar_spec())
-        # euler joins double3 in BOTH _sample (triple) and _set (type=double3).
-        self.assertIn('if t in ("double3", "euler")', script)
+        # euler (and position) join double3 in BOTH _sample (triple) and _set
+        # (type=double3).
+        self.assertIn('if t in ("double3", "euler", "position")', script)
         self.assertGreaterEqual(script.count('"double3", "euler"'), 2,
                                 "euler must be handled in both _sample and _set")
         # The double3-only form must be gone (else euler still falls through).
@@ -1799,7 +1800,7 @@ class TestEulerGeneratedVerifyScripts(unittest.TestCase):
     def test_deformer_verify_script_samples_and_sets_euler_like_double3(self):
         from mpynode.native.ai import porter
         script = porter._verify_script_deformer(self._deformer_spec())
-        self.assertIn('if t in ("double3", "euler")', script)
+        self.assertIn('if t in ("double3", "euler", "position")', script)
         self.assertGreaterEqual(script.count('"double3", "euler"'), 2,
                                 "euler must be handled in both _sample and _set")
         self.assertNotIn('if t == "double3"', script)

@@ -505,12 +505,13 @@ def _pair_stats(a, b):
 
 
 def _set_plug(cmds, plug, t, v):
-    """setAttr one input plug per type. double3/euler/color are double3 (color's
+    """setAttr one input plug per type. double3/euler/position/color are
+    double3 (color's
     usedAsColor float3 accepts a double3 setAttr, verified); quaternion is a
     numeric double4 set in one -type "double4" call; matrix is a flat-16 -type
     "matrix"; everything else is a plain scalar. Works on both a plain plug and
     a multi ELEMENT plug (node.attr[i])."""
-    if t in ("double3", "euler", "color"):
+    if t in ("double3", "euler", "position", "color"):
         cmds.setAttr(plug, v[0], v[1], v[2], type="double3")
     elif t == "float2":
         # numeric compound-2 (mPyFile's uvCoord = uCoord/vCoord) -> double2 setAttr.
@@ -537,7 +538,7 @@ def _elem_value(t, random, enum_n=2):
     """A random driveable value for ONE plug or multi-element of attr-type t."""
     if t == "float2":
         return [random.uniform(0.0, 1.0) for _ in range(2)]
-    if t in ("double3", "euler"):
+    if t in ("double3", "euler", "position"):
         return [random.uniform(-2.0, 2.0) for _ in range(3)]
     if t == "color":
         return [random.uniform(0.0, 1.0) for _ in range(3)]
@@ -696,7 +697,8 @@ def _seed_packed(cmds, plug, dt, values):
         return False
 
 
-_RANGED_TYPES = frozenset(("double", "float", "long", "short", "doubleAngle"))
+_RANGED_TYPES = frozenset(("double", "float", "long", "short", "doubleAngle",
+                           "doubleLinear"))
 
 
 def _clamp_drive(cmds, nodes, attr, t, v):
@@ -1352,9 +1354,9 @@ def apply_scene_ops(cmds, node, ops):
 # input1D; matrices into multMatrix.matrixIn. Anything else is left unsized.
 _OUTPUT_SINKS = {
     "plusMinusAverage.input3D": ("double3", "point", "color", "euler",
-                                 "float3"),
+                                 "position", "float3"),
     "plusMinusAverage.input1D": ("double", "float", "long", "short",
-                                 "doubleAngle", "bool"),
+                                 "doubleAngle", "doubleLinear", "bool"),
     "multMatrix.matrixIn": ("matrix",),
 }
 
@@ -1615,7 +1617,8 @@ def _numeric_mover(cmds, tgt, t):
             cmds.setAttr(_tgt, 1e-3 * k, 2e-3, type="float2")
         elif _t == "time":
             cmds.setAttr(_tgt, float(k))   # one frame per tick, like playback
-        elif _t in ("double3", "float3", "point", "color", "euler"):
+        elif _t in ("double3", "float3", "point", "color", "euler",
+                    "position"):
             cmds.setAttr(_tgt, 1e-3 * k, 2e-3, 3e-3)
         elif _t == "bool":
             cmds.setAttr(_tgt, k % 2)
@@ -1707,8 +1710,8 @@ def bench_perturb_fn(cmds, node, spec, hold=()):
     # aimTransform -- three matrix inputs, nothing else -- was refused as
     # unperturbable on 2026-09-08.
     numeric = ("double", "float", "long", "short", "bool", "doubleAngle",
-               "double3", "float3", "point", "color", "euler",
-               "matrix", "float2", "time")
+               "doubleLinear", "double3", "float3", "point", "color", "euler",
+               "position", "matrix", "float2", "time")
     moves = []
     for attr, meta in sorted((spec.get("inputs") or {}).items()):
         if not isinstance(meta, dict):
@@ -2384,7 +2387,7 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
                 if nm in held_enums:
                     return _enum_default(IN_META.get(nm), ENUM.get(nm))
                 return random.randint(0, max(0, len(ENUM.get(nm, [])) - 1))
-            if t in ("double3", "euler", "color"):
+            if t in ("double3", "euler", "position", "color"):
                 return [random.uniform(0.0, 1.0) for _ in range(3)]
             if t == "quaternion":
                 return [random.uniform(-1.0, 1.0) for _ in range(4)]
@@ -2649,7 +2652,7 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
             return [random.uniform(-2.0, 2.0) for _ in range(2)]
         if t == "color":
             return [random.uniform(0, 1) for _ in range(3)]
-        if t in ("double3", "euler"):
+        if t in ("double3", "euler", "position"):
             return [random.uniform(-4, 4) for _ in range(3)]
         if t == "quaternion":
             return [random.uniform(-1, 1) for _ in range(4)]
@@ -3001,7 +3004,8 @@ def _geo_scalar_value(meta, t, cfg, random, role=None):
         return ""
     dv = meta.get("default_value")
     if cfg == 0 and dv is not None:
-        if t in ("double3", "euler", "color") and not isinstance(dv, (list, tuple)):
+        if (t in ("double3", "euler", "position", "color")
+                and not isinstance(dv, (list, tuple))):
             return [dv, dv, dv]
         return dv
     if t == "color":
@@ -3020,7 +3024,7 @@ def _geo_scalar_value(meta, t, cfg, random, role=None):
         return max(1, base + cfg)               # stay positive for size inputs
     if t == "time":
         return float(cfg + 1)
-    if t in ("double3", "euler"):
+    if t in ("double3", "euler", "position"):
         if isinstance(dv, (list, tuple)) and len(dv) == 3:
             return [dv[i] + 0.1 * cfg for i in range(3)]
         return [random.uniform(-2, 2) for _ in range(3)]
@@ -3053,7 +3057,7 @@ def _geo_array_value(role, t, cfg):
         s = 1.0 + 0.1 * cfg
         return [[u * s, v * s, 0.0]
                 for u in range(_GEO_SURF_DIM) for v in range(_GEO_SURF_DIM)]
-    if role == "points" or t in ("double3", "euler"):
+    if role == "points" or t in ("double3", "euler", "position"):
         # A non-degenerate unit quad in the XY plane (mesh vertex/CV run).
         s = 1.0 + 0.1 * cfg
         return [[0.0, 0.0, 0.0], [s, 0.0, 0.0], [s, s, 0.0], [0.0, s, 0.0]]
@@ -3093,7 +3097,7 @@ def _drive_geo_inputs(cmds, nodes, inputs, roles, cfg, random, fixtures=None):
                     continue
                 for i, ev in enumerate(vals):
                     plug = "%s.%s[%d]" % (nd, nm, i)
-                    if t in ("double3", "euler"):
+                    if t in ("double3", "euler", "position"):
                         cmds.setAttr(plug, ev[0], ev[1], ev[2], type="double3")
                     elif t == "matrix":
                         # a matrix element multi wants the flat-16 -type flag
@@ -3112,7 +3116,7 @@ def _drive_geo_inputs(cmds, nodes, inputs, roles, cfg, random, fixtures=None):
                     cmds.setAttr(nd + "." + nm, v)
             continue
         for nd in nodes:
-            if t in ("double3", "euler", "color"):
+            if t in ("double3", "euler", "position", "color"):
                 # a colour is a float3 compound; -type double3 sets it too. A
                 # bare setAttr raises "Error reading data element number 2".
                 cmds.setAttr(nd + "." + nm, v[0], v[1], v[2], type="double3")

@@ -5,10 +5,11 @@ default so an empty / partial expression still produces valid data and so
 the user can *mutate in place* instead of constructing a value from
 scratch. The convention mirrors Maya's stock plugs:
 
-  * scalar ``float``/``double`` -> ``0.0``; ``long`` -> ``0``; ``bool`` ->
-    ``False``; ``double3``/``euler``/``color`` -> ``[0, 0, 0]``; ``float2``
-    -> ``[0, 0]``; ``quaternion`` -> ``[0, 0, 0, 1]``; ``matrix`` ->
-    identity; ``string`` -> ``""``; anything else -> ``None``.
+  * scalar ``float``/``double``/``doubleLinear`` -> ``0.0``; ``long`` ->
+    ``0``; ``bool`` -> ``False``; ``double3``/``euler``/``position``/``color``
+    -> ``[0, 0, 0]``; ``float2`` -> ``[0, 0]``; ``quaternion`` ->
+    ``[0, 0, 0, 1]``; ``matrix`` -> identity; ``string`` -> ``""``; anything
+    else -> ``None``.
 
   * ARRAY (multi) outputs get a PRE-SIZED ``(N, ...)`` buffer of the same
     per-type default -- e.g. a ``matrix`` array seeds ``(N, 4, 4)`` of
@@ -35,13 +36,13 @@ import numpy as np
 
 def scalar_default(attr_type: str) -> Any:
     """Per-type default for a SINGLE (non-array) output."""
-    if attr_type in ("float", "double"):
+    if attr_type in ("float", "double", "doubleLinear"):
         return 0.0
     if attr_type == "long":
         return 0
     if attr_type == "bool":
         return False
-    if attr_type in ("double3", "euler", "color"):
+    if attr_type in ("double3", "euler", "position", "color"):
         return [0.0, 0.0, 0.0]
     if attr_type == "float2":
         return [0.0, 0.0]
@@ -57,13 +58,13 @@ def scalar_default(attr_type: str) -> Any:
 def array_default(attr_type: str, n: int) -> Any:
     """Pre-sized ``(N, ...)`` buffer for an ARRAY (multi) output."""
     n = max(int(n), 0)
-    if attr_type in ("float", "double"):
+    if attr_type in ("float", "double", "doubleLinear"):
         return np.zeros((n,), dtype=np.float64)
     if attr_type == "long":
         return np.zeros((n,), dtype=np.int64)
     if attr_type == "bool":
         return np.zeros((n,), dtype=bool)
-    if attr_type in ("double3", "euler", "color"):
+    if attr_type in ("double3", "euler", "position", "color"):
         return np.zeros((n, 3), dtype=np.float64)
     if attr_type == "float2":
         # (N, 2): an element the expression leaves alone writes (0, 0), never
