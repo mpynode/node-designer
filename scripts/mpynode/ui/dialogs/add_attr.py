@@ -202,8 +202,12 @@ class _TypeItemDelegate(QStyledItemDelegate):
             rect   = option.rect
             margin = self.text_margin()
             y      = rect.center().y()
+            # The text colour, part-transparent: Mid sits too close to the
+            # popup's background on Maya's dark palette to read as a line.
+            pen = option.palette.color(QPalette.Text)
+            pen.setAlphaF(0.45)
             painter.save()
-            painter.setPen(option.palette.color(QPalette.Mid))
+            painter.setPen(pen)
             painter.drawLine(rect.left() + margin, y, rect.right() - margin, y)
             painter.restore()
             return
