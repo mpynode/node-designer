@@ -24,14 +24,57 @@ def build_payload_system_prompt() -> str:
 
 
 def _attr_types_block() -> str:
-    """The ATTRIBUTE TYPES list: the assistant's types, in the dialog's order,
-    from the one type table (``_common/attr_types.py``)."""
+    """The ATTRIBUTE TYPES table: the Add Attribute dropdown as an artist sees
+    it, one ``"<artist> - <description>"`` line per assistant type in the
+    dropdown's order, then which names "type" takes and which name is stored.
+    All of it from the one type table (``_common/attr_types.py``)."""
     import textwrap
 
-    from mpynode._common.attr_types import ASSISTANT_NAMES
+    from mpynode._common import attr_types
 
-    return textwrap.fill(", ".join(ASSISTANT_NAMES) + ".", width=79,
-                         initial_indent="  ", subsequent_indent="  ")
+    rows = [attr_types.BY_NAME[n] for n in attr_types.ASSISTANT_NAMES]
+
+    def first_word(t):
+        return t.description.split()[0]
+
+    def right_names_it(t):
+        # The right column's first word is this type's stored name or an
+        # alias of it -- not, as for euler ("double3 of ..."), another type.
+        w = first_word(t)
+        return w == t.name or attr_types.ALIASES.get(w) == t.name
+
+    pairs = ["%s or %s" % (t.artist, first_word(t)) for t in rows
+             if t.artist != first_word(t) and right_names_it(t)][:3]
+    left_only = [t.artist for t in rows if not right_names_it(t)]
+    # Maya's names the store uses in place of the left word.
+    stored_differs = [t.name for t in rows if t.name != t.artist]
+
+    def fill(text):
+        return textwrap.fill(text, width=79, initial_indent="  ",
+                             subsequent_indent="  ")
+
+    lines = [fill("The Add Attribute dropdown, in its order: the name an "
+                  "artist picks, then what Maya stores.")]
+    lines += ["    " + attr_types.dialog_label(t.name) for t in rows]
+    lines.append(fill(
+        '"type" takes either column\'s first word (%s), except %s, whose '
+        "right column starts with another type's name: give those the left "
+        "word." % (", ".join(pairs), _and_list(left_only))))
+    lines.append(fill(
+        "The node and its files carry the stored name: the left word, or "
+        "Maya's name where that differs (%s)." % ", ".join(stored_differs)))
+    lines.append(fill(
+        "enum's False/True is only the dialog's starting list: here, always "
+        "give enum_names."))
+    return "\n".join(lines)
+
+
+def _and_list(words) -> str:
+    """``"a, b and c"``."""
+    words = list(words)
+    if len(words) < 2:
+        return "".join(words)
+    return "%s and %s" % (", ".join(words[:-1]), words[-1])
 
 
 def _node_types_block() -> str:
@@ -160,7 +203,7 @@ HOW mPy NODES WORK
 VALUE TYPES -- reads are ALREADY the right native type; MATCH the attr's declared
 type to what your math needs and do NOT defensively recast. Casts to AVOID:
 `float(self.x)`/`int(self.x)`/`str(self.x)` on a scalar read; `np.asarray(self.v)`
-/`np.array(self.v)`/`self.v.reshape(-1)`/`self.v.astype(...)` on a double3/array
+/`np.array(self.v)`/`self.v.reshape(-1)`/`self.v.astype(...)` on a vector (double3)/array
 read (already numpy, right dtype & shape); and wrapping ANY numpy scalar that is
 only used in math -- `float(np.linalg.norm(v))`, `int(np.count_nonzero(a))`,
 `abs(float(np.dot(a, b)))`, `float(np.clip(self.x, 0, 1))`. A numpy scalar (the
@@ -171,13 +214,14 @@ indexing, `np.array([...])` construction, and output writes -- so drop the
 float()/int() (write `abs(np.dot(a, b))`, NOT `abs(float(np.dot(a, b)))`;
 `length = np.linalg.norm(v)`, NOT `float(np.linalg.norm(v))`). Reading
 `self.<input>` gives:
-    double/float -> float   long -> int           bool -> bool
-    doubleAngle -> float (rad)   doubleLinear -> float (cm)   time -> float
+    float64 (double) / float32 (float) -> float   int (long) -> int
+    bool -> bool   angle (doubleAngle) -> float (rad)
+    distance (doubleLinear) -> float (cm)   time -> float
     enum -> EnumInt (an int; .name() gives the field label)
-    string/hex -> str       double3 -> numpy (3,)  euler -> numpy (3,) rad
-    position -> numpy (3,) cm
+    string/hex -> str   vector (double3) -> numpy (3,)
+    euler -> numpy (3,) rad   position -> numpy (3,) cm
     quaternion -> numpy (4,) [x,y,z,w]   color -> numpy (3,) [r,g,b]
-    float2 -> numpy (2,) [u,v]
+    uv (float2) -> numpy (2,) [u,v]
     matrix -> MatrixView ((4,4) row-major, numpy-transparent)
     matrix[] (array) -> MatrixArrayView ((N,4,4); M[i] -> view, M.translation() -> (N,3))
   A MatrixView ALREADY behaves like a numpy (4,4): `pos = self.driverMatrix[3, :3]`,
@@ -211,7 +255,7 @@ float()/int() (write `abs(np.dot(a, b))`, NOT `abs(float(np.dot(a, b)))`;
   matrix, so mutating it would not mean what it means interpreted. Read, do not
   mutate.
   Writing `self.<output> = value`: assign the matching native type directly
-  (scalar for double/float/long/bool, a 3-list or np (3,) for double3, a 4x4 numpy array
+  (scalar for float64/float32/int/bool, a 3-list or np (3,) for vector (double3), a 4x4 numpy array
   or MatrixView for matrix). Don't wrap scalars in float()/int(); don't json/str
   them. NEVER construct a maya.api object (om.MMatrix / om.MVector / om.MPoint)
   for a plug write -- outputs consume numpy / Python natives and the bridge does
@@ -231,10 +275,10 @@ ATTRIBUTE TYPES (for add_input / add_output)
   * "color": a float3 (R/G/B children) flagged usedAsColor so it binds to
     shader color plugs / Arnold; reads/writes as numpy (3,). "quaternion": a
     double4 (X/Y/Z/W), reads/writes as numpy (4,), default identity
-    [0,0,0,1]. "float2": 2 floats (U/V children), reads/writes as numpy
+    [0,0,0,1]. "uv" (float2): 2 floats (U/V children), reads/writes as numpy
     (2,).
   * "position" for anything wired to or from translate or a point (3
-    distances, reads cm); "euler" for rotate; "double3" for a unitless
+    distances, reads cm); "euler" for rotate; "vector" (double3) for a unitless
     3-vector such as a direction or scale.
   * Array outputs are pre-seeded mutable (N,...) buffers, so you can
     slice-assign: `self.outMatrices[:, 3, :3] = positions`.
@@ -430,17 +474,18 @@ HOW mPy NODES WORK
 VALUE TYPES -- reads are ALREADY the right native type; MATCH the attr type to
 what your math needs and do NOT defensively recast. AVOID: `float(self.x)` /
 `int(self.x)` / `str(self.x)` on a scalar; `np.asarray(self.v)` / `np.array(self.v)`
-/ `.reshape(-1)` / `.astype(...)` on a double3/array read (already numpy, right
+/ `.reshape(-1)` / `.astype(...)` on a vector (double3)/array read (already numpy, right
 dtype+shape); and wrapping a numpy scalar used only in math -- write
 `abs(np.dot(a,b))` not `abs(float(np.dot(a,b)))`, `np.linalg.norm(v)` not
 `float(np.linalg.norm(v))`. Reading `self.<input>` gives:
-    double/float -> float   long -> int           bool -> bool
-    doubleAngle -> float (rad)   doubleLinear -> float (cm)   time -> float
+    float64 (double) / float32 (float) -> float   int (long) -> int
+    bool -> bool   angle (doubleAngle) -> float (rad)
+    distance (doubleLinear) -> float (cm)   time -> float
     enum -> EnumInt (an int; .name() gives the field label)
-    string/hex -> str       double3 -> numpy (3,)  euler -> numpy (3,) rad
-    position -> numpy (3,) cm
+    string/hex -> str   vector (double3) -> numpy (3,)
+    euler -> numpy (3,) rad   position -> numpy (3,) cm
     quaternion -> numpy (4,) [x,y,z,w]   color -> numpy (3,) [r,g,b]
-    float2 -> numpy (2,) [u,v]
+    uv (float2) -> numpy (2,) [u,v]
     matrix -> MatrixView ((4,4) row-major, numpy-transparent)
     matrix[] (array) -> MatrixArrayView ((N,4,4))
   A MatrixView already behaves like a numpy (4,4) (`m[3,:3]`, `m @ v`,
@@ -472,7 +517,7 @@ dtype+shape); and wrapping a numpy scalar used only in math -- write
   matrix, so mutating it would not mean what it means interpreted. Read, do not
   mutate.
   Writing `self.<output> = value`: assign the matching
-  native type directly (scalar; a 3-list or np (3,) for double3; a 4x4 numpy for
+  native type directly (scalar; a 3-list or np (3,) for vector (double3); a 4x4 numpy for
   matrix). NEVER construct om.MMatrix / om.MVector for a plug write or import
   maya.api in an expression. Array outputs are pre-seeded numpy buffers --
   slice-assign into them.
@@ -488,9 +533,9 @@ ATTRIBUTE TYPES (for inputs / outputs)
     and the plug stores e.g. "48 69" (what Maya's `type` node textInput wants).
   * "color": float3 (R/G/B) flagged usedAsColor; reads/writes as numpy (3,).
     "quaternion": double4 (X/Y/Z/W), numpy (4,), default [0,0,0,1].
-    "float2": 2 floats (U/V), numpy (2,).
+    "uv" (float2): 2 floats (U/V), numpy (2,).
   * "position" for anything wired to or from translate or a point (3
-    distances, reads cm); "euler" for rotate; "double3" for a unitless
+    distances, reads cm); "euler" for rotate; "vector" (double3) for a unitless
     3-vector such as a direction or scale.
 
 NAMING -- plug / attribute names are camelCase, lowercase first letter

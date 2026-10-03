@@ -1630,8 +1630,8 @@ class TestQuaternionColorAI(unittest.TestCase):
                                                   build_system_prompt)
 
         for p in (build_system_prompt(), build_payload_system_prompt()):
-            self.assertIn("float2 -> numpy (2,)", p)
-            self.assertIn('"float2"', p)
+            self.assertIn("uv (float2) -> numpy (2,)", p)
+            self.assertIn('"uv" (float2)', p)
 
 
 @unittest.skipUnless(_qt_available(), "Qt unavailable")
@@ -1651,9 +1651,9 @@ class TestAttrTypeGrouping(unittest.TestCase):
         self.assertEqual(
             _ATTR_TYPE_GROUPS,
             (
-                ("double", "float", "long", "bool", "doubleAngle",
-                 "doubleLinear"),
-                ("double3", "euler", "position", "matrix", "quaternion",
+                ("double", "long", "bool", "doubleAngle", "doubleLinear",
+                 "float"),
+                ("position", "double3", "euler", "quaternion", "matrix",
                  "color", "float2"),
                 ("string", "enum", "hex", "pickle"),
                 ("mesh", "nurbsCurve", "nurbsSurface"),
@@ -1661,7 +1661,7 @@ class TestAttrTypeGrouping(unittest.TestCase):
             ),
         )
 
-    def test_type_combo_grouped_no_separators_no_color(self):
+    def test_type_combo_grouped_with_separators_no_color(self):
         import sys
 
         from mpynode.ui.dialogs.add_attr import NDAddAttrDialog
@@ -1690,30 +1690,39 @@ class TestAttrTypeGrouping(unittest.TestCase):
         try:
             combo = dlg._type_combo
             n     = combo.count()
-            # no separators, no background colour: every item is a plain
-            # selectable type, in family-group order.
+            # one separator line between families, no background colour:
+            # every other item is a plain selectable type, in group order.
             seps = [
                 i for i in range(n)
                 if combo.itemData(i, Qt.AccessibleDescriptionRole)
                 == "separator"
             ]
-            self.assertEqual(seps, [])
+            self.assertEqual(seps, [6, 14, 19, 23])
             items = [combo.itemData(i) for i in range(n)]
             self.assertEqual(
                 items,
                 [
-                    "double", "float", "long", "bool", "doubleAngle",
-                    "doubleLinear",
-                    "double3", "euler", "position", "matrix", "quaternion",
+                    "double", "long", "bool", "doubleAngle", "doubleLinear",
+                    "float",
+                    None,
+                    "position", "double3", "euler", "quaternion", "matrix",
                     "color", "float2",
+                    None,
                     "string", "enum", "hex", "pickle",
-                    "mesh", "nurbsCurve", "nurbsSurface", "time",
+                    None,
+                    "mesh", "nurbsCurve", "nurbsSurface",
+                    None,
+                    "time",
                 ],
             )
+            model = combo.model()
             for i in range(n):
                 self.assertIsNone(
                     combo.itemData(i, Qt.BackgroundRole),
                     "item %d should have no background colour" % i)
+                flags      = model.flags(model.index(i, 0))
+                selectable = bool(flags & Qt.ItemIsSelectable)
+                self.assertEqual(selectable, i not in seps, i)
         finally:
             dlg.deleteLater()
 
@@ -1762,7 +1771,7 @@ class TestAttrTypeGrouping(unittest.TestCase):
         finally:
             add_attr._LAST_SELECTED_TYPE = saved
 
-    def _dialog(self):
+    def _dialog(self, direction="input"):
         import sys
 
         from mpynode.ui.dialogs.add_attr import NDAddAttrDialog
@@ -1785,7 +1794,7 @@ class TestAttrTypeGrouping(unittest.TestCase):
             def list_valid_output_types(self):
                 return list(VALID_INPUT_TYPES)
 
-        return NDAddAttrDialog(None, _Fake(), "input")
+        return NDAddAttrDialog(None, _Fake(), direction)
 
     def test_double_is_first_and_preselected(self):
         from mpynode.ui.dialogs import add_attr
@@ -1796,10 +1805,11 @@ class TestAttrTypeGrouping(unittest.TestCase):
             dlg                          = self._dialog()
             try:
                 combo = dlg._type_combo
-                self.assertEqual(combo.itemData(0), "double")
-                self.assertEqual(combo.currentData(), "double")
+                self.assertEqual(combo.itemData(0),    "double")
+                self.assertEqual(combo.currentIndex(), 0)
+                self.assertEqual(combo.currentData(),  "double")
                 self.assertEqual(combo.currentText(),
-                                 "double  -  64-bit real (Maya's Float)")
+                                 "float64 - double (64-bit)")
             finally:
                 dlg.deleteLater()
         finally:
@@ -1813,15 +1823,23 @@ class TestAttrTypeGrouping(unittest.TestCase):
         try:
             combo = dlg._type_combo
             names = [combo.itemData(i) for i in range(combo.count())]
-            self.assertEqual(tuple(names), ALL_ATTR_TYPES)
+            types = [n for n in names if n is not None]
+            self.assertEqual(tuple(types), ALL_ATTR_TYPES)
             for i, name in enumerate(names):
+                if name is None:
+                    self.assertEqual(combo.itemText(i), "")
+                    continue
+                t = attr_types.BY_NAME[name]
                 self.assertEqual(combo.itemText(i),
                                  attr_types.dialog_label(name))
-                self.assertTrue(combo.itemText(i).startswith(name + "  -  "))
+                self.assertEqual(combo.itemText(i),
+                                 "%s - %s" % (t.artist, t.description))
+            self.assertEqual(combo.itemText(names.index("double3")),
+                             "vector - double3 (no unit)")
             self.assertEqual(combo.itemText(names.index("float")),
-                             "float  -  32-bit real")
+                             "float32 - float (32-bit)")
             self.assertEqual(combo.itemText(names.index("long")),
-                             "long  -  integer")
+                             "int - long")
         finally:
             dlg.deleteLater()
 
@@ -1837,6 +1855,256 @@ class TestAttrTypeGrouping(unittest.TestCase):
             self.assertNotIn("currentText()", src, meth.__name__)
             self.assertNotIn("findText(",     src, meth.__name__)
             self.assertNotIn("itemText(",     src, meth.__name__)
+
+    def test_every_type_opens_its_sub_frame(self):
+        # The stack is keyed by the stored name and picked by item data, so
+        # the separators (which shift every row) cannot open the wrong frame.
+        from mpynode.ui.dialogs import add_attr
+
+        saved = add_attr._LAST_SELECTED_TYPE
+        try:
+            dlg = self._dialog()
+            try:
+                combo = dlg._type_combo
+                for name in add_attr.ALL_ATTR_TYPES:
+                    with self.subTest(name=name):
+                        combo.setCurrentIndex(combo.findData(name))
+                        self.assertIs(dlg._stack.currentWidget(),
+                                      dlg._sub_frames[name])
+                        self.assertEqual(add_attr._LAST_SELECTED_TYPE, name)
+                # A separator row carries no type: the frame stays put.
+                combo.setCurrentIndex(combo.findData("time"))
+                combo.setCurrentIndex(23)
+                self.assertIsNone(combo.currentData())
+                self.assertIs(dlg._stack.currentWidget(),
+                              dlg._sub_frames["time"])
+                self.assertEqual(add_attr._LAST_SELECTED_TYPE, "time")
+                # A blank sub-frame names the type as the dropdown does.
+                frame = dlg._sub_frames["double3"]
+                labels = [w.text()
+                          for w in frame.findChildren(add_attr.QLabel)]
+                self.assertEqual(
+                    labels, ["(vector \u2014 no extra configuration)"])
+            finally:
+                dlg.deleteLater()
+        finally:
+            add_attr._LAST_SELECTED_TYPE = saved
+
+    def test_add_sends_the_stored_name_for_every_type(self):
+        # Clicking Add hands the command the STORED name (the item data),
+        # never the row's artist text: vector -> double3, int -> long, in
+        # both directions.
+        from unittest import mock
+
+        from mpynode.ui.dialogs import add_attr
+
+        sent   = []
+        warned = []
+
+        class _Box:
+            @staticmethod
+            def warning(_parent, title, text):
+                warned.append((title, text))
+
+        saved = add_attr._LAST_SELECTED_TYPE
+        try:
+            with mock.patch.object(add_attr, "run_undoable", sent.append), \
+                    mock.patch.object(add_attr, "QMessageBox", _Box):
+                for direction, cls in (
+                        ("input", add_attr._AddInputAttrCommand),
+                        ("output", add_attr._AddOutputAttrCommand)):
+                    dlg = self._dialog(direction)
+                    try:
+                        combo = dlg._type_combo
+                        for i, name in enumerate(add_attr.ALL_ATTR_TYPES):
+                            with self.subTest(direction=direction, name=name):
+                                combo.setCurrentIndex(combo.findData(name))
+                                dlg._name_edit.setText("a%d" % i)
+                                del sent[:]
+                                dlg._add_btn.click()
+                                self.assertEqual(warned, [])
+                                self.assertEqual(len(sent), 1)
+                                self.assertIsInstance(sent[0], cls)
+                                self.assertEqual(sent[0].attr_type, name)
+                                self.assertEqual(sent[0].attr_name, "a%d" % i)
+                    finally:
+                        dlg.deleteLater()
+        finally:
+            add_attr._LAST_SELECTED_TYPE = saved
+
+    def test_closed_combo_shows_artist_and_description(self):
+        from mpynode._common import attr_types
+
+        dlg = self._dialog()
+        try:
+            combo = dlg._type_combo
+            for name in attr_types.DIALOG_NAMES:
+                t = attr_types.BY_NAME[name]
+                combo.setCurrentIndex(combo.findData(name))
+                self.assertEqual(combo.currentText(),
+                                 "%s - %s" % (t.artist, t.description))
+            combo.setCurrentIndex(combo.findData("double3"))
+            self.assertEqual(combo.currentText(),
+                             "vector - double3 (no unit)")
+        finally:
+            dlg.deleteLater()
+
+    @staticmethod
+    def _row_option(combo, width, height):
+        """A row's style option as Qt's combo popup builds it: the view's
+        viewport, and the COMBO's font (``QComboBoxListView``)."""
+        from mpynode.ui.qt_wrapper import QRect, QStyle, QStyleOptionViewItem
+
+        opt = QStyleOptionViewItem()
+        opt.initFrom(combo.view().viewport())
+        opt.rect  = QRect(0, 0, width, height)
+        opt.font  = combo.font()
+        opt.state = opt.state | QStyle.State_Enabled
+        return opt
+
+    def _paint_row(self, delegate, combo, row, width, height):
+        """Paint one popup row into a white QImage; returns the image."""
+        from mpynode.ui.qt_wrapper import QColor, QImage, QPainter
+
+        opt   = self._row_option(combo, width, height)
+        image = QImage(width, height, QImage.Format_ARGB32)
+        image.fill(QColor(255, 255, 255))
+        painter = QPainter(image)
+        try:
+            delegate.paint(painter, opt, combo.view().model().index(row, 0))
+        finally:
+            painter.end()
+        return image
+
+    def test_descriptions_share_one_x(self):
+        dlg = self._dialog()
+        try:
+            self._assert_one_x(dlg._type_combo)
+        finally:
+            dlg.deleteLater()
+
+    def test_descriptions_share_one_x_under_a_combo_stylesheet_font(self):
+        # A stylesheet font on QComboBox alone reaches the combo but not its
+        # popup's view. The rows are painted in the combo's font, so the
+        # columns must be measured in it too, or the widest artist name runs
+        # into the descriptions.
+        dlg = self._dialog()
+        try:
+            combo = dlg._type_combo
+            size  = combo.font().pointSizeF() + 6
+            dlg.setStyleSheet("QComboBox { font-size: %gpt; }" % size)
+            combo.ensurePolished()
+            self.assertEqual(combo.font().pointSizeF(), size)
+            self.assertNotEqual(combo.view().font().pointSizeF(), size)
+            self._assert_one_x(combo)
+        finally:
+            dlg.deleteLater()
+
+    def _assert_one_x(self, combo):
+        """Every type row draws its description at the delegate's one column
+        x and the artist name at the item's text margin, in the combo's font;
+        the painted ink agrees: nothing of the artist name reaches the column,
+        the description starts at it, and the longest row fits the view."""
+        from mpynode._common import attr_types
+        from mpynode.ui.qt_wrapper import QFontMetrics
+
+        view     = combo.view()
+        delegate = combo.type_delegate
+        delegate.refresh()
+        self.assertEqual(delegate.item_font(), combo.font())
+        fm     = QFontMetrics(combo.font())
+        em     = fm.horizontalAdvance("M")
+        margin = delegate.text_margin()
+        names  = [combo.itemData(i) for i in range(combo.count())]
+        types  = [attr_types.BY_NAME[n] for n in names if n]
+        widest = max(fm.horizontalAdvance(t.artist) for t in types)
+        gap    = delegate.column_x - margin - widest
+        self.assertGreaterEqual(gap, 2 * em)
+        self.assertLessEqual(gap, 3 * em)
+        need = max(delegate.column_x + fm.horizontalAdvance(t.description)
+                   + margin for t in types)
+        self.assertEqual(delegate.row_width, need)
+        self.assertGreaterEqual(view.minimumWidth(), need)
+
+        drawn = []
+        delegate._draw_text = (
+            lambda painter, rect, text: drawn.append((rect.left(), text)))
+        width, height = delegate.row_width, fm.height() + 6
+        try:
+            for row, name in enumerate(names):
+                if name is None:
+                    continue
+                t = attr_types.BY_NAME[name]
+                del drawn[:]
+                self._paint_row(delegate, combo, row, width, height)
+                self.assertEqual(
+                    drawn, [(margin, t.artist),
+                            (delegate.column_x, t.description)], name)
+        finally:
+            del delegate._draw_text
+
+        for row, name in enumerate(names):
+            if name is None:
+                continue
+            image = self._paint_row(delegate, combo, row, width, height)
+            ink = [x for x in range(width) for y in range(height)
+                   if image.pixelColor(x, y).lightness() < 160]
+            left  = [x for x in ink if x < delegate.column_x - 2]
+            right = [x for x in ink if x >= delegate.column_x - 2]
+            self.assertTrue(left and right, name)
+            self.assertLess(max(left), delegate.column_x - gap // 2, name)
+            self.assertLessEqual(abs(min(right) - delegate.column_x), 2, name)
+            self.assertLess(max(right), delegate.row_width, name)
+
+    def test_separator_rows_draw_a_line(self):
+        from mpynode.ui.qt_wrapper import QFontMetrics
+
+        dlg = self._dialog()
+        try:
+            combo    = dlg._type_combo
+            view     = combo.view()
+            delegate = combo.type_delegate
+            delegate.refresh()
+            height = QFontMetrics(combo.font()).height()
+            image  = self._paint_row(delegate, combo, 6, 200, height)
+            # One row of the image is a line across most of the width.
+            inked = [sum(1 for x in range(200)
+                         if image.pixelColor(x, y).lightness() < 250)
+                     for y in range(height)]
+            self.assertGreaterEqual(max(inked), 180)
+            self.assertEqual(sorted(inked)[-2], 0)
+            opt = self._row_option(combo, 200, height)
+            sep = delegate.sizeHint(opt, view.model().index(6, 0))
+            row = delegate.sizeHint(opt, view.model().index(0, 0))
+            self.assertLess(sep.height(), row.height())
+            self.assertGreaterEqual(row.width(), delegate.row_width)
+        finally:
+            dlg.deleteLater()
+
+    def test_popup_is_wide_enough_for_the_longest_row(self):
+        from mpynode._common import attr_types
+        from mpynode.ui.qt_wrapper import QFontMetrics
+
+        dlg = self._dialog()
+        try:
+            combo    = dlg._type_combo
+            view     = combo.view()
+            delegate = combo.type_delegate
+            delegate.refresh()
+            fm = QFontMetrics(combo.font())
+            need = max(delegate.column_x + fm.horizontalAdvance(t.description)
+                       + delegate.text_margin()
+                       for t in (attr_types.BY_NAME[n]
+                                 for n in attr_types.DIALOG_NAMES))
+            self.assertEqual(delegate.row_width, need)
+            self.assertGreaterEqual(view.minimumWidth(), need)
+            combo.showPopup()
+            try:
+                self.assertGreaterEqual(view.viewport().width(), need)
+            finally:
+                combo.hidePopup()
+        finally:
+            dlg.deleteLater()
 
 
 def setUpModule():

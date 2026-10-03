@@ -39,6 +39,7 @@ from mpynode.ui.qt_wrapper import (
     QCheckBox,
     QComboBox,
     QDialog,
+    QFontMetrics,
     QGridLayout,
     QHBoxLayout,
     QLabel,
@@ -46,9 +47,15 @@ from mpynode.ui.qt_wrapper import (
     QListWidget,
     QListWidgetItem,
     QMessageBox,
+    QPalette,
     QPushButton,
     QRadioButton,
+    QRect,
+    QSize,
     QStackedLayout,
+    QStyle,
+    QStyledItemDelegate,
+    QStyleOptionViewItem,
     Qt,
     QVBoxLayout,
     QWidget,
@@ -56,14 +63,19 @@ from mpynode.ui.qt_wrapper import (
 
 
 # Attr types the dialog offers, grouped into families, from the one type table
-# (``_common/attr_types.py``). Per-type subframe key = the type name;
-# ALL_ATTR_TYPES is the flattened tuple: the dialog's order and membership.
-# "double" (a 64-bit real, what Maya's own Add Attribute calls "Float") leads
-# and is pre-selected; "float" is the 32-bit plug, a different storage, not a
-# synonym. A type the API accepts but the table keeps out of the dialog
-# (``in_dialog=False``) is absent here.
+# (``_common/attr_types.py``). Per-type subframe key = the STORED name, also
+# each combo item's data; ALL_ATTR_TYPES is the flattened tuple: the dialog's
+# order and membership. A separator line sits between families.
+# "double" (float64: a 64-bit real, what Maya's own Add Attribute calls
+# "Float") leads and is pre-selected; "float" (float32) is the 32-bit plug, a
+# different storage, not a synonym. A type the API accepts but the table keeps
+# out of the dialog (``in_dialog=False``) is absent here.
 _ATTR_TYPE_GROUPS = _attr_types.DIALOG_GROUPS
 ALL_ATTR_TYPES    = _attr_types.DIALOG_NAMES
+
+# The open dropdown's gap between the artist-name column and the description
+# column, in em of the font the rows are painted in (the combo's).
+_COLUMN_GAP_EM = 2.5
 
 # The unit the numeric subframe's Min / Max / Default are typed in, for the
 # unit types: Maya's INTERNAL unit, which is what addAttr -min/-max/-dv take
@@ -111,6 +123,143 @@ def validate_attr_name(
         if reason:
             return False, reason
     return True, ""
+
+
+def _is_separator(index) -> bool:
+    """True for a separator row (``QComboBox.insertSeparator`` marks it so)."""
+    return index.data(Qt.AccessibleDescriptionRole) == "separator"
+
+
+class _TypeItemDelegate(QStyledItemDelegate):
+    """Paints the open type dropdown as two columns.
+
+    The artist name sits at the left and the description at ONE x for every
+    row, :attr:`column_x`: the widest artist name in :meth:`item_font` plus
+    :data:`_COLUMN_GAP_EM` em. The style draws each row's background,
+    selection and hover as for any item view; a separator row is a plain line.
+    :meth:`refresh` re-measures the column and widens the view so the longest
+    row shows unclipped.
+    """
+
+    def __init__(self, combo):
+        super().__init__(combo.view())
+        self._combo    = combo
+        self._view     = combo.view()
+        self.column_x  = 0
+        self.row_width = 0
+
+    def item_font(self):
+        """The one font the rows are measured AND painted in: the combo's,
+        which is what Qt's own combo popup paints its items in. The view's
+        font can differ (a stylesheet font set on QComboBox alone does not
+        reach the popup's view), so it is never used for the text."""
+        return self._combo.font()
+
+    def text_margin(self) -> int:
+        """Qt's own left margin for an item's text, so the first column sits
+        where a plain item's text would."""
+        style = self._view.style()
+        return style.pixelMetric(QStyle.PM_FocusFrameHMargin, None,
+                                 self._view) + 1
+
+    def refresh(self) -> None:
+        """Measure the columns for the view's items in :meth:`item_font`, and
+        set the view's minimum width to the longest row (plus frame and scroll
+        bar)."""
+        model = self._view.model()
+        types = []
+        for row in range(model.rowCount()):
+            t = _attr_types.BY_NAME.get(model.index(row, 0).data(Qt.UserRole))
+            if t is not None:
+                types.append(t)
+        fm     = QFontMetrics(self.item_font())
+        margin = self.text_margin()
+        gap    = int(round(_COLUMN_GAP_EM * fm.horizontalAdvance("M")))
+        widest_artist = max((fm.horizontalAdvance(t.artist) for t in types),
+                            default=0)
+        widest_text = max((fm.horizontalAdvance(t.description)
+                             for t in types), default=0)
+        self.column_x  = margin + widest_artist + gap
+        self.row_width = self.column_x + widest_text + margin
+        style          = self._view.style()
+        extra = (2 * self._view.frameWidth()
+                 + style.pixelMetric(QStyle.PM_ScrollBarExtent, None,
+                                     self._view))
+        self._view.setMinimumWidth(self.row_width + extra)
+
+    def column_rects(self, rect):
+        """``(artist_rect, description_rect)`` for a row painted in ``rect``;
+        the description always starts at ``rect.left() + column_x``."""
+        margin = self.text_margin()
+        artist = QRect(rect.left() + margin, rect.top(),
+                       max(0, self.column_x - margin), rect.height())
+        text = QRect(rect.left() + self.column_x, rect.top(),
+                     max(0, rect.width() - self.column_x), rect.height())
+        return artist, text
+
+    def paint(self, painter, option, index):
+        if _is_separator(index):
+            rect   = option.rect
+            margin = self.text_margin()
+            y      = rect.center().y()
+            painter.save()
+            painter.setPen(option.palette.color(QPalette.Mid))
+            painter.drawLine(rect.left() + margin, y, rect.right() - margin, y)
+            painter.restore()
+            return
+        t = _attr_types.BY_NAME.get(index.data(Qt.UserRole))
+        if t is None:
+            super().paint(painter, option, index)
+            return
+        opt = QStyleOptionViewItem(option)
+        self.initStyleOption(opt, index)
+        # The style paints the background, selection and hover; no text.
+        opt.text = ""
+        widget   = opt.widget if opt.widget is not None else self._view
+        widget.style().drawControl(QStyle.CE_ItemViewItem, opt, painter,
+                                   widget)
+        if opt.state & QStyle.State_Enabled:
+            group = QPalette.Normal
+        else:
+            group = QPalette.Disabled
+        if opt.state & QStyle.State_Selected:
+            role = QPalette.HighlightedText
+        else:
+            role = QPalette.Text
+        artist_rect, text_rect = self.column_rects(opt.rect)
+        painter.save()
+        # The font the columns were measured in, so they cannot overlap.
+        painter.setFont(self.item_font())
+        painter.setPen(opt.palette.color(group, role))
+        self._draw_text(painter, artist_rect, t.artist)
+        self._draw_text(painter, text_rect, t.description)
+        painter.restore()
+
+    def _draw_text(self, painter, rect, text) -> None:
+        """One column's text, left-aligned and centred vertically."""
+        painter.drawText(rect, Qt.AlignLeft | Qt.AlignVCenter, text)
+
+    def sizeHint(self, option, index):
+        if _is_separator(index):
+            return QSize(1, max(5, option.fontMetrics.height() // 2))
+        size = super().sizeHint(option, index)
+        size.setWidth(max(size.width(), self.row_width))
+        return size
+
+
+class _TypeComboBox(QComboBox):
+    """The type combo. Closed, it shows the item text ``"<artist> -
+    <description>"``; open, :class:`_TypeItemDelegate` draws two columns,
+    re-measured each time the popup opens."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.type_delegate = _TypeItemDelegate(self)
+        self.setItemDelegate(self.type_delegate)
+
+    def showPopup(self):
+        self.type_delegate.refresh()
+        super().showPopup()
 
 
 class NDAddAttrDialog(QDialog):
@@ -195,7 +344,7 @@ class NDAddAttrDialog(QDialog):
         top.addWidget(self._name_edit, 0, 1)
 
         top.addWidget(QLabel("Type:", self), 1, 0)
-        self._type_combo = QComboBox(self)
+        self._type_combo = _TypeComboBox(self)
         # Safe to call now: _stack exists.
         self._populate_type_combo()
         top.addWidget(self._type_combo, 1, 1)
@@ -224,10 +373,12 @@ class NDAddAttrDialog(QDialog):
         """Populate the type combo with the types valid for the current
         direction. Preserves the current selection across input/output
         switches when the chosen type is valid for the new direction.
-        Falls back to ``double`` otherwise.
+        Falls back to ``double`` (float64) otherwise.
 
-        Each item shows ``"<name>  -  <label>"``; the type name itself is the
-        item data, so every lookup goes through ``findData`` / ``currentData``.
+        Each item's text is ``"<artist> - <description>"`` (the open list draws
+        it as two columns); the STORED type name is the item data, so every
+        lookup goes through ``findData`` / ``currentData``. A separator row,
+        which carries no data and cannot be selected, sits between families.
         """
         # Snapshot the user's current selection so we can try to
         # restore it after re-populating the list.
@@ -250,14 +401,20 @@ class NDAddAttrDialog(QDialog):
                 allowed = None
         if not allowed:
             allowed = list(ALL_ATTR_TYPES)
-        # Render in family-group order (no separators or colour). Every group
-        # member is in ALL_ATTR_TYPES, so a type in ``allowed`` that isn't in a
-        # group (one the table keeps out of the dialog) is correctly dropped.
+        # Render in family-group order, a separator line between families.
+        # Every group member is in ALL_ATTR_TYPES, so a type in ``allowed``
+        # that isn't in a group (one the table keeps out of the dialog) is
+        # correctly dropped.
         allowed_set = set(allowed)
         for group in _ATTR_TYPE_GROUPS:
-            for t in group:
-                if t in allowed_set:
-                    self._type_combo.addItem(_attr_types.dialog_label(t), t)
+            members = [t for t in group if t in allowed_set]
+            if not members:
+                continue
+            if self._type_combo.count():
+                self._type_combo.insertSeparator(self._type_combo.count())
+            for t in members:
+                self._type_combo.addItem(_attr_types.dialog_label(t), t)
+        self._type_combo.type_delegate.refresh()
         # Restore the previous selection, else the last type selected this
         # session, else ``double``. If none is valid for the new direction,
         # the combo stays at index 0.
@@ -309,11 +466,12 @@ class NDAddAttrDialog(QDialog):
             # time has its own subframe with auto-connect option.
             return self._make_time_subframe()
         # double3 / matrix / string / euler / position / pickle /
-        # mesh / nurbsCurve / nurbsSurface — blank
+        # mesh / nurbsCurve / nurbsSurface — blank, named as the dropdown does
         w      = QWidget(self)
         layout = QVBoxLayout(w)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(QLabel(f"({attr_type} — no extra configuration)", w))
+        artist = _attr_types.artist_name(attr_type)
+        layout.addWidget(QLabel(f"({artist} — no extra configuration)", w))
         layout.addStretch(1)
         return w
 
@@ -458,17 +616,18 @@ class NDAddAttrDialog(QDialog):
     # Events
     # ------------------------------------------------------------------
 
-    def _on_type_changed(self, index: int) -> None:
+    def _on_type_changed(self, _index: int = -1) -> None:
         # Defensive: _populate_type_combo can fire this during early
         # init before _stack exists. Safe no-op in that case.
         if not hasattr(self, "_stack"):
             return
-        type_name = (self._type_combo.itemData(index) if index >= 0 else "") or ""
-        for i, t in enumerate(ALL_ATTR_TYPES):
-            if t == type_name:
-                self._stack.setCurrentIndex(i)
-                break
-        if type_name in ALL_ATTR_TYPES:
+        # By item data, never by row: the separators shift every row, and
+        # the sub-frames are keyed by the stored name. A separator row has no
+        # data and leaves the frame as it is.
+        type_name = self._type_combo.currentData() or ""
+        frame     = self._sub_frames.get(type_name)
+        if frame is not None:
+            self._stack.setCurrentWidget(frame)
             global _LAST_SELECTED_TYPE
             _LAST_SELECTED_TYPE = type_name
         # EVERY attr type can be multi: Maya handles ``matrix[]`` fine and the

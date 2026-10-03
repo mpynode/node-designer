@@ -19,11 +19,16 @@ from typing import Any
 
 import maya.cmds as mc
 
-from mpynode._common.attr_types import ASSISTANT_NAMES
+from mpynode._common.attr_types import (ALIASES, ASSISTANT_NAMES,
+                                         artist_name, canonical)
 
 # The types the assistant may create: the Add Attribute dialog's list, in the
 # same order (``double`` first), from the one type table.
 _ATTR_TYPES = list(ASSISTANT_NAMES)
+# What the schemas' "type" accepts: every stored name, then every alias of one
+# (the dropdown's artist names and Maya's double4 / float3). The wrapper
+# translates an alias, and every result reports the stored name.
+_TYPE_ENUM = _ATTR_TYPES + [a for a, s in ALIASES.items() if s in _ATTR_TYPES]
 
 # Reusable attribute / variable item schemas for the batched ``define_node``.
 _CAMEL = ("camelCase, lowercase first letter (e.g. noiseAmount, driverMatrix); "
@@ -44,7 +49,7 @@ _INPUT_ITEM = {
     "type": "object",
     "properties": {
         "name":       {"type": "string", "description": "plug name -- " + _CAMEL},
-        "type":       {"type": "string", "enum": _ATTR_TYPES},
+        "type":       {"type": "string", "enum": _TYPE_ENUM},
         "is_array":   {"type": "boolean"},
         "min":        {"type": "number"},
         "max":        {"type": "number"},
@@ -57,7 +62,7 @@ _OUTPUT_ITEM = {
     "type": "object",
     "properties": {
         "name":       {"type": "string", "description": "plug name -- " + _CAMEL},
-        "type":       {"type": "string", "enum": _ATTR_TYPES},
+        "type":       {"type": "string", "enum": _TYPE_ENUM},
         "is_array":   {"type": "boolean"},
         "enum_names": _ENUM_NAMES_PROP,
     },
@@ -155,11 +160,11 @@ TOOL_SCHEMAS: list[dict] = [
                 "compute": {"type": "string",
                             "description": "Compute expression source. Inputs read "
                                            "via self.<name> are already the right "
-                                           "type (float/int/bool/str, double3->np "
+                                           "type (float/int/bool/str, vector (double3)->np "
                                            "(3,), matrix->MatrixView) -- do NOT "
                                            "recast: no float()/int()/str() on "
                                            "scalars, no np.asarray()/np.array()/"
-                                           ".reshape(-1)/.astype() on double3/array "
+                                           ".reshape(-1)/.astype() on vector (double3)/array "
                                            "reads, and no float()/int() around a "
                                            "numpy scalar used only in math -- "
                                            "np.linalg.norm/np.dot/np.clip/np.sin/... "
@@ -239,7 +244,7 @@ TOOL_SCHEMAS: list[dict] = [
             "properties": {
                 "node":       {"type": "string"},
                 "name":       {"type": "string", "description": "plug name -- " + _CAMEL},
-                "type":       {"type": "string", "enum": _ATTR_TYPES},
+                "type":       {"type": "string", "enum": _TYPE_ENUM},
                 "is_array":   {"type": "boolean"},
                 "min":        {"type": "number"},
                 "max":        {"type": "number"},
@@ -260,7 +265,7 @@ TOOL_SCHEMAS: list[dict] = [
             "properties": {
                 "node":       {"type": "string"},
                 "name":       {"type": "string", "description": "plug name -- " + _CAMEL},
-                "type":       {"type": "string", "enum": _ATTR_TYPES},
+                "type":       {"type": "string", "enum": _TYPE_ENUM},
                 "is_array":   {"type": "boolean"},
                 "enum_names": _ENUM_NAMES_PROP,
             },
@@ -271,7 +276,7 @@ TOOL_SCHEMAS: list[dict] = [
         "name":        "set_compute_expression",
         "description": "Replace the node's Compute expression (the per-frame "
                        "body). Inputs read via self.<name> are ALREADY native "
-                       "Python (float/int/bool/str; double3->numpy (3,); "
+                       "Python (float/int/bool/str; vector (double3)->numpy (3,); "
                        "matrix->MatrixView) -- do NOT recast with "
                        "float()/int()/str(), and do NOT wrap a numpy scalar "
                        "(np.linalg.norm/np.dot/np.clip/np.sin/...) in "
@@ -662,7 +667,9 @@ def _dispatch(tool_name: str, args: dict, ctx: ToolContext) -> dict:
             warnings = []
             extra    = attr_kwargs(args, _INPUT_EXTRA, warnings)
             _wrap(name).add_input_attr(args["name"], args["type"], **extra)
-            res = {"added_input": args["name"], "type": args["type"]}
+            # The stored name, even when the model typed an alias.
+            res = {"added_input": args["name"],
+                   "type": canonical(args["type"])}
             if warnings:
                 res["warnings"] = warnings
             return res
@@ -676,7 +683,8 @@ def _dispatch(tool_name: str, args: dict, ctx: ToolContext) -> dict:
             warnings = []
             extra    = attr_kwargs(args, _OUTPUT_EXTRA, warnings)
             _wrap(name).add_output_attr(args["name"], args["type"], **extra)
-            res = {"added_output": args["name"], "type": args["type"]}
+            res = {"added_output": args["name"],
+                   "type": canonical(args["type"])}
             if warnings:
                 res["warnings"] = warnings
             return res
@@ -824,17 +832,22 @@ def _define_node(args: dict, ctx: ToolContext) -> dict:
                 created       = state["node"]
             w = _wrap(state["node"])
 
-            added_in = []
+            # attr name -> the STORED type name, even when the model typed
+            # an alias.
+            added_types = {}
+            added_in    = []
             for s in (args.get("inputs") or []):
                 w.add_input_attr(s["name"], s["type"],
                                  **attr_kwargs(s, _INPUT_EXTRA, warnings))
                 added_in.append(s["name"])
+                added_types[s["name"]] = canonical(s["type"])
 
             added_out = []
             for s in (args.get("outputs") or []):
                 w.add_output_attr(s["name"], s["type"],
                                   **attr_kwargs(s, _OUTPUT_EXTRA, warnings))
                 added_out.append(s["name"])
+                added_types[s["name"]] = canonical(s["type"])
 
             set_vars = []
             for s in (args.get("variables") or []):
@@ -865,6 +878,7 @@ def _define_node(args: dict, ctx: ToolContext) -> dict:
             "node":          state["node"],
             "added_inputs":  added_in,
             "added_outputs": added_out,
+            "attr_types":    added_types,
             "set_variables": set_vars,
             "set_compute":   compute is not None,
             "set_init":      init is not None,
@@ -1017,8 +1031,10 @@ def tool_summary(tool_name: str, args: dict) -> str:
     if tool_name == "create_node":
         return "create %s" % a.get("node_type", "?")
     if tool_name in ("add_input", "add_output"):
+        # The type as the Add Attribute dropdown names it, whichever name the
+        # model typed (``double3`` and ``vector`` both show ``vector``).
         return "%s %s (%s%s)" % (
-            tool_name, a.get("name", "?"), a.get("type", "?"),
+            tool_name, a.get("name", "?"), artist_name(a.get("type", "?")),
             "[]" if a.get("is_array") else "",
         )
     if tool_name in ("set_compute_expression", "set_init_expression",

@@ -1860,7 +1860,7 @@ class TestUserAttrLabelSparse(unittest.TestCase):
         return NDUserAttrTreeItem._format_label("arr", meta)
 
     def test_scalar_has_no_bracket(self):
-        self.assertEqual(self._label({"attr_type": "float"}), "arr: float")
+        self.assertEqual(self._label({"attr_type": "float"}), "arr: float32")
 
     def test_dense_array_has_no_sparse_word(self):
         self.assertEqual(
@@ -1879,8 +1879,66 @@ class TestUserAttrLabelSparse(unittest.TestCase):
     def test_array_missing_sparse_key_is_dense(self):
         self.assertEqual(
             self._label({"attr_type": "float", "is_array": True}),
-            "arr[]: float",
+            "arr[]: float32",
         )
+
+    def test_the_type_is_the_artist_name(self):
+        # The dropdown's name, not the stored one; an unknown name as is.
+        from mpynode._common import attr_types
+
+        for t in attr_types.ATTR_TYPES:
+            self.assertEqual(self._label({"attr_type": t.name}),
+                             "arr: %s" % t.artist)
+        self.assertEqual(self._label({"attr_type": "double3"}), "arr: vector")
+        self.assertEqual(
+            self._label({"attr_type": "double3", "is_array": True,
+                         "sparse": True}),
+            "arr[]: vector (sparse)")
+        self.assertEqual(self._label({"attr_type": "banana"}), "arr: banana")
+        self.assertEqual(self._label({}), "arr: ?")
+
+    def test_the_tooltip_names_the_stored_type(self):
+        from mpynode.ui.widgets.attributes import NDUserAttrTreeItem
+
+        tip = NDUserAttrTreeItem._format_tooltip
+        self.assertEqual(tip({"attr_type": "double3"}), "stored as double3")
+        self.assertEqual(tip({"attr_type": "position"}), "stored as position")
+        dense = tip({"attr_type": "double3", "is_array": True})
+        self.assertTrue(dense.startswith("stored as double3\nDense array"))
+        sparse = tip({"attr_type": "double3", "is_array": True,
+                      "sparse": True})
+        self.assertTrue(sparse.startswith("stored as double3\nSparse array"))
+        self.assertEqual(tip({}), "")
+
+
+@unittest.skipUnless(_qapp_available(), "Qt unavailable")
+class TestUserAttrRowShowsTheArtistName(unittest.TestCase):
+    """A live attribute-list row: ``"pos: position"``, ``"v[]: vector
+    (sparse)"``, with the stored type in its tooltip."""
+
+    def test_rows(self):
+        from mpynode.ui.qt_wrapper import QTreeWidget
+        from mpynode.ui.widgets.attributes import NDUserAttrTreeItem
+
+        tree = QTreeWidget()
+        try:
+            rows = [
+                ("pos", {"attr_type": "position"}, "pos: position",
+                 "stored as position"),
+                ("v", {"attr_type": "double3", "is_array": True,
+                       "sparse": True}, "v[]: vector (sparse)",
+                 "stored as double3\nSparse array"),
+                ("n", {"attr_type": "long"}, "n: int", "stored as long"),
+                ("a", {"attr_type": "doubleAngle"}, "a: angle",
+                 "stored as doubleAngle"),
+            ]
+            for name, meta, text, tip in rows:
+                item = NDUserAttrTreeItem(tree, name, meta, "input")
+                self.assertEqual(item.text(0), text)
+                self.assertTrue(item.toolTip(0).startswith(tip),
+                                item.toolTip(0))
+        finally:
+            tree.deleteLater()
 
 
 def setUpModule():

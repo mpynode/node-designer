@@ -451,10 +451,13 @@ class TestTheTable(unittest.TestCase):
 
         dl  = attr_types.BY_NAME["doubleLinear"]
         pos = attr_types.BY_NAME["position"]
-        self.assertEqual(dl.add_attr,  {"at": "doubleLinear"})
-        self.assertEqual(dl.label,     "distance, code reads cm")
-        self.assertEqual(pos.add_attr, {"at": "double3"})
-        self.assertEqual(pos.label,    "3 distances like translate, cm")
+        self.assertEqual(dl.add_attr,    {"at": "doubleLinear"})
+        self.assertEqual(dl.artist,      "distance")
+        self.assertEqual(dl.description, "doubleLinear (cm)")
+        self.assertEqual(pos.add_attr,   {"at": "double3"})
+        self.assertEqual(pos.artist,     "position")
+        self.assertEqual(pos.description,
+                         "double3 of doubleLinear (cm)")
         self.assertIn("doubleLinear", attr_types.ASSISTANT_NAMES)
         self.assertIn("position", attr_types.ASSISTANT_NAMES)
 
@@ -464,22 +467,22 @@ class TestTheTable(unittest.TestCase):
         numbers, compounds = attr_types.DIALOG_GROUPS[:2]
         self.assertEqual(numbers.index("doubleLinear"),
                          numbers.index("doubleAngle") + 1)
-        self.assertEqual(compounds.index("position"),
-                         compounds.index("euler") + 1)
+        # position leads the 3-vectors, before vector and euler.
+        self.assertEqual(compounds[:3], ("position", "double3", "euler"))
 
     def test_both_prompts_give_the_shapes_and_the_rule(self):
         from mpynode.ui.llm.system_prompt import (build_payload_system_prompt,
                                                   build_system_prompt)
 
         for p in (build_system_prompt(), build_payload_system_prompt()):
-            self.assertIn("doubleLinear -> float (cm)", p)
+            self.assertIn("distance (doubleLinear) -> float (cm)", p)
             self.assertIn("position -> numpy (3,) cm", p)
             flat = " ".join(p.split())
             self.assertIn('"position" for anything wired to or from translate '
                           'or a point', flat)
             self.assertIn('"euler" for rotate', flat)
-            self.assertIn('"double3" for a unitless 3-vector such as a '
-                          'direction or scale', flat)
+            self.assertIn('"vector" (double3) for a unitless 3-vector '
+                          'such as a direction or scale', flat)
 
 
 @unittest.skipUnless(_qt_available(), "Qt unavailable")
@@ -522,10 +525,12 @@ class TestDialog(unittest.TestCase):
             names = [combo.itemData(i) for i in range(combo.count())]
             self.assertEqual(names.index("doubleLinear"),
                              names.index("doubleAngle") + 1)
-            self.assertEqual(names.index("position"),
-                             names.index("euler") + 1)
+            # position opens the 3-vector family, right after its separator.
+            self.assertIsNone(names[names.index("position") - 1])
+            self.assertEqual(names.index("double3"),
+                             names.index("position") + 1)
             self.assertEqual(combo.itemText(names.index("doubleLinear")),
-                             "doubleLinear  -  distance, code reads cm")
+                             "distance - doubleLinear (cm)")
             self.assertEqual(combo.itemText(names.index("position")),
                              attr_types.dialog_label("position"))
         finally:

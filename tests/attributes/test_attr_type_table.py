@@ -35,19 +35,19 @@ def setUpModule():
     standalone_init()
 
 
-# (stored, artist, description), in table order.
+# (stored, artist, description), in table order: the dropdown's order.
 _TABLE = [
     ("double", "float64", "double (64-bit)"),
-    ("float", "float32", "float (32-bit)"),
     ("long", "int", "long"),
     ("bool", "bool", "bool (on / off)"),
     ("doubleAngle", "angle", "doubleAngle (radians)"),
     ("doubleLinear", "distance", "doubleLinear (cm)"),
+    ("float", "float32", "float (32-bit)"),
+    ("position", "position", "double3 of doubleLinear (cm)"),
     ("double3", "vector", "double3 (no unit)"),
     ("euler", "euler", "double3 of doubleAngle (radians)"),
-    ("position", "position", "double3 of doubleLinear (cm)"),
-    ("matrix", "matrix", "matrix (4x4 doubles)"),
     ("quaternion", "quaternion", "double4 (X/Y/Z/W)"),
+    ("matrix", "matrix", "matrix (4x4 doubles)"),
     ("color", "color", "float3 (colour)"),
     ("float2", "uv", "float2 (U/V)"),
     ("string", "string", "string (text)"),
@@ -63,10 +63,10 @@ _TABLE = [
 
 _ALIASES = {
     "float64":  "double",
-    "float32":  "float",
     "int":      "long",
     "angle":    "doubleAngle",
     "distance": "doubleLinear",
+    "float32":  "float",
     "vector":   "double3",
     "uv":       "float2",
     "double4":  "quaternion",
@@ -100,9 +100,8 @@ class TestTheTable(unittest.TestCase):
         self.assertIn("float2", attr_types.ASSISTANT_NAMES)
         group = attr_types.DIALOG_GROUPS[1]
         self.assertEqual(group.index("float2"), group.index("color") + 1)
-        self.assertEqual(attr_types.BY_NAME["float2"].label, "2 floats U/V")
         self.assertEqual(attr_types.dialog_label("float2"),
-                         "float2  -  2 floats U/V")
+                         "uv - float2 (U/V)")
 
     def test_assistant_list_is_the_dialog_list(self):
         from mpynode._common import attr_types
@@ -115,6 +114,39 @@ class TestTheTable(unittest.TestCase):
         got = [(t.name, t.artist, t.description)
                for t in attr_types.ATTR_TYPES]
         self.assertEqual(got, _TABLE)
+
+    def test_groups(self):
+        from mpynode._common import attr_types
+
+        self.assertEqual(
+            [[t.name for t in attr_types.ATTR_TYPES if t.group == g]
+             for g in range(5)],
+            [["double", "long", "bool", "doubleAngle", "doubleLinear",
+              "float"],
+             ["position", "double3", "euler", "quaternion", "matrix",
+              "color", "float2"],
+             ["string", "enum", "hex", "pickle"],
+             ["mesh", "nurbsCurve", "nurbsSurface"],
+             ["time"]])
+        self.assertEqual(
+            attr_types.DIALOG_NAMES,
+            tuple(t.name for t in attr_types.ATTR_TYPES))
+
+    def test_dialog_label_and_artist_name(self):
+        from mpynode._common import attr_types
+
+        for stored, artist, description in _TABLE:
+            self.assertEqual(attr_types.dialog_label(stored),
+                             "%s - %s" % (artist, description))
+            self.assertEqual(attr_types.artist_name(stored), artist)
+        self.assertEqual(attr_types.dialog_label("double3"),
+                         "vector - double3 (no unit)")
+        for alias, stored in _ALIASES.items():
+            self.assertEqual(attr_types.artist_name(alias),
+                             attr_types.BY_NAME[stored].artist)
+        self.assertEqual(attr_types.artist_name("python"), "python")
+        self.assertEqual(attr_types.artist_name("banana"), "banana")
+        self.assertIsNone(attr_types.artist_name(None))
 
     def test_aliases(self):
         from mpynode._common import attr_types
@@ -201,28 +233,95 @@ class TestTheTable(unittest.TestCase):
 
         self.assertEqual(tools._ATTR_TYPES, list(attr_types.ASSISTANT_NAMES))
         self.assertEqual(tools._ATTR_TYPES[0], "double")
-        self.assertEqual(tools._INPUT_ITEM["properties"]["type"]["enum"],
-                         tools._ATTR_TYPES)
-        self.assertEqual(tools._OUTPUT_ITEM["properties"]["type"]["enum"],
-                         tools._ATTR_TYPES)
+        # The schema takes every stored name AND every alias.
+        want = list(attr_types.ASSISTANT_NAMES) + list(_ALIASES)
+        self.assertEqual(tools._TYPE_ENUM, want)
+        self.assertEqual(set(tools._TYPE_ENUM),
+                         set(attr_types.ALL_NAMES) | set(_ALIASES))
+        self.assertEqual(len(set(tools._TYPE_ENUM)), 30)
+        self.assertNotIn("python", tools._TYPE_ENUM)
+        enums = [tools._INPUT_ITEM["properties"]["type"]["enum"],
+                 tools._OUTPUT_ITEM["properties"]["type"]["enum"]]
+        for schema in tools.TOOL_SCHEMAS:
+            if schema["name"] in ("add_input", "add_output"):
+                enums.append(
+                    schema["input_schema"]["properties"]["type"]["enum"])
+        self.assertEqual(len(enums), 4)
+        for enum in enums:
+            self.assertEqual(enum, want)
 
-    def test_both_prompts_list_the_assistant_types(self):
+    def test_both_prompts_carry_the_dropdown_table(self):
+        # All 21 rows, "<artist> - <description>", in the dropdown's order,
+        # one after the other, in both prompts.
         from mpynode._common import attr_types
         from mpynode.ui.llm import system_prompt
 
+        rows = ["    %s - %s" % (artist, description)
+                for _stored, artist, description in _TABLE]
+        self.assertEqual(len(rows), 21)
+        self.assertEqual(
+            [r.strip() for r in rows],
+            [attr_types.dialog_label(n) for n in attr_types.ASSISTANT_NAMES])
         block = system_prompt._attr_types_block()
-        flat  = [t.strip(" .") for t in block.replace("\n", " ").split(",")]
-        self.assertEqual(tuple(flat), attr_types.ASSISTANT_NAMES)
+        lines = block.splitlines()
+        start = lines.index(rows[0])
+        self.assertEqual(lines[start:start + 21], rows)
+        flat = " ".join(block.split())
+        self.assertIn('"type" takes either column\'s first word (float64 or '
+                      'double, int or long, angle or doubleAngle), except '
+                      'position, euler, hex and pickle', flat)
+        self.assertIn("The node and its files carry the stored name: the "
+                      "left word, or Maya's name where that differs (double, "
+                      "long, doubleAngle, doubleLinear, float, double3, "
+                      "float2).", flat)
         for prompt in (system_prompt.build_system_prompt(),
                        system_prompt.build_payload_system_prompt()):
             self.assertIn("ATTRIBUTE TYPES", prompt)
             self.assertIn(block, prompt)
             self.assertNotIn("{ATTR_TYPES}", prompt)
-            self.assertIn("double3 -> numpy (3,)", prompt)
-            self.assertIn("long -> int", prompt)
-            self.assertIn("doubleAngle -> float (rad)", prompt)
-            self.assertNotIn("vector -> numpy", prompt)
-            self.assertNotIn("angle -> float (rad)    ", prompt)
+            plines = prompt.splitlines()
+            start  = plines.index(rows[0])
+            self.assertEqual(plines[start:start + 21], rows)
+
+    def test_both_prompts_read_shapes_use_the_artist_names(self):
+        from mpynode.ui.llm import system_prompt
+
+        for prompt in (system_prompt.build_system_prompt(),
+                       system_prompt.build_payload_system_prompt()):
+            for line in ("float64 (double) / float32 (float) -> float",
+                         "int (long) -> int",
+                         "angle (doubleAngle) -> float (rad)",
+                         "distance (doubleLinear) -> float (cm)",
+                         "vector (double3) -> numpy (3,)",
+                         "euler -> numpy (3,) rad",
+                         "position -> numpy (3,) cm",
+                         "quaternion -> numpy (4,) [x,y,z,w]",
+                         "color -> numpy (3,) [r,g,b]",
+                         "uv (float2) -> numpy (2,) [u,v]"):
+                self.assertIn(line, prompt)
+            self.assertNotIn("    double3 -> numpy", prompt)
+            self.assertNotIn("long -> int",          prompt.replace("(long) ->", ""))
+            self.assertNotIn("vector -> numpy",      prompt)
+
+    def test_chat_tool_line_names_the_artist_type(self):
+        # The chat transcript's add_input / add_output line shows the type as
+        # the dropdown names it, whichever name the model typed.
+        from mpynode.ui.llm import tools
+
+        for typed, shown in (("double3", "vector"), ("vector", "vector"),
+                             ("long", "int"), ("float4", "float4"),
+                             ("quaternion", "quaternion"),
+                             ("double4", "quaternion")):
+            self.assertEqual(
+                tools.tool_summary("add_input", {"name": "p", "type": typed}),
+                "add_input p (%s)" % shown)
+        self.assertEqual(
+            tools.tool_summary("add_output",
+                               {"name": "o", "type": "float2",
+                                "is_array": True}),
+            "add_output o (uv[])")
+        self.assertEqual(tools.tool_summary("add_input", {"name": "p"}),
+                         "add_input p (?)")
 
     @unittest.skipUnless(_qt_available(), "Qt unavailable")
     def test_dialog_lists_come_from_the_table(self):
@@ -450,6 +549,47 @@ def _payload(input_attrs, output_attrs=None):
         "input_attrs":  input_attrs,
         "output_attrs": output_attrs or {},
     }
+
+
+class TestAssistantReportsStoredNames(_MayaBase):
+    """add_input / add_output / define_node take an alias and report the
+    stored name it became."""
+
+    def _dispatch(self, tool, args):
+        from mpynode.ui.llm import tools
+
+        res = tools.dispatch(tool, dict(args, node=self.name),
+                             tools.ToolContext(self.name))
+        self.assertNotIn("error", res, res)
+        return res
+
+    def test_add_input_and_add_output(self):
+        res = self._dispatch("add_input", {"name": "v", "type": "vector"})
+        self.assertEqual(res["type"], "double3")
+        res = self._dispatch("add_input", {"name": "q", "type": "double4"})
+        self.assertEqual(res["type"], "quaternion")
+        res = self._dispatch("add_input", {"name": "s", "type": "double3"})
+        self.assertEqual(res["type"], "double3")
+        res = self._dispatch("add_output", {"name": "o", "type": "uv"})
+        self.assertEqual(res["type"], "float2")
+        self.assertEqual(
+            {k: m["attr_type"]
+             for k, m in self.node.get_input_attr_map().items()},
+            {"v": "double3", "q": "quaternion", "s": "double3"})
+
+    def test_define_node(self):
+        res = self._dispatch("define_node", {
+            "inputs": [{"name": "n", "type": "int"},
+                       {"name": "a", "type": "angle"},
+                       {"name": "m", "type": "matrix"}],
+            "outputs": [{"name": "c", "type": "float3"},
+                        {"name": "d", "type": "float64"}],
+        })
+        self.assertEqual(res["attr_types"],
+                         {"n": "long", "a": "doubleAngle", "m": "matrix",
+                          "c": "color", "d": "double"})
+        self.assertEqual(res["added_inputs"], ["n", "a", "m"])
+        self.assertEqual(res["schema"]["outputs"]["c"]["attr_type"], "color")
 
 
 class TestMpnRestore(_MayaBase):

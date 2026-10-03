@@ -34,6 +34,7 @@ from mpynode._base.commands import (
     _timeline_is_playing,
     run_undoable,
 )
+from mpynode._common import attr_types as _attr_types
 from mpynode.ui.dialogs.add_attr import NDAddAttrDialog, validate_attr_name
 from mpynode.ui.dialogs.confirm import confirm_delete_node
 from mpynode.ui.dialogs.connect_attr import (
@@ -322,21 +323,7 @@ class NDUserAttrTreeItem(QTreeWidgetItem):
         if blank is not None:
             self.setIcon(0, blank)
         self.setText(0, self._format_label(attr_name, meta))
-        # Array read-mode tooltip (explains the optional "sparse" marker).
-        if meta.get("is_array"):
-            if meta.get("sparse"):
-                self.setToolTip(
-                    0,
-                    "Sparse array — the expression reads only the connected/"
-                    "set elements, compactly (by physical position).",
-                )
-            else:
-                self.setToolTip(
-                    0,
-                    "Dense array — the expression reads a contiguous array of "
-                    "length max_logical+1; gaps are filled with the attribute "
-                    "default.",
-                )
+        self.setToolTip(0, self._format_tooltip(meta))
         self._apply_color(meta)
         self._apply_connection_state()
 
@@ -411,7 +398,9 @@ class NDUserAttrTreeItem(QTreeWidgetItem):
 
     @staticmethod
     def _format_label(name: str, meta: dict) -> str:
-        attr_type = meta.get("attr_type", "?")
+        # The type as the Add Attribute dropdown names it (``vector``, not the
+        # stored ``double3``); the tooltip names the stored type.
+        attr_type = _attr_types.artist_name(meta.get("attr_type", "?"))
         is_array  = meta.get("is_array", False)
         suffix    = "[]" if is_array else ""
         # Dense is the default, so only sparse arrays get a marker.
@@ -419,6 +408,28 @@ class NDUserAttrTreeItem(QTreeWidgetItem):
         if is_array and meta.get("sparse"):
             type_part = f"{attr_type} (sparse)"
         return f"{name}{suffix}: {type_part}"
+
+    @staticmethod
+    def _format_tooltip(meta: dict) -> str:
+        """``"stored as <stored type>"``, then for an array its read mode
+        (which explains the optional "sparse" marker)."""
+        lines  = []
+        stored = _attr_types.stored_name(meta.get("attr_type"))
+        if stored:
+            lines.append(f"stored as {stored}")
+        if meta.get("is_array"):
+            if meta.get("sparse"):
+                lines.append(
+                    "Sparse array — the expression reads only the connected/"
+                    "set elements, compactly (by physical position)."
+                )
+            else:
+                lines.append(
+                    "Dense array — the expression reads a contiguous array of "
+                    "length max_logical+1; gaps are filled with the attribute "
+                    "default."
+                )
+        return "\n".join(lines)
 
     def getCurrentName(self) -> str:
         return self.attr_name
