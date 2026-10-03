@@ -7,7 +7,8 @@ from .spec_model import (PORT_BEGIN, PORT_END, _GEO_INFO, _spec_has_hex,
 from .emit_attr import (_array_read_lines, _create_lines, _image_read_hint_lines,
                         _image_read_lines, _members, _out_handle_default,
                         _out_setclean, _pick_path_input, _read_line,
-                        _setter_hint, PACKED_INCLUDES, DISTANCE_INCLUDE)
+                        _setter_hint, compute_open_lines, PACKED_INCLUDES,
+                        DISTANCE_INCLUDE)
 from .emit_hex import _HEX_CPP
 from .nd_runtime import _nd_runtime_cpp
 from mpynode.native.compiler.kernels import nd_io_cpp, file_texture_cpp
@@ -526,8 +527,11 @@ def _generate_geo_cpp(spec: dict, kind: str, for_port: bool = False) -> str:
         L.append("// ==== bundled commands (Methods @maya_command) ====")
         L.append(cmd_out["classes"])
         L.append("")
-    # compute()
-    L.append("MStatus %s::compute(const MPlug& plug, MDataBlock& data) {" % cls)
+    # compute(). The shared opening normalises a compound output's child to its
+    # parent -- inert today (_GEO_SCALAR_OUT_TYPES refuses compound outputs), so
+    # every generator stays byte-identical, but the gate cannot regress if the
+    # refusal is ever lifted.
+    L += compute_open_lines(cls, out_members)
     # A pull on the geometry OR on any scalar output runs the one compute pass;
     # each handle is marked clean below, so the other plugs are satisfied too.
     _gate = ["plug != %s" % out_member] + ["plug != %s" % m["member"]

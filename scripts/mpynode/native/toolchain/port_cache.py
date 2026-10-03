@@ -479,7 +479,25 @@ from typing import Optional
 # move to a numeric double4 changes its _NORM_TYPE row, so those keys move by
 # themselves.) Moves 0 of 76 stage-1 files: every shipped float2 names its
 # children -- 2026-10-02.
-PORTER_RECIPE_VERSION = "37"
+# v38: four emitter fixes, all SKELETON changes invisible to the key (no spec
+# moves), so a hit would keep serving the old scaffold. (1) A recorded
+# min_value / max_value reaches the compiled attr as setMin / setMax
+# (emit_attr._limit_lines, and the locator's and IK solver's bespoke scalars),
+# as the interpreted addAttr -min/-max does; no compiled node clamped before.
+# (2) compute() resolves a compound output's CHILD to its parent before the
+# plug guard (emit_attr.compute_open_lines), so pulling outColorR or outX first
+# computes instead of reading the default (bug 7); emitted only on a node with
+# a compound output. (3) The mPyFile VP2 override reads a doubleAngle with
+# asMAngle() and keeps unit / vector / colour / float2 / quaternion / hex
+# multis in nd_texel (bug 6). (4) Every compiled time write names
+# MTime::uiUnit() -- a bare MTime(x) is 24 fps -- and the time hints say frames,
+# not seconds. Moves 29 of 76 stage-1 files: circularText, compositeTexture,
+# fileTexture, gameOfLifeMesh, gameOfLifeTex, mPyDnet, meshMaze,
+# meshRegionLocator, ouch, scanlineTex, spine, spline, springChain and
+# voxelizeMesh, in their templates and in the All Templates Plugin, plus the
+# orphaned brightContrastTex; (3) and (4) move none. The shipped artifacts took
+# the same hunks by splice, not a re-port -- 2026-10-02.
+PORTER_RECIPE_VERSION = "38"
 
 # Spec keys excluded from the cache key -- provably irrelevant to the generated
 # C++. A deny-list, NOT an allow-list (design C1).

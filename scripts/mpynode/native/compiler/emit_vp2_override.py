@@ -28,6 +28,8 @@ import re
 import textwrap
 from typing import List, Optional
 
+from .emit_attr import _elem_plug_read_expr, _elem_read_expr
+
 
 # ---- Parsing the deterministic codegen output ------------------------------
 _CLASS_RE    = re.compile(r"\nclass (\w+) : public MPx\w+ \{")
@@ -63,13 +65,43 @@ _INPUT_DECL_RE = re.compile(
 #             in_aLayers[_li] = eh.asString();
 # so _INPUT_DECL_RE never saw them and nd_texel dropped every array input off its
 # signature -- the extracted body then referenced an undeclared identifier.
+#
+# The element read is captured WHOLE (``rhs``) and the gap fill may carry one
+# level of parenthesised arguments. Until 2026-10-02 both only matched a bare
+# ``eh.asX();`` and an argument-less fill, so every unit / vector / colour /
+# float2 / quaternion / hex multi (``eh.asAngle().asRadians()``,
+# ``MVector(eh.asDouble3())``, fill ``MFloatVector(0.0f, 0.0f, 0.0f)``) was
+# dropped the same way.
 _MULTI_DECL_RE = re.compile(
     r"^[ \t]*std::vector<(?P<elem>[\w:]+)>\s+(?P<var>in_a\w+);\s*\n"
     r"[ \t]*\{\s*\n"
     r"[ \t]*MArrayDataHandle\s+\w+\s*=\s*data\.inputArrayValue\((?P<attr>a\w+)\);"
-    r".*?(?P=var)\.resize\([^,]+,\s*(?P<fill>[^)]*(?:\(\))?)\);"
-    r".*?(?P=var)\[\w+\]\s*=\s*\w+\.(?P<read>as\w+)\(\);",
+    r".*?(?P=var)\.resize\([^,]+,\s*"
+    r"(?P<fill>(?:[^(),;]|\((?:[^()]|\([^()]*\))*\))+)\);"
+    r".*?(?P=var)\[\w+\]\s*=\s*(?P<rhs>[^;\n]+);",
     re.M | re.S)
+
+# A multi element's data-handle read (emit_attr._elem_read_expr, exactly as the
+# codegen spells it) -> its spec type, so updateDG can read the SAME element off
+# an MPlug through emit_attr._elem_plug_read_expr. Types whose handle reads are
+# identical (double3 / euler / position) share a plug read too.
+_MULTI_ELEM_TYPES = ("float", "double", "long", "bool", "enum", "string", "hex",
+                     "doubleAngle", "doubleLinear", "time", "double3", "euler",
+                     "position", "color", "float2", "quaternion", "matrix")
+_ELEM_TYPE_BY_READ = {}
+for _t in _MULTI_ELEM_TYPES:
+    _ELEM_TYPE_BY_READ.setdefault(_elem_read_expr(_t), _t)
+del _t
+
+# Components folded into the texture key per multi element type; a scalar is
+# one (double) and an MString appends whole.
+_ELEM_KEY_PARTS = {
+    "MVector":      ("%s.x", "%s.y", "%s.z"),
+    "MFloatVector": ("%s.x", "%s.y", "%s.z"),
+    "MQuaternion":  ("%s.x", "%s.y", "%s.z", "%s.w"),
+    "MMatrix": tuple("%%s(%d, %d)" % (r, c)
+                     for r in range(4) for c in range(4)),
+}
 
 # attr member -> plug name from initialize(): aBands = nAttr.create("bands", ...
 _CREATE_RE = re.compile(
@@ -90,18 +122,20 @@ _ARRAY_TYPES = {
 
 
 class _Input:
-    __slots__ = ("type", "var", "attr", "read", "plug", "multi", "elem", "fill")
+    __slots__ = ("type", "var", "attr", "read", "plug", "multi", "elem", "fill",
+                 "elem_type")
 
     def __init__(self, type_, var, attr, read, plug, multi=False, elem="",
-                 fill=""):
-        self.type  = type_.replace(" ", "")  # 'float2&'
-        self.var   = var                     # 'in_aBands'
-        self.attr  = attr                    # 'aBands'
-        self.read  = read                    # 'asInt()' / 'asTime().value()'
-        self.plug  = plug                    # 'bands'
-        self.multi = multi                   # array (multi) input
-        self.elem  = elem                    # multi element ctype ('MString')
-        self.fill  = fill                    # multi sparse-gap default
+                 fill="", elem_type=""):
+        self.type      = type_.replace(" ", "")  # 'float2&'
+        self.var       = var                     # 'in_aBands'
+        self.attr      = attr                    # 'aBands'
+        self.read      = read                    # 'asInt()' / 'asTime().value()'
+        self.plug      = plug                    # 'bands'
+        self.multi     = multi                   # array (multi) input
+        self.elem      = elem                    # multi element ctype ('MString')
+        self.fill      = fill                    # multi sparse-gap default
+        self.elem_type = elem_type               # multi element spec type ('euler')
 
     @property
     def is_uv(self):
@@ -111,7 +145,8 @@ class _Input:
 
     @property
     def is_time(self):
-        return "asTime" in self.read
+        # A time MULTI is a std::vector<double>, not a cached double.
+        return not self.multi and "asTime" in self.read
 
     @property
     def bare_type(self):
@@ -123,12 +158,28 @@ class _Input:
         value semantics)."""
         if self.is_time:
             return "asMTime().value()"
-        # A doubleLinear reads asDistance() off the data handle, but MPlug
-        # spells it asMDistance(); both return an MDistance, so the
-        # .asCentimeters() after it is unchanged.
+        # A doubleLinear reads asDistance() off the data handle and a
+        # doubleAngle asAngle(), but MPlug spells them asMDistance() /
+        # asMAngle(); each returns the same MDistance / MAngle, so the
+        # .asCentimeters() / .asRadians() after it is unchanged.
         if self.read.startswith("asDistance()"):
             return "asMDistance()" + self.read[len("asDistance()"):]
+        if self.read.startswith("asAngle()"):
+            return "asMAngle()" + self.read[len("asAngle()"):]
         return self.read  # asString()/asInt()/asFloat()/asDouble()/asBool()
+
+    def elem_plug_lines(self, elem, index):
+        """updateDG statement(s) reading ONE multi element off the MPlug
+        ``elem`` into ``_m_<var>[index]`` -- the plug twin of the element read
+        compute() makes off its data handle (emit_attr._elem_plug_read_expr).
+        A matrix has no expression form on a plug: it is read through
+        getValue + MFnMatrixData, as emit_attr._read_plug_array_assign does."""
+        dst = "_m_%s[%s]" % (self.var, index)
+        if self.elem_type == "matrix":
+            return ["{ MObject _mo; if (%s.getValue(_mo) == MS::kSuccess "
+                    "&& !_mo.isNull()) %s = MFnMatrixData(_mo).matrix(); }"
+                    % (elem, dst)]
+        return ["%s = %s;" % (dst, _elem_plug_read_expr(self.elem_type, elem))]
 
     @property
     def member_type(self):
@@ -168,11 +219,15 @@ def _parse_inputs(cpp: str) -> List[_Input]:
                              d.group("read"), attr_to_plug.get(attr, ""))))
     for d in _MULTI_DECL_RE.finditer(scope):
         attr = d.group("attr")
+        rhs  = d.group("rhs").strip()
+        et   = _ELEM_TYPE_BY_READ.get(rhs)
+        if et is None:
+            continue  # an element read codegen does not emit: leave it out
         found.append((d.start(),
                       _Input("std::vector<%s>" % d.group("elem"), d.group("var"),
-                             attr, d.group("read") + "()",
-                             attr_to_plug.get(attr, ""), multi=True,
-                             elem=d.group("elem"), fill=d.group("fill").strip())))
+                             attr, rhs, attr_to_plug.get(attr, ""), multi=True,
+                             elem=d.group("elem"), fill=d.group("fill").strip(),
+                             elem_type=et)))
     return [i for _, i in sorted(found, key=lambda t: t[0])]
 
 
@@ -676,7 +731,10 @@ def _make_override_block(cls, type_name, inputs, has_raw, extras=(), comp=None,
                 % (i.var, (", " + i.fill) if i.fill else ""),
                 "            for (unsigned int _i = 0; _i < _ne; ++_i) {",
                 "                MPlug _e = p.elementByPhysicalIndex(_i);",
-                "                _m_%s[_e.logicalIndex()] = _e.%s;" % (i.var, i.read),
+            ]
+            dg += ["                " + s
+                   for s in i.elem_plug_lines("_e", "_e.logicalIndex()")]
+            dg += [
                 "            }",
                 "        }",
             ]
@@ -740,11 +798,16 @@ def _make_override_block(cls, type_name, inputs, has_raw, extras=(), comp=None,
         # node whose only varying input is one of those keys every edit to the SAME
         # texture name and the viewport never refreshes.
         if i.multi:
+            # A vector / quaternion / matrix element folds component by
+            # component: `(double)` on an MVector is not a conversion.
+            el = "_m_%s[_i]" % i.var
+            parts = ([el] if i.elem == "MString" else
+                     ["(double)" + c % el
+                      for c in _ELEM_KEY_PARTS.get(i.elem, ("%s",))])
             key_parts.append(
-                "for (size_t _i = 0; _i < _m_%s.size(); ++_i) { texName += %s; "
-                'texName += MString(","); }'
-                % (i.var, ("_m_%s[_i]" % i.var) if i.elem == "MString"
-                   else "(double)_m_%s[_i]" % i.var))
+                "for (size_t _i = 0; _i < _m_%s.size(); ++_i) { %s }"
+                % (i.var, " ".join('texName += %s; texName += MString(",");' % p
+                                   for p in parts)))
         elif i.array_info:
             for k in range(i.array_info[1]):
                 key_parts.append('texName += MString(",");' if k else "")
@@ -1402,13 +1465,18 @@ def inject_vp2_override(cpp: str, spec: Optional[dict] = None) -> str:
     # needs the endpoint fixed, and that grid only exists on those branches.
     wrap_clamp = _parse_wrap_override(port_body, inputs) if texload else None
 
-    # (2) includes after <mutex> (raw-cache) or before the class otherwise.
+    # (2) includes after <mutex> (raw-cache) or before the class otherwise. A
+    # matrix multi's updateDG read needs MFnMatrixData, which a node reading its
+    # matrices off data handles never included -- added only then.
+    incs = _OVERRIDE_INCLUDES
+    if (any(i.multi and i.elem_type == "matrix" for i in inputs)
+            and "<maya/MFnMatrixData.h>" not in cpp):
+        incs += "#include <maya/MFnMatrixData.h>\n"
     if "#include <mutex>\n" in cpp:
-        cpp = cpp.replace("#include <mutex>\n",
-                          "#include <mutex>\n" + _OVERRIDE_INCLUDES, 1)
+        cpp = cpp.replace("#include <mutex>\n", "#include <mutex>\n" + incs, 1)
     else:
         cpp = cpp.replace("\nclass %s " % cls,
-                          "\n" + _OVERRIDE_INCLUDES + "\nclass %s " % cls, 1)
+                          "\n" + incs + "\nclass %s " % cls, 1)
 
     # (2.5) hoist the nested _NdState struct to file scope so the free nd_texel
     # can name the type. The class keeps its `_NdState _ndState;` member, which

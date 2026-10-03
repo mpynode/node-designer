@@ -12,7 +12,7 @@ from .spec_model import PORT_BEGIN, PORT_END, _CPP, lowered_guard
 from .emit_attr import (
     _UNSET, _array_read_lines, _array_write_lines, _image_read_lines,
     _out_handle_default, _out_setclean, _read_line, _scal_out_finalize,
-    _scal_out_handle_lines, _scal_out_hint, _write_lines,
+    _scal_out_handle_lines, _scal_out_hint, _write_lines, compute_open_lines,
 )
 from . import emit_geo_io
 
@@ -163,7 +163,8 @@ def _compute_lines(cls, ins, outs, spec, for_port, lowered=_UNSET,
     tail at the end of finalize."""
     base_outs = [m for m in base_extra if m["kind"] == "outputs"]
     derived   = file_texture_cpp.derived_output_lines(ins, outs, base_extra, spec)
-    L         = ["MStatus %s::compute(const MPlug& plug, MDataBlock& data) {" % cls]
+    # A compound output's child is normalised to its parent before the guard.
+    L = compute_open_lines(cls, list(outs) + base_outs)
     if outs or base_outs:
         guard = " && ".join("plug != %s" % o["member"]
                             for o in list(outs) + base_outs)

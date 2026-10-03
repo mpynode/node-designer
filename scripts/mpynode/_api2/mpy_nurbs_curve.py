@@ -317,7 +317,11 @@ class MPyNurbsCurve(om.MPxNode):
         if _dirty_affects.api2_suspended_in_block(self, data_block):
             return
 
+        # A compound output's child resolves to its parent, as in
+        # MPyNode.compute -- otherwise pulling outX first read the default.
         try:
+            if plug.isChild:
+                plug = plug.parent()
             attr = plug.attribute()
         except Exception:
             return None

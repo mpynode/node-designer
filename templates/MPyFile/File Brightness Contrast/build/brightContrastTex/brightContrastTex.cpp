@@ -406,7 +406,8 @@ MStatus BrightContrastTex::initialize() {
     return MS::kSuccess;
 }
 
-MStatus BrightContrastTex::compute(const MPlug& plug, MDataBlock& data) {
+MStatus BrightContrastTex::compute(const MPlug& plugIn, MDataBlock& data) {
+    const MPlug plug = plugIn.isChild() ? plugIn.parent() : plugIn;
     if (plug != aOutAlpha && plug != aOutColor)
         return MS::kUnknownParameter;
 

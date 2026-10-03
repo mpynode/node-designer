@@ -30,7 +30,7 @@ Rules:
 - Write EVERY output through its pre-declared handle `h_<name>` using the
   setter shown in the scaffold (e.g. h_out.setFloat(x)). Do not redeclare them.
 - Matrix inputs are MMatrix; vectors are double3 (index [0],[1],[2]); angles
-  and times are doubles (radians / seconds).
+  are doubles in radians, times doubles in frames of the UI time unit.
 - Use <cmath>, MVector, MMatrix, MEulerRotation, MQuaternion as needed.
 - Pure compute only: NO maya.cmds, NO file/scene/network access, no I/O.
 - If the Python relies on numpy, reproduce the math with plain loops / MMatrix.

@@ -631,9 +631,9 @@ def _generate_cpp_impl(spec: dict, for_port: bool = False) -> str:
                 color_children[cm] = (rv, gv, bv)
         # quaternion outputs: wire the same input->child affects so qX/qY/qZ/qW
         # go dirty with the parent (the double4's 4 children, fetched via
-        # MFnNumericAttribute like color's). compute() still answers the parent
-        # plug only (emit_compute's plug guard), so a downstream connected to a
-        # child alone reads a stale value -- as on the interpreted node.
+        # MFnNumericAttribute like color's). compute() resolves a child pull to
+        # its parent before the plug guard (emit_attr.compute_open_lines), as
+        # the interpreted node does, so a downstream on one child reads fresh.
         for o in outs:
             if o["meta"].get("type") == "quaternion" and not o["meta"].get("is_array"):
                 cm = o["member"]

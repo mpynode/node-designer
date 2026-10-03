@@ -160,7 +160,8 @@ def _generic_local_hint(t):
     the AI-porter comment block."""
     return {
         "float": "double", "double": "double", "long": "int", "bool": "bool",
-        "enum": "short", "doubleAngle": "double, RADIANS", "time": "double, seconds",
+        "enum": "short", "doubleAngle": "double, RADIANS",
+        "time":         "double, frames (UI time unit)",
         "doubleLinear": "double, CENTIMETRES",
         "double3": "double[3]; .x==[0]", "euler": "double[3], RADIANS",
         "position": "double[3], CENTIMETRES",

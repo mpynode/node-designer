@@ -272,7 +272,11 @@ class MPyConstraint(MPyNode):
         # JSON), so the parent compute path can't supply them. They are read
         # here and injected into exec_locals inline.
 
+        # A compound output's child resolves to its parent, as in
+        # MPyNode.compute -- otherwise pulling outX first read the default.
         try:
+            if plug.isChild:
+                plug = plug.parent()
             attr_obj = plug.attribute()
             attr_fn  = om.MFnAttribute(attr_obj)
             out_name = attr_fn.name

@@ -722,7 +722,13 @@ class MPyFile(om.MPxNode):
         if _dirty_affects.api2_suspended_in_block(self, data_block):
             return self
 
+        # A compound output's child resolves to its parent, as in
+        # MPyNode.compute: base children (outColorR) were matched by hand
+        # below, but a USER compound's child was not in the output map, so
+        # pulling it first read the default.
         try:
+            if plug.isChild:
+                plug = plug.parent()
             attr_obj = plug.attribute()
             attr_fn  = om.MFnAttribute(attr_obj)
             out_name = attr_fn.name
@@ -744,9 +750,6 @@ class MPyFile(om.MPxNode):
             or attr_obj == MPyFile.aOutAlpha
             or attr_obj == MPyFile.aOutTransparency
             or attr_obj == MPyFile.aOutSize
-            or (plug.isChild and plug.parent().attribute()
-                in (MPyFile.aOutColor, MPyFile.aOutTransparency,
-                    MPyFile.aOutSize))
             or out_name in _MANAGED_OUTPUT_NAMES
             or out_name in output_map
         )

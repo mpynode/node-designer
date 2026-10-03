@@ -501,7 +501,8 @@ def _scalar_output_lines(m, val):
     if t == "doubleLinear":
         return ["%s.setMDistance(MDistance((double)(%s)));" % (h, e)]
     if t == "time":
-        return ["%s.setMTime(MTime((double)(%s)));" % (h, e)]
+        # UI unit, as the interpreted writer: a bare MTime(x) is 24 fps.
+        return ["%s.setMTime(MTime((double)(%s), MTime::uiUnit()));" % (h, e)]
     raise UnsupportedSpec("nd_lower: output %r type %r not liftable"
                           % (m["plug"], t))
 

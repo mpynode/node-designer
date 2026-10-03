@@ -5,7 +5,7 @@ import ast
 
 from .spec_model import (PORT_BEGIN, PORT_END, lowered_guard,
                          LOWERED_GUARD_INCLUDE)
-from .emit_attr import (_ident, _create_lines, _read_plug_decl,
+from .emit_attr import (_ident, _create_lines, _limit_lines, _read_plug_decl,
                         _read_plug_assign, _read_plug_array_decl,
                         _read_plug_array_assign, findplug_family_extras,
                         findplug_local_hint)
@@ -87,7 +87,9 @@ def _loc_scalar_inputs(spec):
         if t in ("float", "long", "bool", "enum") and not meta.get("is_array"):
             out.append({"plug": plug, "member": "in_" + _ident(plug),
                         "type": t, "enum_names": meta.get("enum_names") or [],
-                        "default_value": meta.get("default_value")})
+                        "default_value": meta.get("default_value"),
+                        "min_value":     meta.get("min_value"),
+                        "max_value": meta.get("max_value")})
     return out
 
 def _loc_mesh_inputs(spec):
@@ -221,7 +223,8 @@ def _loc_generic_expose(gm):
 def _loc_generic_hint(t):
     """C++ shape of a generic input's ``in_a<ident>`` local (PORT comment)."""
     return {
-        "double": "double", "doubleAngle": "double, RADIANS", "time": "double, seconds",
+        "double": "double", "doubleAngle": "double, RADIANS",
+        "time":         "double, frames (UI time unit)",
         "doubleLinear": "double, CENTIMETRES",
         "double3": "double[3]; .x==[0]", "euler": "double[3], RADIANS",
         "position": "double[3], CENTIMETRES",
@@ -1369,15 +1372,19 @@ def _generate_locator_cpp(spec, for_port=False):
             plug = s["plug"]
             t    = s["type"]
             mem  = "a_" + s["member"]
+            # float/long take the recorded min/max (emit_attr._limit_lines --
+            # the interpreted addAttr -min/-max); bool and enum take none.
             if t == "float":
                 L.append('    %s = nAttr.create("%s", "%s", MFnNumericData::kFloat, %s);'
                          % (mem, plug, plug, _loc_input_default("float", s["default_value"], [])))
                 L.append("    nAttr.setStorable(true); nAttr.setKeyable(true);")
+                L += _limit_lines("nAttr", s, t)
                 L.append("    nAttr.setAffectsAppearance(true);")
             elif t == "long":
                 L.append('    %s = nAttr.create("%s", "%s", MFnNumericData::kInt, %s);'
                          % (mem, plug, plug, _loc_input_default("long", s["default_value"], [])))
                 L.append("    nAttr.setStorable(true); nAttr.setKeyable(true);")
+                L += _limit_lines("nAttr", s, t)
                 L.append("    nAttr.setAffectsAppearance(true);")
             elif t == "bool":
                 L.append('    %s = nAttr.create("%s", "%s", MFnNumericData::kBoolean, %s);'

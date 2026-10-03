@@ -286,9 +286,21 @@ def declare_user_affects(node_mobject, plug, affected_plugs, in_attr, out_attr,
                 # ARRAY outputs: also dirty each existing element plug, else a
                 # downstream node wired to out[i] reads stale (appending only
                 # the array parent doesn't propagate to the elements).
+                elems = [out_plug]
                 if out_plug.isArray:
-                    for ei in range(out_plug.numElements()):
-                        affected_plugs.append(out_plug.elementByPhysicalIndex(ei))
+                    elems = [out_plug.elementByPhysicalIndex(ei)
+                             for ei in range(out_plug.numElements())]
+                    for e in elems:
+                        affected_plugs.append(e)
+                # COMPOUND outputs: and each CHILD, for the same reason --
+                # dirtying the parent leaves outX / outColorR clean, so a pull
+                # on the child alone never reached compute and read the old
+                # value (bug 7; the compiled node's attributeAffects reach
+                # the children).
+                for e in elems:
+                    if e.isCompound:
+                        for ci in range(e.numChildren()):
+                            affected_plugs.append(e.child(ci))
             except Exception:
                 pass
     except Exception:
@@ -337,9 +349,17 @@ def declare_user_affects_api1(node_mobject, plug, affected_plugs, in_attr, out_a
                 affected_plugs.append(out_plug)
                 # ARRAY outputs: also dirty each existing element plug (api1
                 # MPlug uses method-style isArray()/numElements()).
+                elems = [out_plug]
                 if out_plug.isArray():
-                    for ei in range(out_plug.numElements()):
-                        affected_plugs.append(out_plug.elementByPhysicalIndex(ei))
+                    elems = [out_plug.elementByPhysicalIndex(ei)
+                             for ei in range(out_plug.numElements())]
+                    for e in elems:
+                        affected_plugs.append(e)
+                # COMPOUND outputs: and each child, as in the api2 twin.
+                for e in elems:
+                    if e.isCompound():
+                        for ci in range(e.numChildren()):
+                            affected_plugs.append(e.child(ci))
             except Exception:
                 pass
     except Exception:

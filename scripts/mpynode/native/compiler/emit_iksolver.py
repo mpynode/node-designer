@@ -3,10 +3,10 @@ from __future__ import annotations
 
 from .spec_model import PORT_BEGIN, PORT_END, lowered_guard
 from .emit_attr import (_ident, _create_lines, _image_read_hint_lines,
-                        _image_read_lines, _pick_path_input, _read_plug_decl,
-                        _read_plug_assign, _read_plug_array_decl,
-                        _read_plug_array_assign, findplug_family_extras,
-                        findplug_local_hint)
+                        _image_read_lines, _limit_lines, _pick_path_input,
+                        _read_plug_decl, _read_plug_assign,
+                        _read_plug_array_decl, _read_plug_array_assign,
+                        findplug_family_extras, findplug_local_hint)
 from .emit_locator import _LOCATOR_MESH_HELPERS, _MESH_QUERY_HELPERS
 from . import emit_geo_io
 from . import nd_lower
@@ -163,8 +163,10 @@ def _ik_scalar_inputs(spec):
         t = meta.get("type")
         if t in _IK_BESPOKE_SCALAR_TYPES and not meta.get("is_array"):
             out.append({"plug": plug, "ident": _ident(plug), "type": t,
-                        "enum_names": meta.get("enum_names") or [],
-                        "default_value": meta.get("default_value")})
+                        "enum_names":    meta.get("enum_names") or [],
+                        "default_value": meta.get("default_value"),
+                        "min_value":     meta.get("min_value"),
+                        "max_value": meta.get("max_value")})
     return out
 
 def _ik_mesh_inputs(spec):
@@ -210,7 +212,7 @@ def _ik_generic_local_hint(t):
         "color": "float[3] RGB", "float2": "float[2]",
         "quaternion": "double[4] {x,y,z,w}", "doubleAngle": "double, RADIANS",
         "doubleLinear": "double, CENTIMETRES",
-        "time": "double, seconds", "string": "MString; .asChar()",
+        "time": "double, frames (UI time unit)", "string": "MString; .asChar()",
         "matrix": "MMatrix; m(row,col)",
     }.get(t, t)
 
@@ -382,6 +384,8 @@ def _generate_iksolver_cpp(spec: dict, for_port: bool = False) -> str:
                 L.append('    %s = nAttr.create("%s", "%s", MFnNumericData::%s, %s);'
                          % (mem, plug, plug, _IK_CREATE_DATA[t], dv))
                 L.append("    nAttr.setStorable(true); nAttr.setKeyable(true);")
+                # recorded min/max, as the interpreted addAttr (none for bool)
+                L += _limit_lines("nAttr", s, t)
             L.append("    addAttribute(%s);" % mem)
         for m in meshes:
             mem = "a_" + m["ident"]

@@ -142,6 +142,28 @@ def _color_default(meta):
         return None
     return rgb if any(rgb) else None
 
+# The types the interpreted node hands ``addAttr -min/-max``
+# (``wrappers._mpy_node._NUMERIC_LIMIT_TYPES``). Never bool, enum or time.
+_LIMIT_TYPES = ("float", "double", "long", "doubleAngle", "doubleLinear")
+
+def _limit_lines(fn, meta, t):
+    """``setMin`` / ``setMax`` for a recorded ``min_value`` / ``max_value``.
+
+    The compiled twin of ``wrappers._mpy_node._apply_numeric_limits``: the same
+    types, ``int`` for a long, and the unit types in INTERNAL units (radians,
+    centimetres) -- MFnUnitAttribute's double overload takes internal units, as
+    ``addAttr -min`` does. Until 2026-10-02 no compiled node set either, so its
+    slider ran past the range the interpreted twin clamps to. Nothing recorded
+    -> nothing emitted, so such a node stays byte-identical."""
+    if t not in _LIMIT_TYPES:
+        return []
+    cast = int if t == "long" else float
+    L    = []
+    for key, setter in (("min_value", "setMin"), ("max_value", "setMax")):
+        if meta.get(key) is not None:
+            L.append("    %s.%s(%r);" % (fn, setter, cast(meta[key])))
+    return L
+
 def _create_lines(m):
     """C++ lines that create + flag one attribute in initialize()."""
     plug, mem, meta = m["plug"], m["member"], m["meta"]
@@ -174,6 +196,7 @@ def _create_lines(m):
                 "bool": _bool_default(meta)}[t]
         L.append("    %s = nAttr.create(%s, %s, MFnNumericData::%s, %s);"
                   % (mem, a, a, data, dflt))
+        L += _limit_lines("nAttr", meta, t)
         L += _flags("nAttr", is_out)
     elif t == "double3":
         # Build the 3 children explicitly so they're named <plug>X/Y/Z
@@ -275,6 +298,7 @@ def _create_lines(m):
                 if t in ("doubleAngle", "doubleLinear") else "0.0")
         L.append("    %s = uAttr.create(%s, %s, MFnUnitAttribute::%s, %s);"
                   % (mem, a, a, unit, dflt))
+        L += _limit_lines("uAttr", meta, t)
         L += _flags("uAttr", is_out)
     elif t == "matrix":
         L.append("    %s = mAttr.create(%s, %s, MFnMatrixAttribute::kDouble);"
@@ -795,13 +819,19 @@ def _image_read_hint_lines(ins):
     return lines
 
 
+# Every time WRITE names the UI unit. A bare MTime(x) is kFilm (24 fps,
+# MTime.h), while the interpreted writer is MTime(x, uiUnit()) and every read
+# here is asTime()/asMTime().value() -- which comes back IN the UI unit
+# (measured at ntsc: unit 8, value 10.0 at frame 10). So at 30 fps a compiled
+# time output written as frame 10 read back as 12.5.
 _OUT_DEFAULT = {
     "float": "%s.setFloat(0.0f);", "double": "%s.setDouble(0.0);",
     "long": "%s.setInt(0);",
     "bool": "%s.setBool(false);", "enum": "%s.setShort(0);",
     "matrix": "%s.setMMatrix(MMatrix());",
     "string": '%s.setString("");', "hex": '%s.setString("");',
-    "doubleAngle": "%s.setMAngle(MAngle(0.0));", "time": "%s.setMTime(MTime(0.0));",
+    "doubleAngle":  "%s.setMAngle(MAngle(0.0));",
+    "time":         "%s.setMTime(MTime(0.0, MTime::uiUnit()));",
     "doubleLinear": "%s.setMDistance(MDistance(0.0));",
     "double3":      "%s.set3Double(0.0, 0.0, 0.0);",
     "euler":        "%s.set3Double(0.0, 0.0, 0.0);",
@@ -827,6 +857,28 @@ def _write_lines(m):
     """Phase-1 stub: declare handle, write neutral default, mark clean."""
     return _out_handle_default(m) + [_out_setclean(m)]
 
+# Numeric compounds: a pull may name one of their CHILDREN (outColorR).
+_COMPOUND_TYPES = ("double3", "euler", "position", "color", "float2",
+                   "quaternion")
+
+def compute_open_lines(cls, outs):
+    """``compute()``'s opening line(s) for a node whose outputs are ``outs``.
+
+    A pull on a compound output's CHILD (outColorR, outputTranslateX) arrives
+    as that child, and MPlug's ``!=`` against an MObject compares attributes,
+    so the plug guard turned it away: the child read its default until the
+    parent itself was pulled (bug 7). Element plugs already passed -- their
+    attribute IS the array's. With a compound output the parameter is renamed
+    and ``plug`` rebound to the parent, so the guard and any ``plug`` a ported
+    body tests read unchanged. No compound output -> the old signature, byte
+    for byte."""
+    if any(o["meta"].get("type") in _COMPOUND_TYPES for o in outs):
+        return [
+            "MStatus %s::compute(const MPlug& plugIn, MDataBlock& data) {" % cls,
+            "    const MPlug plug = plugIn.isChild() ? plugIn.parent() : plugIn;",
+        ]
+    return ["MStatus %s::compute(const MPlug& plug, MDataBlock& data) {" % cls]
+
 def _setter_hint(m):
     """Human/AI hint: which setter call writes this output handle."""
     mem, t = m["member"], m["meta"]["type"]
@@ -838,7 +890,7 @@ def _setter_hint(m):
         "string": "h_%s.setString(<MString>)", "hex": "h_%s.setString(<MString>)",
         "doubleAngle":  "h_%s.setMAngle(MAngle(<radians>))",
         "doubleLinear": "h_%s.setMDistance(MDistance(<cm>))",
-        "time":         "h_%s.setMTime(MTime(<seconds>))",
+        "time":         "h_%s.setMTime(MTime(<frames>, MTime::uiUnit()))",
         "double3":      "h_%s.set3Double(<x>, <y>, <z>)",
         "euler":        "h_%s.set3Double(<rx>, <ry>, <rz>)  // radians",
         "position":     "h_%s.set3Double(<x>, <y>, <z>)  // centimetres",
@@ -891,7 +943,7 @@ def _elem_set_stmt(t, val):
     if t == "doubleLinear":
         return "eh.setMDistance(MDistance(%s));" % val
     if t == "time":
-        return "eh.setMTime(MTime(%s));" % val
+        return "eh.setMTime(MTime(%s, MTime::uiUnit()));" % val
     if t == "enum":
         return "eh.setShort(%s);" % val
     if t == "string":

@@ -200,8 +200,14 @@ class MPyNode(om.MPxNode):
         if _dirty_affects.api2_suspended_in_block(self, data_block):
             return
 
-        # Identify the OUTPUT being requested.
+        # Identify the OUTPUT being requested. A compound output's CHILD (outX
+        # of out) arrives as itself and its name is not in the output map, so
+        # the pull returned early and the child read its default until the
+        # parent was pulled. Resolve it to the parent first, as the compiled
+        # node does (emit_attr.compute_open_lines).
         try:
+            if plug.isChild:
+                plug = plug.parent()
             attr_obj = plug.attribute()
             attr_fn  = om.MFnAttribute(attr_obj)
             out_name = attr_fn.name
