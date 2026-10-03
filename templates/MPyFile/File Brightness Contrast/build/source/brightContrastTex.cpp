@@ -362,7 +362,7 @@ MStatus BrightContrastTex::initialize() {
     aUvCoord = nAttr.create("uvCoord", "uvCoord", aUvCoordX, aUvCoordY);
     nAttr.setStorable(true);
     nAttr.setKeyable(true);
-    aOutAlpha = nAttr.create("outAlpha", "outAlpha", MFnNumericData::kFloat, 0.0);
+    aOutAlpha = nAttr.create("outAlpha", "outAlpha", MFnNumericData::kFloat, 1.0);
     nAttr.setWritable(false);
     nAttr.setStorable(false);
     aOutColor = nAttr.createColor("outColor", "outColor");
