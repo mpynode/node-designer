@@ -33,67 +33,102 @@ MPyNode.build(name="myNode", setup=True)  # create + seed methods + run setup()
 ## 2. Adding attributes
 
 ```python
-n.add_input_attr("amp", "double", min_value=0.0, max_value=10.0, default_value=1.0)
+n.add_input_attr("amp", "float64", min_value=0.0, max_value=10.0, default_value=1.0)
 n.add_input_attr("mode", "enum", enum_names=["off", "add", "mult"])
 n.add_input_attr("points", "position", is_array=True)            # cm, like translate
 n.add_input_attr("table", "double", is_array=True, packed=True)  # bulk data
-n.add_output_attr("result", "double3")
+n.add_output_attr("result", "vector")                            # stored as double3
 n.add_output_attr("outs", "double", is_array=True)
 ```
 
+Either name works: the dropdown's (`float64`, `vector`) or the stored one
+(`double`, `double3`). See **Two names per type** below.
+
 ### Every `attr_type` (21)
 
-In `_common/attr_types.py` order, which is also the Add-Attribute dialog's.
+In the Add-Attribute dropdown's order and groups (`_common/attr_types.py`).
+**Dropdown** is the name the dialog shows, **Description** its right column,
+**Stored** the name files, scene maps and the get-APIs carry.
 
-| `attr_type` | Maya plug | `self.X` reads as | `is_array=True` reads as | Units |
-|---|---|---|---|---|
-| `double` | `at="double"` | `float` | `ndarray (n,)` float64 | — |
-| `float` | `at="float"` (32-bit) | `float` | `ndarray (n,)` float64 | — |
-| `long` | `at="long"` | `int` | `ndarray (n,)` int64 | — |
-| `bool` | `at="bool"` | `bool` | `ndarray (n,)` bool | — |
-| `doubleAngle` | `at="doubleAngle"` | `float` | `ndarray (n,)` float64 | RADIANS |
-| `doubleLinear` | `at="doubleLinear"` | `float` | `ndarray (n,)` float64 | CM |
-| `double3` | `at="double3"`, `double` kids X/Y/Z | `ndarray (3,)` float64 | `ndarray (n, 3)` | — |
-| `euler` | `at="double3"`, `doubleAngle` kids X/Y/Z | `ndarray (3,)` float64 | `ndarray (n, 3)` | RADIANS |
-| `position` | `at="double3"`, `doubleLinear` kids X/Y/Z | `ndarray (3,)` float64 | `ndarray (n, 3)` | CM |
-| `matrix` | `at="matrix"` | `MatrixView`, numpy-transparent 4x4; identity until set | `MatrixArrayView` → `(n, 4, 4)` | — (Maya's own matrices hold CM) |
-| `quaternion` | `at="double4"`, `double` kids X/Y/Z/W, W defaults to 1 | `ndarray (4,)` X/Y/Z/W; `[0,0,0,1]` until set | `ndarray (n, 4)` | — |
-| `color` | `at="float3"`, `usedAsColor`, `float` kids R/G/B | `ndarray (3,)` float64 R/G/B | `ndarray (n, 3)` | — |
-| `float2` | `at="float2"`, `float` kids U/V | `ndarray (2,)` float64 U/V | `ndarray (n, 2)` | — |
-| `string` | `dt="string"` | `str` | `list[str]` | — |
-| `enum` | `at="enum"` | `EnumInt` (int; `.name()` → label) | `ndarray (n,)` int64 | — |
-| `hex` | `dt="string"` | `str` (hex-decoded text) | `list[str]` | — |
-| `python` | `dt="string"` | any unpickled object (trust-gated) | `list` | — |
-| `mesh` | `dt="mesh"` | `Mesh` (any `MFnMesh` method) or `None` | `list` | — |
-| `nurbsCurve` | `dt="nurbsCurve"` | `NurbsCurve` (any `MFnNurbsCurve` method) or `None` | `list` | — |
-| `nurbsSurface` | `dt="nurbsSurface"` | `NurbsSurface` (any `MFnNurbsSurface` method) or `None` | `list` | — |
-| `time` | `at="time"` | `float`, the FRAME | `ndarray (n,)` float64 | UI time unit |
+| Dropdown | Description | Stored | Maya plug | `self.X` reads as | `is_array=True` reads as | Units |
+|---|---|---|---|---|---|---|
+| **Numbers** | | | | | | |
+| `float64` | double (64-bit) | `double` | `at="double"` | `float` | `ndarray (n,)` float64 | — |
+| `int` | long | `long` | `at="long"` | `int` | `ndarray (n,)` int64 | — |
+| `bool` | bool (on / off) | `bool` | `at="bool"` | `bool` | `ndarray (n,)` bool | — |
+| `angle` | doubleAngle (radians) | `doubleAngle` | `at="doubleAngle"` | `float` | `ndarray (n,)` float64 | RADIANS |
+| `distance` | doubleLinear (cm) | `doubleLinear` | `at="doubleLinear"` | `float` | `ndarray (n,)` float64 | CM |
+| `float32` | float (32-bit) | `float` | `at="float"` | `float` | `ndarray (n,)` float64 | — |
+| **Vectors, compounds, matrix** | | | | | | |
+| `position` | double3 of doubleLinear (cm) | `position` | `at="double3"`, `doubleLinear` kids X/Y/Z | `ndarray (3,)` float64 | `ndarray (n, 3)` | CM |
+| `vector` | double3 (no unit) | `double3` | `at="double3"`, `double` kids X/Y/Z | `ndarray (3,)` float64 | `ndarray (n, 3)` | — |
+| `euler` | double3 of doubleAngle (radians) | `euler` | `at="double3"`, `doubleAngle` kids X/Y/Z | `ndarray (3,)` float64 | `ndarray (n, 3)` | RADIANS |
+| `quaternion` | double4 (X/Y/Z/W) | `quaternion` | `at="double4"`, `double` kids X/Y/Z/W, W defaults to 1 | `ndarray (4,)` X/Y/Z/W; `[0,0,0,1]` until set | `ndarray (n, 4)` | — |
+| `matrix` | matrix (4x4 doubles) | `matrix` | `at="matrix"` | `MatrixView`, numpy-transparent 4x4; identity until set | `MatrixArrayView` → `(n, 4, 4)` | — (Maya's own matrices hold CM) |
+| `color` | float3 (colour) | `color` | `at="float3"`, `usedAsColor`, `float` kids R/G/B | `ndarray (3,)` float64 R/G/B | `ndarray (n, 3)` | — |
+| `uv` | float2 (U/V) | `float2` | `at="float2"`, `float` kids U/V | `ndarray (2,)` float64 U/V | `ndarray (n, 2)` | — |
+| **Text and data** | | | | | | |
+| `string` | string (text) | `string` | `dt="string"` | `str` | `list[str]` | — |
+| `enum` | enum (named choices, default False/True) | `enum` | `at="enum"` | `EnumInt` (int; `.name()` → label) | `ndarray (n,)` int64 | — |
+| `hex` | string (stored as UTF-8 hex) | `hex` | `dt="string"` | `str` (hex-decoded text) | `list[str]` | — |
+| `pickle` | string (pickled data, C++ unsupported) | `pickle` | `dt="string"` | any unpickled object (trust-gated) | `list` | — |
+| **Geometry** | | | | | | |
+| `mesh` | mesh (code gets a Mesh object) | `mesh` | `dt="mesh"` | `Mesh` (any `MFnMesh` method) or `None` | `list` | — |
+| `nurbsCurve` | nurbsCurve (code gets a NurbsCurve object) | `nurbsCurve` | `dt="nurbsCurve"` | `NurbsCurve` (any `MFnNurbsCurve` method) or `None` | `list` | — |
+| `nurbsSurface` | nurbsSurface (code gets a NurbsSurface object) | `nurbsSurface` | `dt="nurbsSurface"` | `NurbsSurface` (any `MFnNurbsSurface` method) or `None` | `list` | — |
+| **Time** | | | | | | |
+| `time` | time (frames) | `time` | `at="time"` | `float`, the FRAME | `ndarray (n,)` float64 | UI time unit |
 
-mPyFile's Compute reads `float2` as a list and `hex` / `python` undecoded; see
-`docs/node_types/_input_type_contract.md`.
+mPyFile's Compute reads `uv` (`float2`) as a list and `hex` / `pickle`
+undecoded; see `docs/node_types/_input_type_contract.md`.
 
-The Add-Attribute dialog offers all 21 and pre-selects `double` until you pick
-another type; it then remembers the last pick for the session.
+**The dialog.** The Type dropdown lists all 21 in the five groups above, a
+separator line between groups, drawn as two columns: dropdown name |
+description. Closed, it shows the pick on one line, `<name> - <description>`.
+It pre-selects `float64` (`float64 - double (64-bit)`) until you pick another
+type, then remembers the last pick for the session. Whatever is picked, the
+node gets the stored name (`vector` adds a `double3`). The Attributes list
+shows the dropdown name (`pos: vector`), with `stored as double3` in the row's
+tooltip.
 
-**Which one.** `double` for a number; `float` only to match a 32-bit plug.
-`position` for anything wired to or from `translate`, or a point, when the
-value is in cm; a value computed from a unitless input (e.g. mPyConstraint's
-presets) stays `double3`. `euler` for `rotate`; `double3` for a unitless
-direction or scale. `doubleLinear` / `doubleAngle` for one channel of those.
+**Which one.** `float64` (`double`) for a number; `float32` (`float`) only to
+match a 32-bit plug. `position` for anything wired to or from `translate`, or
+a point, when the value is in cm; a value computed from a unitless input (e.g.
+mPyConstraint's presets) stays `vector` (`double3`). `euler` for `rotate`;
+`vector` for a unitless direction or scale. `distance` (`doubleLinear`) /
+`angle` (`doubleAngle`) for one channel of those.
 
 **Units.** The unit types are Maya's INTERNAL units whatever the scene's UI
 units: the code reads and writes CM and RADIANS. `min_value` / `max_value` /
-`default_value` on a `doubleLinear` / `doubleAngle` (and the dialog's Min /
-Max / Default for them, labelled `(cm)` / `(radians)`) are typed in them;
+`default_value` on a `distance` / `angle` (and the dialog's Min / Max /
+Default for them, labelled `(cm)` / `(radians)`) are typed in them;
 `position` and `euler` take none. A `position` wires to `translate` with no
-`unitConversion` node; a `double3` wired in a non-cm scene gets one and reads
+`unitConversion` node; a `vector` wired in a non-cm scene gets one and reads
 UI units (one wired in a cm scene has none and keeps reading cm).
 
-**Retired names** are rejected, with the replacement named: `int` → `long`,
-`vector` → `double3` (or `position`), `angle` → `doubleAngle`, `double4` →
-`quaternion`, `float3` → `color`. v1 scenes map their old names on upgrade; a
-v2 scene or `.mpn` saved before the rename that stores an old name fails with
-the same error.
+**Two names per type.** Each type stores ONE name: Maya's attribute type where
+that alone describes the plug, otherwise our own word (`position`, `euler`,
+`quaternion`, `color`, `hex`, `pickle`). Its dropdown name where that differs,
+and Maya's own `double4` / `float3`, are aliases: accepted by
+`add_input_attr` / `add_output_attr`, in an `.mpn` and by the assistant, and
+translated to the stored name before anything is created.
+
+| Alias | `float64` | `int` | `angle` | `distance` | `float32` | `vector` | `uv` | `double4` | `float3` |
+|---|---|---|---|---|---|---|---|---|---|
+| **Stored** | `double` | `long` | `doubleAngle` | `doubleLinear` | `float` | `double3` | `float2` | `quaternion` | `color` |
+
+- Stored name: `.mpn` and `.py` bake files, scene attr maps,
+  `get_input_attr_map()` / `get_output_attr_map()`, `list_valid_input_types()`
+  and errors. Dropdown name: the dialog, the Attributes list and the
+  assistant's chat line (`add_input pos (vector)`).
+- `python` is renamed `pickle` (stored and dropdown). New code or an `.mpn`
+  naming `python` is rejected: `attr_type 'python' was renamed: use 'pickle'`.
+  A scene that stored `python` keeps computing; its map is translated on read.
+- Scenes that stored `int` / `vector` / `angle` (the stored names before the
+  2026-10-02 rename) load again. Their maps keep the old names through a
+  re-save, until an attribute edit on that side rewrites its map (inputs and
+  outputs separately); harmless, since every reader translates. v1 scenes map
+  through the same table on upgrade.
 
 ### `add_input_attr` kwargs
 
@@ -103,7 +138,7 @@ the same error.
 | `enum_names=[...]` | Required for `enum`; falls back to `['False','True']`. |
 | `min_value` / `max_value` / `default_value` | Scalar numerics; `default_value` also for `enum` (start index) and `bool`. |
 | `sparse=True` | Compact, connected-only read. Default `False` = DENSE read of length `max_logical+1`, gaps filled with the default, so `self.X[i]` == logical index `i`. |
-| `packed=True` | `double`/`long` arrays only: ONE typed-array plug. 655,928 values = 41.5 min as a multi vs 0.017 s packed. Excludes `sparse` and per-element connections; cannot be toggled later. |
+| `packed=True` | `float64` (`double`) / `int` (`long`) arrays only: ONE typed-array plug. 655,928 values = 41.5 min as a multi vs 0.017 s packed. Excludes `sparse` and per-element connections; cannot be toggled later. |
 | `auto_connect_time=False` | Suppress the automatic `time1.outTime` connect on scalar `time` inputs. |
 
 Names: valid Python identifier, no dashes, no leading digit, not a keyword, not
@@ -168,23 +203,25 @@ self.sum     = float(self.a) + float(self.b)
 self.product = np.asarray(self.offset) * float(self.amp)
 ```
 
+Dropdown name first, stored name in brackets where it differs:
+
 | Output type | Assign | Written as |
 |---|---|---|
-| `double` / `float` / `long` / `bool` / `enum` | numeric | `float()` / `int()` / `bool()` |
-| `doubleAngle` / `doubleLinear` | numeric, RADIANS / CM | `setDouble` |
-| `double3` / `euler` / `position` | `[x,y,z]`, tuple, or `(3,)` ndarray | `np.asarray(..., float64).flatten()` → `set3Double` |
-| `color` / `float2` | `[r,g,b]` / `[u,v]` | `set3Float` / `set2Float` |
+| `float64` (`double`) / `int` (`long`) / `bool` / `float32` (`float`) / `enum` | numeric | `float()` / `int()` / `bool()` |
+| `angle` (`doubleAngle`) / `distance` (`doubleLinear`) | numeric, RADIANS / CM | `setDouble` |
+| `position` / `vector` (`double3`) / `euler` | `[x,y,z]`, tuple, or `(3,)` ndarray | `np.asarray(..., float64).flatten()` → `set3Double` |
 | `quaternion` | `[x,y,z,w]` | `set4Double` on the double4 |
 | `matrix` | `MMatrix`, `MTransformationMatrix`, flat-16, `(4,4)`, `(3,3)` | coerced to 4x4 → `setMMatrix` |
+| `color` / `uv` (`float2`) | `[r,g,b]` / `[u,v]` | `set3Float` / `set2Float` |
+| `string` / `hex` / `pickle` | `str` / `str` / any picklable | as-is / UTF-8 hex / pickle + base64 |
 | `time` | a frame | `MTime` in the UI time unit |
-| `string` / `hex` / `python` | `str` / `str` / any picklable | as-is / UTF-8 hex / pickle + base64 |
-| `double3` array | list of `(3,)` items | array of double3 plugs |
+| `vector` (`double3`) array | list of `(3,)` items | array of double3 plugs |
 
 These are the API 2.0 nodes' writes. The API 1.0 nodes write by plug kind:
-`hex` / `python` outputs get plain `str(value)`; on mPyDeformer /
+`hex` / `pickle` outputs get plain `str(value)`; on mPyDeformer /
 mPyBlendShape / mPySkinCluster a `time` output is taken as SECONDS; on
-mPyTransform / mPyIkSolver (`setAttr`) a `doubleAngle` / `euler` lands in UI
-units, unconverted. See `docs/node_types/_input_type_contract.md`.
+mPyTransform / mPyIkSolver (`setAttr`) an `angle` (`doubleAngle`) / `euler`
+lands in UI units, unconverted. See `docs/node_types/_input_type_contract.md`.
 
 ## 5. Stored variables
 
@@ -324,7 +361,7 @@ the AI Assistant.
 | Menu path | Does |
 |---|---|
 | `Node ▸ New Node ▸ <type>` | stays open — create several in a row (right-click a type for create modes) |
-| `Node ▸ Add Attribute…` | persistent dialog: `Add` clears + refocuses, `Done` closes |
+| `Node ▸ Add Attribute…` | persistent dialog: `Add` clears + refocuses, `Done` closes; the Type dropdown is grouped, `float64` first (section 2) |
 | `Node ▸ Duplicate` / `Duplicate + Inputs` | the latter re-creates input connections |
 | `Node ▸ Save Node` (F5) / `Save All` | commit editor buffers to the node |
 | `Node ▸ Compile to Native Plugin…` | the Compile tab (Workspace · Templates · **Compile**); `Add compiled nodes…` opens the compiled pane over the node table |
@@ -415,7 +452,7 @@ res = porter.port_from_node("myNode", "out")   # one node -> one plug-in
 - The compute is pure C++ on BOTH paths — there is no interpreter fallback.
 - A gap the AI cannot honestly fill is marked `ND_PORT_INCOMPLETE`, never invented.
 - Ported `.cpp` is cached by SPEC hash, so an emitter-only change is invisible to it — bump `PORTER_RECIPE_VERSION` and rebuild rather than editing the freshness test.
-- Network / file / `maya.cmds` / GUI use is reported as **unported** — a warning plus AI-porter context, NOT a gate. The only BLOCKERS are `python` and `message` attr types.
+- Network / file / `maya.cmds` / GUI use is reported as **unported** — a warning plus AI-porter context, NOT a gate. The only BLOCKERS are `pickle` and `message` attr types (and the retired `python`, with the rename hint).
 - Needs a C++ toolchain; a fully deterministic or fully cached build needs no AI provider.
 
 ### Bundling nodes that are already compiled
@@ -466,7 +503,8 @@ a compiled template straight into the tab, one after another.
 | Output never updates when an upstream node moves | Auto-dirty callbacks failed to install — check the Output Window for `[auto_dirty]` errors at plug-in load. |
 | Mesh comes out undeformed | You wrote `self.deformed` / `self.points`. Deformers commit ONLY via `self.outputGeometry[i].setPoints(arr)`. |
 | A value vanishes between evals | It was a bare local or a temporary var. `n.set_variable_persistent(name, True)`. |
-| `python` input reads `None` | Untrusted scene — pickle is trust-gated. Headless: `MPYNODE_TRUST_PICKLE=1`. |
+| `pickle` input reads `None` | Untrusted scene — pickle is trust-gated. Headless: `MPYNODE_TRUST_PICKLE=1`. |
+| `attr_type 'python' was renamed: use 'pickle'` | The pickled-object type is `pickle` now. Rename it in the code or the `.mpn`; a saved scene that stored `python` still computes. |
 | `self.X[i]` doesn't line up with the plug index | The input is `sparse=True`; the default dense read pads gaps with the attribute default. |
 | Writing a big table takes minutes | A numeric multi is one `setAttr` per element. Re-add the attribute with `packed=True`. |
 | Locator user OUTPUT never computes | `MPxLocatorNode` doesn't dispatch `compute()` for runtime outputs — chain a downstream `mPyNode`. |

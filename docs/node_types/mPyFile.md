@@ -85,9 +85,9 @@ User-added inputs are supported too -- call `wrapper.add_input_attr(...)`
 exactly like on `mPyNode`. They appear in the Init / Compute / Viewport
 namespace as `self.<name>` alongside the presets. Compute reads them off the
 datablock (safe on the swatch / Arnold worker thread), and three types arrive
-differently there than on `mPyNode`: a `float2` is a Python list `[u, v]` (an
-array is a list of lists), and a `hex` or `python` input is the raw stored
-string, not decoded. See
+differently there than on `mPyNode`: a `uv` (`float2`) is a Python list
+`[u, v]` (an array is a list of lists), and a `hex` or `pickle` input is the
+raw stored string, not decoded. See
 [`_input_type_contract.md`](_input_type_contract.md#mpyfile).
 
 ---

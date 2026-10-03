@@ -80,17 +80,24 @@ python tools/migrate_attr_names.py            # dry run: what would change, per 
 python tools/migrate_attr_names.py --apply    # rewrite in place
 ```
 
-`migrate_attr_names.py` renames the retired `attr_type` names (`int` ->
-`long`, `vector` -> `double3`, `angle` -> `doubleAngle`) in the repo's own
-data: every git-tracked `template.mpn`, `.ma` scene, template build manifest,
-spec fixture and generated `verify_in_maya.py`. Each rewrite is a token
-replacement, re-parsed and checked so the type value is the only change. Plain
-Python 3, no Maya.
+`migrate_attr_names.py` translates every `attr_type` that is not a stored
+name to its stored name, in the repo's own data: the aliases
+(`attr_types.ALIASES`: `int` -> `long`, `vector` -> `double3`, `angle` ->
+`doubleAngle`, `float64` -> `double` ...) and the retired names
+(`attr_types.RETIRED`: `python` -> `pickle`). It reads that map from
+`attr_types.py` by path, so it follows the table. It covers every git-tracked
+`template.mpn`, `.ma` scene, template build manifest, spec fixture and
+generated `verify_in_maya.py`; in a verify script's generated code only the
+old stored names (`int`, `vector`, `angle`, `python`) are renamed as bare
+literals, never a dict key (an attr name) or a keyword argument's value
+(`initialize(name="python")`). Each rewrite is a token replacement, re-parsed
+and checked so the type value is the only change. Plain Python 3, no Maya.
 
-Repo-only: it never touches a scene or `.mpn` outside the repo. One of those
-that still stores an old name is rejected with the replacement named; v1
-scenes map their old names on upgrade. Idempotent: a dry run after `--apply`
-reports 0.
+Repo-only: it never touches a scene or `.mpn` outside the repo. Those load as
+they are, aliases included, and a scene that stored `python` still computes,
+its map translated on read. The one exception is an `.mpn` naming `python`:
+it is rejected with the replacement named, so rename it to `pickle`.
+Idempotent: a dry run after `--apply` reports 0.
 
 ## Attended probes and gates
 

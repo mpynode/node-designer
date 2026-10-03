@@ -2,9 +2,9 @@
 
 Every list of attr types is derived from :data:`ATTR_TYPES`:
 
-* the wrapper's ``cmds.addAttr`` kwargs and its accepted names
+* the wrapper's ``cmds.addAttr`` kwargs and its stored names
   (``wrappers._mpy_node._ADD_ATTR_KIND`` / ``VALID_INPUT_TYPES`` /
-  ``VALID_OUTPUT_TYPES``);
+  ``VALID_OUTPUT_TYPES``); aliases go through :func:`canonical` first;
 * the Add Attribute dialog's families and labels
   (``ui.dialogs.add_attr._ATTR_TYPE_GROUPS`` / ``ALL_ATTR_TYPES``);
 * the assistant's tool enum, which takes every stored name and every alias

@@ -101,23 +101,31 @@ Three things worth knowing before writing any code:
 ## What converts mechanically
 
 **Attribute types map by name, one table.** v1's 15 types are a subset of the
-old v2 names; three have since been renamed to Maya's, and v2 rejects the old
-spellings:
+old v2 names. Three now store Maya's name and keep the old one as the Add
+Attribute dropdown's alias (`int`, `vector`, `angle`); one is retired
+(`python`, renamed `pickle`). The v2 line gives the stored names, the
+dropdown line the names the Add Attribute dropdown shows for them:
 
 ```
-v1: int float bool enum vector matrix color time angle euler
-    string mesh nurbsCurve nurbsSurface python
-v2: long float bool enum double3 matrix color time doubleAngle euler
-    string mesh nurbsCurve nurbsSurface python
-    plus double doubleLinear position quaternion float2 hex (21)
+v1:       int float bool enum vector matrix color time angle euler
+          string mesh nurbsCurve nurbsSurface python
+v2:       long float bool enum double3 matrix color time doubleAngle euler
+          string mesh nurbsCurve nurbsSurface pickle
+          plus double doubleLinear position quaternion float2 hex (21)
+dropdown: int float32 bool enum vector matrix color time angle euler
+          string mesh nurbsCurve nurbsSurface pickle
+          plus float64 distance position quaternion uv hex
 ```
 
-The map is `attr_types.RETIRED` (`int` -> `long`, `vector` -> `double3`,
-`angle` -> `doubleAngle`), applied by `attr_types.upgrade_legacy_name` on the
-way in; it is the only place a retired name is still read. So `_inputAttrs`
-and `_outputAttrs` feed `add_input_attr` / `add_output_attr` directly, names
-unchanged and types mapped. Stored variables likewise: `_storedVarsData`
-is already `{name: value}`, which is what `set_variable(name, value,
+The map is `attr_types.ALIASES` then `attr_types.RETIRED` (`int` -> `long`,
+`vector` -> `double3`, `angle` -> `doubleAngle`, `python` -> `pickle`),
+applied by `attr_types.upgrade_legacy_name` on the way in, so the registry
+stores today's names. v2 code and `.mpn` files would take the three aliases
+anyway, but reject `python`; only a scene's attr map (`decode_attr_map`) and
+this upgrade still read it. So `_inputAttrs` and `_outputAttrs` feed
+`add_input_attr` / `add_output_attr` directly, names unchanged and types
+mapped. Stored variables likewise: `_storedVarsData` is already
+`{name: value}`, which is what `set_variable(name, value,
 persistent=True)` wants.
 
 That is most of a node, and it is close to free.
@@ -166,7 +174,7 @@ which merely costs per-evaluation work rather than breaking the node.
 | **Enum field names are absent** | v1 stores `['enum']` and nothing else — no labels. The spine example has **5 enum inputs** and not one has field names | Real collision: v2 now *rejects* an enum with no `enum_names`. Synthesise `["0", "1", ...]` up to the highest index the expression compares against, and report every one so the user can rename them |
 | **`maya.api.OpenMaya` in the body** | v1 expressions routinely build `om.MMatrix`/`om.MVector`. v2 asks that outputs be written as numpy/native and warns that constructing api objects for a plug write is almost always wrong | Convert as-is, flag it. It will still run; it just will not lower to C++ |
 | **Outputs written via api objects** | Same root cause, but this one can actually be wrong rather than merely slow | Flag loudly in the report |
-| **`python` type plugs** | Both sides have the type, but v1 pickles arbitrary objects; unpickling executes code | Refuse by default; honour the existing `MPYNODE_TRUST_PICKLE` / trust-prompt path rather than inventing a second policy |
+| **`python` type plugs** | Both sides have the type (v2 calls it `pickle`), but v1 pickles arbitrary objects; unpickling executes code | Refuse by default; honour the existing `MPYNODE_TRUST_PICKLE` / trust-prompt path rather than inventing a second policy |
 | **Silently-empty v1 data** | The bare `except: pass` above | Treat empty attrs on a node with a non-empty expression as an error, not an empty node |
 
 ## Delivery

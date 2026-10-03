@@ -128,10 +128,11 @@ permutation reproduces that exactly where the plain `std::sort` in `nd::unique`
 would not. `return_inverse` / `return_counts` still reject.
 
 ### Rejected → AI porter (still pure C++)
-`np.linalg.solve`; deferred `argwhere`; I/O `nd_lower` cannot lift (`python`
-either way, a `string`/`hex` array output, geometry array inputs outside the
-plain `MPxNode` path, a geometry-output shape `lower_geo_io_compute` does not
-recognise). `np.linalg.svd` **without** tuple-unpack and `np.einsum`
+`np.linalg.solve`; deferred `argwhere`; I/O `nd_lower` cannot lift (a
+`string`/`hex` array output, geometry array inputs outside the plain `MPxNode`
+path, a geometry-output shape `lower_geo_io_compute` does not recognise; a
+`pickle` attr never gets this far: `spec_model._check` excludes it from
+compilation). `np.linalg.svd` **without** tuple-unpack and `np.einsum`
 **without** an explicit `->` are rejected with a message pointing at the required
 form.
 
@@ -164,6 +165,12 @@ Supported I/O, single and multi: numeric scalars
 write). A single geometry input binds through `_is_geo_input`; a geometry
 array input only on the plain `MPxNode` path. Anything else rejects to the
 porter with zero regression.
+
+These are stored names, the only ones a spec carries: `normalize_attr` and
+`spec_model._check` translate an alias first. The Add Attribute dropdown
+calls `double` / `long` / `doubleAngle` / `doubleLinear` / `float` /
+`double3` / `float2` by their artist names `float64` / `int` / `angle` /
+`distance` / `float32` / `vector` / `uv`.
 
 ## Extending the transpiler
 

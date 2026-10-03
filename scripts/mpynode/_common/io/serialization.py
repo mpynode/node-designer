@@ -53,9 +53,9 @@ def decode_attr_map(plug_value: str) -> dict[str, dict[str, Any]]:
     """Parse a JSON attr-map string. Returns ``{}`` for empty/None.
 
     An ``attr_type`` that is an alias (``attr_types.ALIASES``) comes back as
-    its stored name, so a scene saved before 2026-10-01 -- whose maps carry
-    ``int`` / ``vector`` / ``angle`` -- reads like a new one, and every reader
-    of the map sees one vocabulary. A retired stored name
+    its stored name, so a scene saved before the 2026-10-02 rename -- whose
+    maps carry ``int`` / ``vector`` / ``angle`` -- reads like a new one, and
+    every reader of the map sees one vocabulary. A retired stored name
     (``attr_types.RETIRED``: ``python``, now ``pickle``) is translated too,
     but only here: a scene is data already written, so its node keeps
     computing, while new code and ``.mpn`` files that name it are rejected.

@@ -239,83 +239,149 @@ d.delete_input_attr(name)
 d.delete_output_attr(name)
 d.rename_input_attr(old, new)
 d.rename_output_attr(old, new)
-d.get_input_attr_map()      # {name: type, ...}
+d.get_input_attr_map()      # {name: {"attr_type": <stored name>, ...}, ...}
 d.get_output_attr_map()
-d.list_valid_input_types()  # list of supported attr_type strings
+d.list_valid_input_types()  # the 21 stored attr_type names
 ```
 
 ### Supported `attr_type` values
 
 21 types total, declared once in `_common/attr_types.py`. All support
-`is_array=True` for multi plugs. The Add Attribute dialog offers all 21, in
-this order, and pre-selects `double` until you pick another type; it then
-remembers the last pick for the session.
+`is_array=True` for multi plugs. Each type has two names: the one the Add
+Attribute dropdown shows, and the stored one, Maya's where that alone
+describes the plug. `attr_type` takes either (see
+[Two names per type](#two-names-per-type)).
 
-| `attr_type` | Maya plug | Python value the expression sees |
-|---|---|---|
-| `"double"` | `double` (the default; Maya's own "Float") | `float` |
-| `"float"` | `float` (32-bit) | `float` |
-| `"long"` | `long` | `int` |
-| `"bool"` | `bool` | `bool` |
-| `"doubleAngle"` | `doubleAngle` | `float` (radians) |
-| `"doubleLinear"` | `doubleLinear` (a distance, like `translateX`) | `float` (cm) |
-| `"double3"` | `double3` of `double` | `np.ndarray(3,)` float64 (no unit) |
-| `"euler"` | `double3` of `doubleAngle`, like `rotate` | `np.ndarray(3,)` float64 (radians) |
-| `"position"` | `double3` of `doubleLinear`, like `translate` | `np.ndarray(3,)` float64 (cm) |
-| `"matrix"` | `matrix` (`-at`) | `MatrixView` — numpy-transparent → `(4, 4)`; `np.asarray(m)`, `m @ x`, `.asNumpy()` / `.translation()` / …; identity until set |
-| `"quaternion"` | `double4`, children X/Y/Z/W | `np.ndarray(4,)` float64 (X/Y/Z/W; W defaults to 1, so `[0, 0, 0, 1]` until set) |
-| `"color"` | `float3`, `usedAsColor` | `np.ndarray(3,)` float64 (R/G/B; binds to shader color plugs) |
-| `"float2"` | `float2`, children U/V | `np.ndarray(2,)` float64 (U/V) |
-| `"string"` | `string` | `str` |
-| `"enum"` | `enum` | `int` (`EnumInt`; `.name()` gives the field label) |
-| `"hex"` | `string` | `str` (hex-decoded text) |
-| `"python"` | `string` | arbitrary unpickled object (trust-gated; `None` in an untrusted scene) |
-| `"mesh"` / `"nurbsCurve"` / `"nurbsSurface"` | the typed geometry plug | `Mesh` / `NurbsCurve` / `NurbsSurface`, which pass any `MFnMesh` / `MFnNurbsCurve` / `MFnNurbsSurface` method through (or `None` if unconnected) |
-| `"time"` | `time` | `float` (the current frame, in the UI time unit) |
+The table is in the dropdown's order and groups. **Dropdown** and
+**Description** are the dropdown's two columns, word for word; **Stored** is
+what files, scene attr maps and the get-APIs carry.
+
+| Dropdown | Description | Stored | Maya plug | Python value the expression sees |
+|---|---|---|---|---|
+| **Numbers** | | | | |
+| `"float64"` | double (64-bit) | `"double"` | `double` (the dialog's default; Maya's own "Float") | `float` |
+| `"int"` | long | `"long"` | `long` | `int` |
+| `"bool"` | bool (on / off) | `"bool"` | `bool` | `bool` |
+| `"angle"` | doubleAngle (radians) | `"doubleAngle"` | `doubleAngle` | `float` (radians) |
+| `"distance"` | doubleLinear (cm) | `"doubleLinear"` | `doubleLinear` (a distance, like `translateX`) | `float` (cm) |
+| `"float32"` | float (32-bit) | `"float"` | `float` (32-bit) | `float` |
+| **Vectors, compounds, matrix** | | | | |
+| `"position"` | double3 of doubleLinear (cm) | `"position"` | `double3` of `doubleLinear`, like `translate` | `np.ndarray(3,)` float64 (cm) |
+| `"vector"` | double3 (no unit) | `"double3"` | `double3` of `double` | `np.ndarray(3,)` float64 (no unit) |
+| `"euler"` | double3 of doubleAngle (radians) | `"euler"` | `double3` of `doubleAngle`, like `rotate` | `np.ndarray(3,)` float64 (radians) |
+| `"quaternion"` | double4 (X/Y/Z/W) | `"quaternion"` | `double4`, children X/Y/Z/W | `np.ndarray(4,)` float64 (X/Y/Z/W; W defaults to 1, so `[0, 0, 0, 1]` until set) |
+| `"matrix"` | matrix (4x4 doubles) | `"matrix"` | `matrix` (`-at`) | `MatrixView` — numpy-transparent → `(4, 4)`; `np.asarray(m)`, `m @ x`, `.asNumpy()` / `.translation()` / …; identity until set |
+| `"color"` | float3 (colour) | `"color"` | `float3`, `usedAsColor` | `np.ndarray(3,)` float64 (R/G/B; binds to shader color plugs) |
+| `"uv"` | float2 (U/V) | `"float2"` | `float2`, children U/V | `np.ndarray(2,)` float64 (U/V) |
+| **Text and data** | | | | |
+| `"string"` | string (text) | `"string"` | `string` | `str` |
+| `"enum"` | enum (named choices, default False/True) | `"enum"` | `enum` | `int` (`EnumInt`; `.name()` gives the field label) |
+| `"hex"` | string (stored as UTF-8 hex) | `"hex"` | `string` | `str` (hex-decoded text) |
+| `"pickle"` | string (pickled data, C++ unsupported) | `"pickle"` | `string` | arbitrary unpickled object (trust-gated; `None` in an untrusted scene) |
+| **Geometry** | | | | |
+| `"mesh"` | mesh (code gets a Mesh object) | `"mesh"` | the typed geometry plug | `Mesh`, which passes any `MFnMesh` method through (or `None` if unconnected) |
+| `"nurbsCurve"` | nurbsCurve (code gets a NurbsCurve object) | `"nurbsCurve"` | the typed geometry plug | `NurbsCurve`, which passes any `MFnNurbsCurve` method through (or `None` if unconnected) |
+| `"nurbsSurface"` | nurbsSurface (code gets a NurbsSurface object) | `"nurbsSurface"` | the typed geometry plug | `NurbsSurface`, which passes any `MFnNurbsSurface` method through (or `None` if unconnected) |
+| **Time** | | | | |
+| `"time"` | time (frames) | `"time"` | `time` | `float` (the current frame, in the UI time unit) |
 
 `is_array=True` produces a Maya multi-plug:
-* Numeric / 3-vector / color / float2 / quaternion multis arrive as a stacked
-  `np.ndarray` (double3 / euler / position / color multi → `(n, 3)`; float2
+* Numeric / 3-vector / color / uv / quaternion multis arrive as a stacked
+  `np.ndarray` (position / vector / euler / color multi → `(n, 3)`; uv
   multi → `(n, 2)`; quaternion multi → `(n, 4)`).
 * A matrix multi arrives as a `MatrixArrayView`, numpy-transparent
   (`np.asarray` → `(n, 4, 4)`).
-* String / hex / python / geometry multis arrive as a `list`.
+* String / hex / pickle / geometry multis arrive as a `list`.
 
 See [`node_types/_input_type_contract.md`](node_types/_input_type_contract.md)
 for the complete attr-type → value contract, including the two places it
-bends: mPyFile's Compute reads `float2` as a list and `hex` / `python`
-undecoded, and the API 1.0 nodes write `hex` / `python` / `time` (and, on
-mPyTransform / mPyIkSolver, `doubleAngle` / `euler`) outputs differently.
+bends: mPyFile's Compute reads `uv` (`float2`) as a list and `hex` / `pickle`
+undecoded, and the API 1.0 nodes write `hex` / `pickle` / `time` (and, on
+mPyTransform / mPyIkSolver, `angle` / `euler`) outputs differently.
+
+### The Add Attribute dialog
+
+The Type dropdown lists all 21 in the five groups above, with a separator line
+between groups that cannot be picked. Open, it is drawn as two columns, the
+dropdown name and its description, the description at one x for every row;
+closed, it shows the pick on one line, `<name> - <description>`. It
+pre-selects `float64` (`float64 - double (64-bit)`) until you pick another
+type, then remembers the last pick for the session. Whatever you pick, the
+node gets the stored name: picking `vector` adds a `double3`.
+The Min / Max / Default fields of a `distance` / `angle` are labelled `(cm)` /
+`(radians)`. The Attributes list names each attribute the dropdown's way
+(`pos: vector`), with `stored as double3` in the row's tooltip.
 
 ### Which type to pick
 
-* `double` for a number. `float` only to match a 32-bit plug; it reads as a
-  Python `float` either way.
+* `float64` (`double`) for a number. `float32` (`float`) only to match a
+  32-bit plug; it reads as a Python `float` either way.
 * `position` for anything wired to or from `translate`, or any point, when
-  the value is in cm; `doubleLinear` for one translate channel. A value
-  computed from a unitless input (e.g. mPyConstraint's presets) stays
-  `double3`.
-* `euler` for `rotate`; `doubleAngle` for one rotate channel.
-* `double3` for a unitless 3-vector: a direction, a scale.
+  the value is in cm; `distance` (`doubleLinear`) for one translate channel.
+  A value computed from a unitless input (e.g. mPyConstraint's presets) stays
+  `vector` (`double3`).
+* `euler` for `rotate`; `angle` (`doubleAngle`) for one rotate channel.
+* `vector` for a unitless 3-vector: a direction, a scale.
 
 The unit types use Maya's internal units whatever the scene's UI units:
-`doubleAngle` / `euler` in radians, `doubleLinear` / `position` in
-centimetres. The expression reads and writes those units. `min_value` /
-`max_value` / `default_value` on a `doubleAngle` / `doubleLinear` are typed in
-them too, and the Add Attribute dialog labels its Min / Max / Default fields
-for those two `(radians)` / `(cm)`; `euler` and `position` take none. At
-linear unit m, a `translate` of 1.5 reads 150.0 through a `position`, with no
-`unitConversion` node between them. A `double3` wired from the same
-`translate` in that scene gets a `unitConversion` node and reads 1.5; one
-wired while the scene was still cm has none and keeps reading 150.0.
+`angle` / `euler` in radians, `distance` / `position` in centimetres. The
+expression reads and writes those units. `min_value` / `max_value` /
+`default_value` on an `angle` / `distance` are typed in them too, and the Add
+Attribute dialog labels its Min / Max / Default fields for those two
+`(radians)` / `(cm)`; `euler` and `position` take none. At linear unit m, a
+`translate` of 1.5 reads 150.0 through a `position`, with no `unitConversion`
+node between them. A `vector` wired from the same `translate` in that scene
+gets a `unitConversion` node and reads 1.5; one wired while the scene was
+still cm has none and keeps reading 150.0.
 
-### Retired type names
+### Two names per type
 
-`int`, `vector`, `angle`, `double4` and `float3` are rejected, never aliased;
-the error names the replacement: `long`, `double3` (or `position` for a
-distance), `doubleAngle`, `quaternion`, `color`. v1 scenes map their old names
-on upgrade. A v2 scene or `.mpn` saved before the rename that stores an old
-name fails with the same error.
+Every type stores ONE name: Maya's attribute type where that alone describes
+the plug, our own word where Maya tells the plug apart only by its child type
+or a flag, or has no type for it (`position`, `euler`, `quaternion`, `color`,
+`hex`, `pickle`). The dropdown's name, where it differs, is an alias, and so
+are Maya's `double4` and `float3` for `quaternion` and `color`. Every input
+point takes an alias and translates it to the stored name before anything is
+created: `add_input_attr` / `add_output_attr`, an `.mpn` being restored, the
+assistant's tools and a compile spec.
+
+| Alias | Stored |
+|---|---|
+| `float64` | `double` |
+| `int` | `long` |
+| `angle` | `doubleAngle` |
+| `distance` | `doubleLinear` |
+| `float32` | `float` |
+| `vector` | `double3` |
+| `uv` | `float2` |
+| `double4` | `quaternion` |
+| `float3` | `color` |
+
+```python
+d.add_input_attr("aim", "vector")  # the dropdown's name
+d.add_input_attr("up", "double3")  # the stored name: the same plug type
+
+d.get_input_attr_map()["aim"]["attr_type"]  # -> "double3"
+```
+
+**Stored name everywhere it is saved or reported:** `.mpn` files, the `.py`
+bake, scene attr maps (`_inputAttrs` / `_outputAttrs`),
+`get_input_attr_map()` / `get_output_attr_map()`, `list_valid_input_types()`
+and error messages. **Dropdown name where an artist reads it:** the Add
+Attribute dialog, the Attributes list and the assistant's chat line
+(`add_input pos (vector)`).
+
+**`python` is now `pickle`**, both its stored and its dropdown name. New code
+or an `.mpn` that names `python` is rejected with a hint,
+`attr_type 'python' was renamed: use 'pickle'`, and compiling one reports it
+as a blocker. A scene that stored `python` keeps computing: its map is
+translated on read.
+
+**Old scenes.** Scenes that stored `int` / `vector` / `angle` (the stored
+names before the 2026-10-02 rename) load again. Their maps keep the old names
+through a re-save, until an attribute edit on that side rewrites its map
+(inputs and outputs separately); that is harmless, because every reader
+translates. v1 scenes map their names through the same table on upgrade.
 
 ### How the expression sees them
 
@@ -324,7 +390,7 @@ names must be valid, non-keyword Python identifiers, since they are accessed
 through `self`.)
 
 ```python
-d.add_input_attr("amplitude", "double")
+d.add_input_attr("amplitude", "float64")  # or "double"
 d.add_input_attr("center", "matrix")
 d.set_compute_expression("""
 import numpy as np

@@ -102,7 +102,7 @@ the parent `MPyNode` dirty logic.
 
 ## Example
 
-Point-constrain one cube to another: the constraint reads its preset `targetTranslate` input and writes it back out through a user-added `constrained_pos` double3 output, which drives the driven cube's `translate`. After moving the source, forcing evaluation shows the driven cube following exactly. The output is a `double3`, not a `position`, because it carries the preset's unitless value: wired in a metre scene, `targetTranslate` reads metres, and a `position` output would write them as centimetres.
+Point-constrain one cube to another: the constraint reads its preset `targetTranslate` input and writes it back out through a user-added `constrained_pos` vector output (stored as `double3`), which drives the driven cube's `translate`. After moving the source, forcing evaluation shows the driven cube following exactly. The output is a `vector` (`double3`), not a `position`, because it carries the preset's unitless value: wired in a metre scene, `targetTranslate` reads metres, and a `position` output would write them as centimetres.
 
 ```python
 import maya.cmds as mc
@@ -114,7 +114,7 @@ mc.file(new=True, force=True)
 src = mc.polyCube(name="srcCube")[0]
 dst = mc.polyCube(name="drivenCube")[0]
 
-# Build the constraint, add a double3 output, and write targetTranslate to it.
+# Build the constraint, add a vector (double3) output, and write targetTranslate to it.
 c    = MPyConstraint.create(name="myConstraint")
 node = c.get_name()
 c.add_output_attr("constrained_pos", "double3")

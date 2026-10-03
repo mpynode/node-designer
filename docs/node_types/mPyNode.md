@@ -46,7 +46,47 @@ print("mPyNode computed c =", result)
 
 ## Supported attribute types
 
-`double` (the default), `float` (32-bit), `long`, `bool`, `doubleAngle` (radians), `doubleLinear` (a distance, cm), `double3` (no unit), `euler` (double3 of doubleAngle children, like rotate, radians), `position` (double3 of doubleLinear children, like translate, cm), `matrix` (4×4, `-at matrix`), `quaternion` (double4 X/Y/Z/W, W defaults to 1), `color` (float3 used as colour), `float2` (U/V), `string`, `enum` (requires `enum_names`), `hex` (hex-encoded string), `python` (pickled object), `mesh`, `nurbsCurve`, `nurbsSurface`, `time` (auto-connects to `time1.outTime`) — 21 types total, in the Add Attribute dialog's order. All support `is_array=True` for multi plugs. The unit types read and write Maya's internal units (radians, cm) whatever the scene's UI units. Retired names (`int`, `vector`, `angle`, `double4`, `float3`) are rejected with the replacement named; v1 scenes map them on upgrade, but a v2 scene or `.mpn` saved before the rename that stores one fails with the same error. The full value contract is in [`_input_type_contract.md`](_input_type_contract.md).
+21 types, in the Add Attribute dropdown's order and groups. **Dropdown** and **Description** are what the dropdown shows; **Stored** is the name the node, its files and `get_input_attr_map()` carry. All support `is_array=True` for multi plugs.
+
+| Dropdown | Description | Stored | Notes |
+|---|---|---|---|
+| **Numbers** | | | |
+| `float64` | double (64-bit) | `double` | the dialog's default; Maya's own "Float" |
+| `int` | long | `long` | |
+| `bool` | bool (on / off) | `bool` | |
+| `angle` | doubleAngle (radians) | `doubleAngle` | radians |
+| `distance` | doubleLinear (cm) | `doubleLinear` | a distance, like `translateX`; cm |
+| `float32` | float (32-bit) | `float` | only to match a 32-bit plug |
+| **Vectors, compounds, matrix** | | | |
+| `position` | double3 of doubleLinear (cm) | `position` | doubleLinear children, like `translate`; cm |
+| `vector` | double3 (no unit) | `double3` | a direction or scale |
+| `euler` | double3 of doubleAngle (radians) | `euler` | doubleAngle children, like `rotate`; radians |
+| `quaternion` | double4 (X/Y/Z/W) | `quaternion` | W defaults to 1 |
+| `matrix` | matrix (4x4 doubles) | `matrix` | `-at matrix`; identity until set |
+| `color` | float3 (colour) | `color` | `usedAsColor` |
+| `uv` | float2 (U/V) | `float2` | |
+| **Text and data** | | | |
+| `string` | string (text) | `string` | |
+| `enum` | enum (named choices, default False/True) | `enum` | requires `enum_names` |
+| `hex` | string (stored as UTF-8 hex) | `hex` | write plain text, read decoded |
+| `pickle` | string (pickled data, C++ unsupported) | `pickle` | any picklable object; trust-gated |
+| **Geometry** | | | |
+| `mesh` | mesh (code gets a Mesh object) | `mesh` | |
+| `nurbsCurve` | nurbsCurve (code gets a NurbsCurve object) | `nurbsCurve` | |
+| `nurbsSurface` | nurbsSurface (code gets a NurbsSurface object) | `nurbsSurface` | |
+| **Time** | | | |
+| `time` | time (frames) | `time` | auto-connects to `time1.outTime` |
+
+`add_input_attr` / `add_output_attr` take either name (and Maya's `double4` / `float3` for `quaternion` / `color`) and translate it before anything is created, so these two lines make the same kind of plug:
+
+```python
+node.add_input_attr("aim", "vector")  # the dropdown's name, stored as double3
+node.add_input_attr("up", "double3")  # the stored name
+```
+
+Files, scene attr maps, `get_input_attr_map()` and errors report the stored name; the dialog, the Attributes list and the assistant's chat line show the dropdown's. The unit types read and write Maya's internal units (radians, cm) whatever the scene's UI units.
+
+`python` is renamed `pickle`: new code and `.mpn` files that name `python` are rejected with the hint, while a scene that stored it keeps computing. Scenes that stored `int` / `vector` / `angle` (the stored names before the 2026-10-02 rename) load again; their attr maps keep the old names through a re-save, which is harmless because every reader translates them. v1 scenes map their names on upgrade. The full value contract is in [`_input_type_contract.md`](_input_type_contract.md).
 
 ---
 

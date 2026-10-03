@@ -183,26 +183,68 @@ truth.
 
 Attribute surface: 21 wire types, any of them arrayable, declared once in
 `_common/attr_types.py :: ATTR_TYPES`. Every list of them derives from that
-table: the wrapper's `cmds.addAttr` kwargs and accepted names
-(`_mpy_node.py :: _ADD_ATTR_KIND`, exposed as `VALID_INPUT_TYPES`), the
-Add-Attribute dialog's groups (`add_attr.py :: _ATTR_TYPE_GROUPS` ->
-`ALL_ATTR_TYPES`) and the assistant's tool enum and prompt lists. The dialog
-offers all 21 in table order and pre-selects `double` (`DIALOG_DEFAULT`),
-Maya's own "Float", until a type is picked; after that it pre-selects the last
-type picked that session (`add_attr.py :: _LAST_SELECTED_TYPE`).
+table: the wrapper's `cmds.addAttr` kwargs and stored names
+(`_mpy_node.py :: _ADD_ATTR_KIND`, exposed as `VALID_INPUT_TYPES`; aliases go
+through `canonical()`), the Add-Attribute dialog's groups
+(`add_attr.py :: _ATTR_TYPE_GROUPS` -> `ALL_ATTR_TYPES`, from
+`DIALOG_GROUPS`) and the assistant's tool enum (`tools.py :: _TYPE_ENUM`) and
+prompt table (`system_prompt.py`).
+
+Each `AttrType` row carries two names. `name` is the STORED name: what files,
+scene attr maps, the get-APIs and errors carry. `artist` is the dropdown's
+name, with `description` beside it. The table is in the dropdown's order, in
+five `group`s:
+
+| Group | Dropdown name -> stored name |
+|---|---|
+| 0 numbers | `float64` -> `double`, `int` -> `long`, `bool`, `angle` -> `doubleAngle`, `distance` -> `doubleLinear`, `float32` -> `float` |
+| 1 vectors, compounds, matrix | `position`, `vector` -> `double3`, `euler`, `quaternion`, `matrix`, `color`, `uv` -> `float2` |
+| 2 text and data | `string`, `enum`, `hex`, `pickle` |
+| 3 geometry | `mesh`, `nurbsCurve`, `nurbsSurface` |
+| 4 time | `time` |
 
 A stored name is Maya's attribute type when that alone describes the plug
-(`double`, `float`, `long`, `bool`, `doubleAngle`, `doubleLinear`, `double3`,
+(`double`, `long`, `bool`, `doubleAngle`, `doubleLinear`, `float`, `double3`,
 `matrix`, `float2`, ...). `euler` and `position` (double3 of doubleAngle /
-doubleLinear children), `color` (float3 + `usedAsColor`), `hex` and `python`
+doubleLinear children), `color` (float3 + `usedAsColor`), `hex` and `pickle`
 (strings with an encoding) are our words, because Maya tells them apart only
 by child type or a flag, or has no type for them; `quaternion` is our word for
 Maya's numeric `double4`. The unit types read and write Maya's internal units
 (radians, cm) whatever the scene's UI units, so a `position` wires to
-`translate` with no `unitConversion` node. Retired names (`int`, `vector`,
-`angle`, `double4`, `float3`) are rejected, never aliased; `RETIRED` maps each
-to its replacement for the error, and for the v1 scene upgrade, the one reader
-allowed to map them.
+`translate` with no `unitConversion` node.
+
+`ALIASES` maps every artist name that differs from its stored name, plus
+Maya's `double4` / `float3` (-> `quaternion` / `color`), to the stored name.
+`canonical()` translates an alias or raises (`stored_name()` is the
+never-raising form for stored data), and every input point translates before
+anything is created: `add_input_attr` / `add_output_attr`, the `.mpn` restore
+(`mpn_io._check_attr_types`, before any plug is added), the plug and
+datablock readers and writers, the compile spec (`spec_extractor.normalize_attr`,
+`spec_model._check`) and the assistant's tools. `RETIRED` holds the one name
+that is rejected outright, `python` (renamed `pickle`); the error names the
+replacement. Scene attr maps are data already written, so
+`serialization.decode_attr_map` translates aliases AND retired names on read:
+a scene that stored `int` / `vector` / `angle` (the stored names before the
+2026-10-02 rename), or one that stored `python`, computes as before (the raw
+map keeps the old names until an attribute edit on that side rewrites it:
+`_write_input_map` and `_write_output_map` are separate). v1 scenes map
+through both tables on upgrade (`upgrade_legacy_name`).
+
+So an alias and its stored name make the same plug, and the attr map stores
+`double3` for both:
+
+```python
+node.add_input_attr("aim", "vector")  # alias: canonical() -> "double3"
+node.add_input_attr("up", "double3")  # stored name: the same plug type
+```
+
+The dialog draws the dropdown as two columns, artist name | description
+(`add_attr.py :: _TypeItemDelegate`), with a separator between groups; each
+item's data is the stored name, so picking `vector` sends `double3`. It
+pre-selects `double` (`DIALOG_DEFAULT`, shown as `float64`) until a type is
+picked; after that it pre-selects the last type picked that session
+(`add_attr.py :: _LAST_SELECTED_TYPE`). The Attributes list and the
+assistant's chat line show the artist name (`artist_name()`).
 
 ## 5. The compile pipeline in detail
 
@@ -449,10 +491,11 @@ lowered — a compiled compute reads a copy, so mutating it would not mean what
 it means interpreted. See `docs/notes/matrixview-lowering.md`.
 
 Non-numeric IO lowers too — it is *not* a porter fallback.
-`nd_lower._materialise_input` lifts matrix, string/hex, quaternion, float2 and
-colour, scalar **and** array (`_is_matrix_scalar` … `_is_color_array`), with
-matching writers (`_matrix_array_output_lines`; `_string_scalar_output_lines`
-hex-encodes inline on the way out); mesh/NURBS handles bind via `_is_geo_input`.
+`nd_lower._materialise_input` lifts matrix, string/hex, quaternion, float2
+(the dropdown's `uv`; a spec carries stored names only) and colour, scalar
+**and** array (`_is_matrix_scalar` … `_is_color_array`), with matching writers
+(`_matrix_array_output_lines`; `_string_scalar_output_lines` hex-encodes
+inline on the way out); mesh/NURBS handles bind via `_is_geo_input`.
 The one real gap is geo **array** inputs: only the plain `MPxNode` path declares
 the `std::vector<Nd<Kind>>` they bind to, so generator and deformer paths leave
 those reads to the porter.
