@@ -897,13 +897,18 @@ class TestDialogShapePhase18_8(unittest.TestCase):
 
     def test_write_plug_value_handles_pickle(self):
         """per-type write logic moved to
-        ``_write_value_to_handle`` (shared by scalar + multi paths).
-        Inspect that helper for the pickle-attr branches."""
+        ``_write_value_to_handle`` (shared by scalar + multi paths), whose
+        pickle / hex branch calls ``encode_string_output`` (shared with the
+        api1 writers). Inspect both for the pickle-attr branches."""
         import inspect
 
-        from mpynode._api2.helpers import _write_value_to_handle
+        from mpynode._api2.helpers import (_write_value_to_handle,
+                                           encode_string_output)
 
         src = inspect.getsource(_write_value_to_handle)
+        self.assertIn('"pickle"', src)
+        self.assertIn("encode_string_output", src)
+        src = inspect.getsource(encode_string_output)
         self.assertIn('"pickle"',         src)
         self.assertIn("pickle.dumps",     src)
         self.assertIn("base64.b64encode", src)

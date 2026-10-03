@@ -217,11 +217,10 @@ Dropdown name first, stored name in brackets where it differs:
 | `time` | a frame | `MTime` in the UI time unit |
 | `vector` (`double3`) array | list of `(3,)` items | array of double3 plugs |
 
-These are the API 2.0 nodes' writes. The API 1.0 nodes write by plug kind:
-`hex` / `pickle` outputs get plain `str(value)`; on mPyDeformer /
-mPyBlendShape / mPySkinCluster a `time` output is taken as SECONDS; on
-mPyTransform / mPyIkSolver (`setAttr`) an `angle` (`doubleAngle`) / `euler`
-lands in UI units, unconverted. See `docs/node_types/_input_type_contract.md`.
+These are the API 2.0 nodes' writes. The API 1.0 nodes write the same values:
+an output reads back what the expression wrote (radians, cm, a frame, decoded
+hex / pickle). See
+`docs/node_types/_input_type_contract.md`.
 
 ## 5. Stored variables
 

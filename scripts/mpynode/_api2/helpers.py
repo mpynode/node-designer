@@ -399,6 +399,50 @@ def decode_python_string(raw: str) -> Any:
         )
 
 
+def decode_hex_string(raw: str) -> str:
+    """A ``hex`` attr's space-separated UTF-8 hex bytes ("48 69") as plain
+    text ("Hi"). Blank reads as ``""``; anything that is not hex is returned
+    as stored. Shared by the plug read and the data-handle read."""
+    if not raw or not raw.strip():
+        return ""
+    try:
+        return bytes.fromhex(raw.replace(" ", "")).decode("utf-8", "replace")
+    except Exception:
+        return raw
+
+
+def encode_string_output(attr_type: str, value: Any) -> str:
+    """The string a ``string`` / ``hex`` / ``pickle`` output stores for
+    ``value``: the inverse of what the same type reads as.
+
+    * ``pickle`` -- ``base64(pickle(value))``; read back by
+      :func:`decode_python_string`, which is where the trust gate sits.
+      Encoding runs no foreign code, so it is not gated.
+    * ``hex`` -- a plain ``str`` as space-separated UTF-8 hex bytes, the form
+      Maya's ``type`` node expects on ``textInput`` ("Hi" -> "48 69").
+    * anything else -- ``str(value)``.
+
+    ``None`` stores ``""`` for ``hex`` and ``pickle``. Shared by every writer
+    (the api2 handle write and the api1 plug writes) so they cannot drift.
+    """
+    if attr_type == "pickle":
+        if value is None:
+            return ""
+        try:
+            # protocol 5: explicit + reader-compatible across Maya 2024
+            # (py3.10) and 2026 (py3.11), both of which read protocol 5.
+            return base64.b64encode(
+                pickle.dumps(value, protocol=5)
+            ).decode("ascii")
+        except Exception as exc:
+            raise ValueError(f"failed to pickle value for pickle attr: {exc}")
+    if attr_type == "hex":
+        if value is None:
+            return ""
+        return " ".join("%02x" % b for b in str(value).encode("utf-8"))
+    return str(value)
+
+
 def read_plug_value(plug: om.MPlug, attr_type: str, data_block=None) -> Any:
     """Read a Maya plug value into a Python value matching attr_type.
 
@@ -502,13 +546,7 @@ def read_plug_value(plug: om.MPlug, attr_type: str, data_block=None) -> Any:
     # INPUT it decodes hex -> text (read a Type node's textInput back as
     # readable text). The matching OUTPUT encode is in _write_value_to_handle.
     if attr_type == "hex":
-        raw = plug.asString() or ""
-        if not raw.strip():
-            return ""
-        try:
-            return bytes.fromhex(raw.replace(" ", "")).decode("utf-8", "replace")
-        except Exception:
-            return raw
+        return decode_hex_string(plug.asString() or "")
     # Typed Maya geometry plugs. Returns the high-level MFn* function set so
     # the user gets ergonomic API access (m.numVertices, m.getPoints()).
     if attr_type == "mesh":
@@ -717,28 +755,12 @@ def _write_value_to_handle(
         except Exception:
             # Older Maya: just write the raw double.
             handle.setDouble(float(value))
-    # pickle output -- pickle the value, store as base64 string.
-    elif attr_type == "pickle":
-        if value is None:
-            handle.setString("")
-        else:
-            try:
-                # protocol 5: explicit + reader-compatible across Maya 2024
-                # (py3.10) and 2026 (py3.11), both of which read protocol 5.
-                payload = base64.b64encode(
-                    pickle.dumps(value, protocol=5)
-                ).decode("ascii")
-            except Exception as exc:
-                raise ValueError(f"failed to pickle value for pickle attr: {exc}")
-            handle.setString(payload)
-    # hex output -- encode a plain ``str`` to the space-separated UTF-8
-    # hex string Maya's ``type`` node expects on ``textInput`` ("Hi" -> "48 69").
-    # Write plain text in the expression; the consumer receives the hex form.
-    elif attr_type == "hex":
-        if value is None:
-            handle.setString("")
-        else:
-            handle.setString(" ".join("%02x" % b for b in str(value).encode("utf-8")))
+    # pickle output -- pickle the value, store as base64 string. hex output --
+    # encode a plain ``str`` to the space-separated UTF-8 hex string Maya's
+    # ``type`` node expects on ``textInput`` ("Hi" -> "48 69"). Write plain
+    # text in the expression; the consumer receives the hex form.
+    elif attr_type in ("pickle", "hex"):
+        handle.setString(encode_string_output(attr_type, value))
     elif attr_type in ("mesh", "nurbsCurve", "nurbsSurface"):
         data_obj = _geo_value_to_data(attr_type, value)
         if data_obj is None:
@@ -1275,7 +1297,20 @@ def _read_handle_value(handle, attr_type, attr_obj=None):
 
     This is the data-handle analogue of the plug read in
     :func:`read_user_inputs_dict`; it is used on the worker-thread compute
-    path (Hypershade swatch / Arnold) where ``findPlug`` is unsafe."""
+    path (Hypershade swatch / Arnold) where ``findPlug`` is unsafe.
+
+    ``hex`` and ``pickle`` decode exactly as :func:`read_plug_value` does:
+    hex to text, pickle through :func:`decode_python_string` -- the same trust
+    gate (``None`` in an untrusted scene, so ``None`` is a real value here)
+    and the same ``ValueError`` on a corrupt payload, which is NOT swallowed."""
+    if attr_type in ("hex", "pickle"):
+        try:
+            raw = handle.asString() or ""
+        except Exception:
+            return None
+        if attr_type == "pickle":
+            return decode_python_string(raw)
+        return decode_hex_string(raw)
     try:
         if attr_type == "float":
             # A "float" attr is MFnNumericData.kFloat. asDouble() on a kFloat
@@ -1325,7 +1360,7 @@ def _read_handle_value(handle, attr_type, attr_obj=None):
             return int(handle.asShort())
         if attr_type == "bool":
             return bool(handle.asBool())
-        if attr_type in ("string", "hex", "pickle"):
+        if attr_type == "string":
             return handle.asString()
         if attr_type in ("double3", "euler", "position"):
             # double3 numeric compound (euler XYZ children are doubleAngle,
@@ -1413,6 +1448,12 @@ def _cast_datablock_multi(values, attr_type):
             if values
             else np.zeros((0, 3), dtype=np.float64)
         )
+    if attr_type == "float2":
+        return (
+            np.asarray(values, dtype=np.float64)
+            if values
+            else np.zeros((0, 2), dtype=np.float64)
+        )
     if attr_type == "quaternion":
         return (
             np.asarray(values, dtype=np.float64)
@@ -1460,9 +1501,11 @@ def read_user_inputs_dict_from_datablock(
 
     Type contract MATCHES :func:`read_user_inputs_dict` exactly (scalars ->
     Python primitives; double3/euler/position/color -> ``np.ndarray (3,)``;
-    matrix -> ``MatrixView``; multi scalar -> ``np.ndarray (n,)``; multi
-    double3/euler/position/color -> ``np.ndarray (n, 3)``; multi matrix ->
-    ``MatrixArrayView``), so
+    float2 -> ``np.ndarray (2,)``; hex -> decoded text; pickle -> the
+    trust-gated unpickled object; matrix -> ``MatrixView``; multi scalar ->
+    ``np.ndarray (n,)``; multi double3/euler/position/color ->
+    ``np.ndarray (n, 3)``; multi float2 -> ``np.ndarray (n, 2)``; multi matrix
+    -> ``MatrixArrayView``), so
     ``self.<input>`` behaves identically on the main and worker threads. This
     is the C2 (dense input seeding) base-contract guarantee for the file node.
 
@@ -1500,10 +1543,12 @@ def read_user_inputs_dict_from_datablock(
             except Exception:
                 continue
             val = _read_handle_value(handle, attr_type, attr_obj)
-            if val is None:
+            # None is a real pickle value (empty, or an untrusted scene), and
+            # the plug read hands it to the expression.
+            if val is None and attr_type != "pickle":
                 continue
             if attr_type in ("double3", "euler", "position", "color",
-                             "quaternion"):
+                             "float2", "quaternion"):
                 out[name] = np.asarray(val, dtype=np.float64)
             elif attr_type == "matrix":
                 from mpynode._common.plugs.promoted_types import MatrixView
@@ -1542,10 +1587,13 @@ def read_user_inputs_dict_from_datablock(
             try:
                 lidx = arr.elementLogicalIndex()
                 elem = arr.inputValue()
-                val  = _read_handle_value(elem, attr_type, attr_obj)
-                pairs.append((lidx, gap if val is None else val))
             except Exception:
-                pass
+                arr.next()
+                continue
+            # Outside the try: a corrupt pickle payload raises, as it does
+            # from the plug read. Every other failure already reads as None.
+            val = _read_handle_value(elem, attr_type, attr_obj)
+            pairs.append((lidx, gap if val is None else val))
             arr.next()
         if sparse:
             values = [v for _lidx, v in pairs]

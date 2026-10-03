@@ -175,7 +175,9 @@ def _write_plug_compute_time(
                     om.MDistance(float(value), om.MDistance.kCentimeters)
                 )
             elif ut == om.MFnUnitAttribute.kTime:
-                handle.setMTime(om.MTime(float(value), om.MTime.kSeconds))
+                # A time reads in the UI time unit (frames), so it is written
+                # in it too -- never seconds.
+                handle.setMTime(om.MTime(float(value), om.MTime.uiUnit()))
             else:
                 handle.setDouble(float(value))
         except Exception as exc:
@@ -212,7 +214,7 @@ def _write_plug_compute_time(
             attr_type = None
         try:
             if attr_type == om.MFnData.kString:
-                handle.setString(str(value))
+                handle.setString(_string_output(plug, attr_mobject, value))
             elif attr_type == om.MFnData.kMatrix:
                 # typed matrix: setMObject(MFnMatrixData); setMMatrix crashes.
                 arr = _coerce_to_4x4_numpy(value)
@@ -316,24 +318,101 @@ def _write_via_geom_iter(geom_iter, value, compute_ctx=None) -> None:
 def _setattr_units(attr_mobject: "om.MObject", value: Any) -> Any:
     """``value`` in the units ``cmds.setAttr`` takes for this attribute.
 
-    A distance reads in Maya's internal centimetres whatever the scene's
-    linear unit (``plug_read._read_unit_plug``), and an expression writes it
-    back in the same units, but setAttr takes UI units: at linear unit m, the
-    100.0 a 1 m distance reads would land as 100 m. A DYNAMIC distance (a
-    user ``doubleLinear`` / ``position`` attr) is converted from centimetres
-    here; every other value passes through unchanged. Built-in distance plugs
-    (translate, ...) keep their setAttr-in-UI-units behaviour on purpose: that
-    is a separate change. The conversion is exact at cm, so nothing changes in
-    a cm scene.
+    Every read of a unit plug is in Maya's internal units whatever the scene's
+    units (``plug_read._read_unit_plug``): radians for an angle, centimetres
+    for a distance. An expression writes back in the units it read, but
+    setAttr takes UI units: at angle unit degrees the 0.5 a 0.5 rad angle
+    reads would land as 0.5 degrees, and at linear unit m the 100.0 a 1 m
+    distance reads would land as 100 m. So every angle and distance, user
+    attr and built-in plug (rotate, translate, ...) alike, is converted from
+    internal units here. A ``time`` reads in the UI time unit already and
+    passes through, as does every non-unit value. The conversion is exact
+    when the UI unit is the internal one (radians / cm).
     """
-    if (
-        attr_mobject.hasFn(om.MFn.kUnitAttribute)
-        and om.MFnUnitAttribute(attr_mobject).unitType()
-        == om.MFnUnitAttribute.kDistance
-        and om.MFnAttribute(attr_mobject).isDynamic()
-    ):
-        return om.MDistance.internalToUI(float(value))
+    if attr_mobject.hasFn(om.MFn.kUnitAttribute):
+        unit_type = om.MFnUnitAttribute(attr_mobject).unitType()
+        if unit_type == om.MFnUnitAttribute.kDistance:
+            return om.MDistance.internalToUI(float(value))
+        if unit_type == om.MFnUnitAttribute.kAngle:
+            return om.MAngle.internalToUI(float(value))
     return value
+
+
+def _setattr_child_units(plug: "om.MPlug", value: Any) -> list:
+    """A compound write's per-child values in setAttr's units.
+
+    A position's (translate's) children are distances and an euler's
+    (rotate's) are angles, each converted by :func:`_setattr_units`; other
+    children pass through.
+    """
+    args = list(value)
+    for i in range(min(len(args), plug.numChildren())):
+        args[i] = _setattr_units(plug.child(i).attribute(), args[i])
+    return args
+
+
+# Raw ``_outputAttrs`` / ``_inputAttrs`` string -> decoded map, so the string
+# writes below decode a node's map once rather than on every write. Bounded:
+# it is cleared whenever it grows past _MAP_CACHE_MAX distinct strings.
+_MAP_CACHE: dict = {}
+_MAP_CACHE_MAX = 64
+
+
+def _declared_attr_type(plug: "om.MPlug", attr_mobject: "om.MObject"):
+    """The ``attr_type`` this node's attr map declares for the attribute
+    behind ``plug`` (outputs first, then inputs), or None.
+
+    Only a dynamic attribute can be declared; a built-in plug is never looked
+    up. The map is read the same way the compute already reads it
+    (``findPlug(...).asString()``)."""
+    try:
+        fn_attr = om.MFnAttribute(attr_mobject)
+        if not fn_attr.isDynamic():
+            return None
+        name    = fn_attr.name()
+        fn_node = om.MFnDependencyNode(plug.node())
+    except Exception:
+        return None
+    for map_attr in ("_outputAttrs", "_inputAttrs"):
+        try:
+            raw = fn_node.findPlug(map_attr, True).asString()
+        except Exception:
+            continue
+        if not raw:
+            continue
+        attr_map = _MAP_CACHE.get(raw)
+        if attr_map is None:
+            try:
+                from mpynode._common.io import serialization
+
+                attr_map = serialization.decode_attr_map(raw)
+            except Exception:
+                attr_map = {}
+            if len(_MAP_CACHE) >= _MAP_CACHE_MAX:
+                _MAP_CACHE.clear()
+            _MAP_CACHE[raw] = attr_map
+        meta = attr_map.get(name)
+        if meta:
+            return meta.get("attr_type")
+    return None
+
+
+def _string_output(plug: "om.MPlug", attr_mobject: "om.MObject", value: Any) -> str:
+    """The string to store on a string plug for ``value``.
+
+    A ``hex`` or ``pickle`` attr is a string plug carrying an encoding, and
+    every read of it decodes (``read_plug_value``): hex to text, pickle to the
+    object. So a write encodes the same way the api2 writer does
+    (``_api2.helpers.encode_string_output``), and an expression can copy what
+    it read straight to an output of the same type. A plain string, or any
+    string plug the node does not declare, is stored as ``str(value)``.
+    """
+    attr_type = _declared_attr_type(plug, attr_mobject)
+    if attr_type in ("hex", "pickle"):
+        from mpynode._api2.helpers import encode_string_output
+
+        return encode_string_output(attr_type, value)
+    return str(value)
 
 
 def _write_plug_init_time(
@@ -347,9 +426,11 @@ def _write_plug_init_time(
     Raises a clear AttributeError if the write isn't supported.
 
     Despite the name, this is also the compute-time output path of the api1
-    mPyTransform and mPyIkSolver, whose expressions run with no datablock. A
-    user distance attr arrives in internal centimetres, like every read of
-    one, and is converted to UI units for setAttr (``_setattr_units``).
+    mPyTransform and mPyIkSolver, whose expressions run with no datablock. An
+    angle or distance arrives in internal units (radians, centimetres), like
+    every read of one, and is converted to UI units for setAttr
+    (``_setattr_units``); a hex / pickle string is encoded
+    (``_string_output``).
     """
     plug_name = plug.name()
 
@@ -369,12 +450,7 @@ def _write_plug_init_time(
             om.MFnNumericData.k4Double,
         ):
             try:
-                # A position's children are distances, like translate's.
-                args = list(value)
-                for i in range(min(len(args), plug.numChildren())):
-                    child   = plug.child(i).attribute()
-                    args[i] = _setattr_units(child, args[i])
-                mc.setAttr(plug_name, *args)
+                mc.setAttr(plug_name, *_setattr_child_units(plug, value))
                 return
             except Exception as exc:
                 raise AttributeError(f"setAttr({plug_name!r}, {value!r}) failed: {exc}")
@@ -425,7 +501,8 @@ def _write_plug_init_time(
 
         if attr_type == om.MFnData.kString:
             try:
-                mc.setAttr(plug_name, str(value), type="string")
+                mc.setAttr(plug_name, _string_output(plug, attr_mobject, value),
+                           type="string")
                 return
             except Exception as exc:
                 raise AttributeError(f"setAttr({plug_name!r},...) failed: {exc}")
@@ -511,7 +588,7 @@ def _write_plug_init_time(
         # `node.translate = (1,2,3)` style should call
         # ``mc.setAttr(plug, *value)`` themselves, OR set each child.
         try:
-            mc.setAttr(plug_name, *value)
+            mc.setAttr(plug_name, *_setattr_child_units(plug, value))
             return
         except Exception as exc:
             raise AttributeError(

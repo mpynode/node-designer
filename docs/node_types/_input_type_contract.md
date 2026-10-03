@@ -226,18 +226,14 @@ map until an attribute edit on that side rewrites it (inputs and outputs
 separately).
 
 These are the writes on the API 2.0 nodes (mPyNode, mPyConstraint, mPyFile,
-mPyMesh, mPyNurbsCurve, mPyNurbsSurface). The API 1.0 nodes pick the call
-from the plug's kind, not the attr type, so a `hex` or `pickle` output gets
-plain `str(value)`, with no hex encoding and no pickle. Beyond that:
-
-* mPyDeformer, mPyBlendShape and mPySkinCluster write through the datablock.
-  A `time` output is taken as SECONDS there: `10.0` at 30 fps lands as frame
-  300.
-* mPyTransform and mPyIkSolver write through `setAttr`. A `time` output is a
-  frame in the UI time unit, and a `distance` (`doubleLinear`) / `position`
-  value is converted from cm. An `angle` (`doubleAngle`) / `euler` value is
-  NOT converted from radians: it lands in the UI angle unit, so `math.pi / 2`
-  reads back as 1.5708°, not 90°.
+mPyMesh, mPyNurbsCurve, mPyNurbsSurface). The API 1.0 nodes write the same
+values: mPyDeformer, mPyBlendShape and mPySkinCluster through the datablock,
+mPyTransform and mPyIkSolver through `setAttr`. An output reads back what the
+expression wrote, in the units the same type reads in: an `angle`
+(`doubleAngle`) / `euler` in radians and a `distance` (`doubleLinear`) /
+`position` in cm (built-in plugs such as `rotate` / `translate` too), a `time`
+as a frame in the UI time unit, and a `hex` / `pickle` output encoded like
+the API 2.0 write.
 
 ## Why this matters
 

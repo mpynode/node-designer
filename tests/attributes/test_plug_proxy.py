@@ -465,11 +465,14 @@ class TestE3ScalarWrites(unittest.TestCase):
             mc.getAttr(self.tf + ".translateX"), 7.5, places=5
         )
 
-    def test_unit_angle_in_degrees(self):
-        self.n.rotateY = 90.0
+    def test_unit_angle_in_radians(self):
+        # An angle reads in radians (test_unit_angle_returns_radians), so it
+        # is written in radians too; getAttr shows the UI degrees.
+        self.n.rotateY = 1.5707963267948966
         self.assertAlmostEqual(
             mc.getAttr(self.tf + ".rotateY"), 90.0, places=3
         )
+        self.assertAlmostEqual(self.n.rotateY, 1.5707963267948966, places=6)
 
     def test_bool(self):
         self.n.visibility = False

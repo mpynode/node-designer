@@ -381,11 +381,11 @@ class TestOtherReadPaths(_UnitCase):
                     _as_double(nm + ".pArrOut[1].pArrOutZ"), 6.0 * cm)
                 self.assertEqual(mc.ls(type="unitConversion"), [])
 
-    def test_setattr_writer_converts_user_distances_only(self):
+    def test_setattr_writer_converts_every_distance(self):
         # The writer behind every api1 plug-proxy write with no datablock
-        # (mPyTransform / mPyIkSolver outputs, the Init tab). A user distance
-        # attr (dynamic) takes internal cm; a built-in distance plug keeps
-        # setAttr's UI units, unchanged by the distance types.
+        # (mPyTransform / mPyIkSolver outputs, the Init tab). Every distance
+        # reads in internal cm, so every distance write takes internal cm: a
+        # user attr (dynamic) and a built-in plug alike.
         import maya.OpenMaya as om1
 
         from mpynode._common.plugs.plug_write import _write_plug_init_time
@@ -397,7 +397,7 @@ class TestOtherReadPaths(_UnitCase):
             sel.getPlug(0, plug)
             _write_plug_init_time(plug, plug.attribute(), value)
 
-        for unit, cm in _CM_PER_UNIT.items():
+        for unit in _CM_PER_UNIT:
             with self.subTest(unit=unit):
                 self._new_scene(unit)
                 nm = mc.createNode("transform", name="wDst")
@@ -414,8 +414,7 @@ class TestOtherReadPaths(_UnitCase):
                 self.assertEqual(
                     [_as_double(nm + ".pos" + a) for a in "XYZ"],
                     [100.0, 200.0, 300.0])
-                self.assertAlmostEqual(
-                    _as_double(nm + ".translateX"), 5.0 * cm)
+                self.assertAlmostEqual(_as_double(nm + ".translateX"), 5.0)
                 self.assertEqual(list(mc.getAttr(nm + ".scale")[0]),
                                  [2.0, 3.0, 4.0])
 
