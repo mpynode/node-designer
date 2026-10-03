@@ -91,15 +91,15 @@ class TestPresetRanges(unittest.TestCase):
 
         m = [{"plug": "preFilterRadius", "kind": "inputs", "member": "aP",
               "meta": {"type": "float", "is_array": False}}]
-        self.assertEqual(ftc.with_preset_limits({"mpy_type": "mPyNode"}, m), m)
-        got = ftc.with_preset_limits({"mpy_type": "mPyFile"}, m)
+        self.assertEqual(ftc.with_preset_ssot({"mpy_type": "mPyNode"}, m), m)
+        got = ftc.with_preset_ssot({"mpy_type": "mPyFile"}, m)
         self.assertEqual((got[0]["meta"]["min_value"], got[0]["meta"]["max_value"]),
                          (0.0, 8.0))
         self.assertNotIn("min_value", m[0]["meta"], "the member is copied")
         # a same-named attr of another type is not the preset
         m[0]["meta"]["type"] = "double"
         self.assertNotIn("min_value",
-                         ftc.with_preset_limits({"mpy_type": "mPyFile"}, m)[0]["meta"])
+                         ftc.with_preset_ssot({"mpy_type": "mPyFile"}, m)[0]["meta"])
 
 
 if __name__ == "__main__":

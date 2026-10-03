@@ -199,9 +199,9 @@ def _generate_cpp_impl(spec: dict, for_port: bool = False) -> str:
     if base == _IKSOLVER_BASE:
         return _generate_iksolver_cpp(spec, for_port)
     is_deformer = base in _DEFORMER_BASES
-    # an mPyFile preset the spec carries takes the SSOT's min / max (a copy --
-    # the spec itself is the port-cache key)
-    members = file_texture_cpp.with_preset_limits(spec, _members(spec))
+    # an mPyFile preset the spec carries takes the SSOT's default and min / max
+    # (a copy -- the spec itself is the port-cache key)
+    members = file_texture_cpp.with_preset_ssot(spec, _members(spec))
     # Texture/file node: declare `fileName` FIRST among inputs. Maya 2026's CPU
     # swatch generator (2dTextureSwatchGen) uses the node's first input plug as a
     # "what kind of texture" hint; if it isn't fileName the Hypershade swatches

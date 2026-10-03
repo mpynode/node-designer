@@ -1961,6 +1961,20 @@ def _ssot_limits(entry):
             if entry.get(s) is not None}
 
 
+def _ssot_default(entry):
+    """``default_value`` meta for one SSOT descriptor's ``default`` -- the value
+    MPyFile.initializer() creates the plug with -- for the types whose emit_attr
+    create call takes one: an enum's field index, a float / long / bool value.
+    No SSOT preset is a unit type, so the value is already in internal units. A
+    compound's children all default to 0, which is what emit_attr creates; a
+    string's "" is not a default emit_attr writes."""
+    t = entry["attr_type"]
+    if t == "enum" or (t in ("float", "double", "long", "bool")
+                       and entry.get("default") is not None):
+        return {"default_value": entry["default"]}
+    return {}
+
+
 def _ssot_meta(entry):
     """emit_attr meta for one SSOT descriptor.
 
@@ -1975,38 +1989,48 @@ def _ssot_meta(entry):
     t    = entry["attr_type"]
     meta = {"type": t}
     if t == "enum":
-        meta["enum_names"]    = _iface.enum_labels(entry)
-        meta["default_value"] = entry["default"]
+        meta["enum_names"] = _iface.enum_labels(entry)
     elif t == "float2":
         meta["children"] = [c["long"] for c in entry["children"]]
-    elif t in ("float", "double", "long", "bool") and entry.get("default") is not None:
-        meta["default_value"] = entry["default"]
+    meta.update(_ssot_default(entry))
     meta.update(_ssot_limits(entry))
     return meta
 
 
-def with_preset_limits(spec: dict, members) -> list:
-    """``members`` with the SSOT min / max on each mPyFile preset the SPEC carries.
+def with_preset_ssot(spec: dict, members) -> list:
+    """``members`` with the SSOT default and min / max on each mPyFile preset the
+    SPEC carries.
 
-    A preset the compute references (preFilterRadius) reaches the spec through
-    ``build_porter_meta_table``, which keeps the type and nothing else, so it is
-    created from the spec meta, not ``_ssot_meta``, and lost its range the same
-    way. The spec stays untouched (it is the port-cache key): a member whose
-    meta has no recorded range of its own gets a COPY carrying the SSOT's. A
-    preset with no range, a type that is not the SSOT's, and any other
-    ``mpy_type`` come back as they were."""
+    A preset the compute references (preFilterRadius, outAlpha) reaches the spec
+    through ``build_porter_meta_table``, which keeps the type and little else, so
+    it is created from the spec meta, not ``_ssot_meta``, and lost what that
+    projection drops: its range (until 2026-10-03) and its numeric default --
+    the compiled preFilterRadius registered 0 instead of 2, outAlpha 0 instead
+    of 1. The spec stays untouched (it is the port-cache key): the member gets a
+    COPY of its meta carrying the SSOT's default and range, each only where the
+    spec records none of its own (a recorded default or range wins). A ``None``
+    is not a record: emit_attr reads ``default_value`` / ``min_value`` /
+    ``max_value`` of ``None`` as absent, so a ``None`` key takes the SSOT's
+    value here instead of a create at 0 with no range. A plug whose direction
+    or type is not the SSOT's, and any other ``mpy_type``, come back as they
+    were."""
     if (spec or {}).get("mpy_type") != "mPyFile":
         return list(members or [])
     from mpynode._common.interface import file_texture_interface as _iface
-    ssot = {e["long"]: e for e in _iface.FILE_TEXTURE_ATTRS
-            if e["direction"] == "input" and _ssot_limits(e)}
-    out = []
+    ssot = {e["long"]: e for e in _iface.FILE_TEXTURE_ATTRS}
+    out  = []
     for m in members or []:
-        e = ssot.get(m["plug"])
-        if (e is not None and m["kind"] == "inputs"
-                and m["meta"].get("type") == e["attr_type"]
-                and "min_value" not in m["meta"] and "max_value" not in m["meta"]):
-            m = dict(m, meta=dict(m["meta"], **_ssot_limits(e)))
+        e, meta = ssot.get(m["plug"]), m["meta"]
+        if (e is not None and meta.get("type") == e["attr_type"]
+                and m["kind"] == ("inputs" if e["direction"] == "input"
+                                  else "outputs")):
+            add = {}
+            if meta.get("default_value") is None:
+                add.update(_ssot_default(e))
+            if meta.get("min_value") is None and meta.get("max_value") is None:
+                add.update(_ssot_limits(e))
+            if add:
+                m = dict(m, meta=dict(meta, **add))
         out.append(m)
     return out
 

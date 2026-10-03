@@ -513,7 +513,19 @@ from typing import Optional
 # templates and in the All Templates Plugin, plus the orphaned
 # brightContrastTex; the shipped artifacts took the hunks by splice --
 # 2026-10-03.
-PORTER_RECIPE_VERSION = "39"
+# v40: an mPyFile preset the spec carries takes the SSOT's default too. It
+# arrives through build_porter_meta_table with its type only (an enum keeps its
+# field index), so the compiled preFilterRadius registered 0 where the
+# interpreted initializer() creates it at 2, and outAlpha 0 where it is 1.
+# v39's with_preset_limits becomes with_preset_ssot: the same copy of the
+# member now carries the default beside the range, the spec and so the key
+# untouched, and a default the spec records wins; base plugs already had both
+# through _ssot_meta, which now shares _ssot_default. A SKELETON change
+# invisible to the key. Moves 9 of 76 stage-1 files: compositeTexture,
+# fileTexture, gameOfLifeTex and scanlineTex, in their templates and in the All
+# Templates Plugin, plus the orphaned brightContrastTex; the shipped artifacts
+# took the hunks by splice -- 2026-10-03.
+PORTER_RECIPE_VERSION = "40"
 
 # Spec keys excluded from the cache key -- provably irrelevant to the generated
 # C++. A deny-list, NOT an allow-list (design C1).
