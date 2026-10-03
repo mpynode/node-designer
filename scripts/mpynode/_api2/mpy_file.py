@@ -176,6 +176,71 @@ def _derive_out_size(self_proxy):
     return (float(buf.shape[1]), float(buf.shape[0]))
 
 
+def _texture_parameter(shader):
+    """Name of the fragment's 2D-texture parameter on ``shader``, else None.
+
+    Also None for anything that is not a shader instance: tests and headless
+    callers hand runViewport None or a stand-in object."""
+    try:
+        names = shader.parameterList()
+    except Exception:
+        return None
+    for pname in names:
+        try:
+            if shader.parameterType(pname) == omr.MShaderInstance.kTexture2:
+                return pname
+        except Exception:
+            continue
+    return None
+
+
+# Texture-manager name of the 1 x 1 image _bind_nothing() binds, used verbatim.
+# Every name a shipped tier gives an image either carries another prefix
+# ("mpyfile_template::", "mpyfile::bb::", ...) or ends in the "|cs=..|pf=.."
+# suffix upload_linear_texture() appends, so none can equal it on any OS.
+_NOTHING_KEY = "mpyfile::<nothing>"
+
+
+def _bind_nothing(shader) -> bool:
+    """Bind transparent black to ``shader``, so a Viewport call shows only what
+    it binds itself.
+
+    A shader instance keeps the last texture it was given until something
+    replaces it. A Viewport tier that uploads nothing on a call -- an older
+    source that skips the upload when there is no image, or one that raised
+    half way -- therefore left the PREVIOUS image on the surface: a cleared or
+    missing fileName kept showing the old file. Transparent black is what a
+    compute that writes nothing leaves on outColor / outAlpha. The shipped
+    tiers bind the missing-image magenta themselves (DEFAULT_VIEWPORT_SOURCE).
+
+    A real 1 x 1 texture, never an empty MTextureAssignment: setParameter with
+    no texture crashes Maya 2025 on a shader that has never had one (measured,
+    OGS::Devices::TextureInstance). True when the texture was bound."""
+    pname = _texture_parameter(shader)
+    if pname is None or _np is None:
+        return False
+    try:
+        texture = _tex.upload_linear_texture(
+            _np.zeros((1, 1, 4), dtype=_np.float32), "", 0, kMipmapNone,
+            False, kPreFilterGaussian, 0.0, dummy_name=_NOTHING_KEY)
+    except Exception:
+        return False
+    if texture is None:
+        return False
+    try:
+        assignment         = omr.MTextureAssignment()
+        assignment.texture = texture
+        shader.setParameter(pname, assignment)
+        return True
+    except Exception:
+        return False
+    finally:
+        try:
+            omr.MRenderer.getTextureManager().releaseTexture(texture)
+        except Exception:
+            pass
+
+
 def _build_preset_interface(cls):
     """Register the mPyFile preset texture attrs from ``_iface.FILE_TEXTURE_ATTRS`` and
     set the ``cls.aXxx`` MObject refs. Reproduces the exact imperative MFn sequence."""
@@ -628,9 +693,15 @@ class MPyFile(om.MPxNode):
         linear = _tex.load_linear_pixels(
             file_name, cs_index, preFilter, preFilterKernel, preFilterRadius
         )
+        key = "file:" + file_name
+        if linear is None:
+            # No image: upload what compute samples (magenta), never nothing --
+            # the shader would keep showing the previous image.
+            linear = _tex.missing_pixels()
+            key    = _tex.MISSING_KEY
         if linear is not None and map_param:
             texture = _tex.upload_linear_texture(
-                linear, file_name, cs_index, mipmapMode,
+                linear, key, cs_index, mipmapMode,
                 preFilter, preFilterKernel, preFilterRadius,
                 name_prefix="mpyfile::bb::",
                 dummy_name=("mpyfile::bb::DUMMY_RED_64x64"
@@ -1206,6 +1277,13 @@ class MPyFile(om.MPxNode):
         namespace         = build_exec_namespace()
         namespace["self"] = self_proxy
 
+        # Start the call from transparent black, so the surface shows only what
+        # this run of the Viewport tier binds and never a texture an earlier
+        # call left behind (see _bind_nothing). Rebinding in the same
+        # updateShader replaces it before VP2 draws, so a tier that uploads
+        # its image every call -- every shipped one -- is unaffected.
+        _bind_nothing(shader)
+
         captured: list[str] = []
 
         def _on_err(msg):
@@ -1541,7 +1619,10 @@ class MPyFileOverride(omr.MPxShadingNodeOverride):
             "(always rebinding -- cache disabled)\n"
             % (map_param, samp_param)
         )
-        if map_param is not None and self._file_name:
+        # A blank fileName still binds -- the missing-image magenta below --
+        # because skipping left the previous image on the surface.
+        if map_param is not None:
+            key = "file:" + self._file_name
             if MPyFile.DUMMY_TEXTURE_MODE and _np is not None:
                 # Solid-red 64x64 RGBA float32 in scene-linear. Renders red =
                 # the GPU pipeline works; else the fragment binding is broken.
@@ -1562,9 +1643,12 @@ class MPyFileOverride(omr.MPxShadingNodeOverride):
                 "[MPyFileOverride._update_shader_barebones] linear=%s\n"
                 % ("OK" if linear is not None else "None")
             )
+            if linear is None:
+                linear = _tex.missing_pixels()
+                key    = _tex.MISSING_KEY
             if linear is not None:
                 texture = _tex.upload_linear_texture(
-                    linear, self._file_name, self._cs_index,
+                    linear, key, self._cs_index,
                     self._mipmap_mode, self._pre_filter,
                     self._pre_filter_kernel, self._pre_filter_radius,
                     name_prefix="mpyfile::bb::",

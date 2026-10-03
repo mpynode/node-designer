@@ -749,6 +749,34 @@ def sample(pixels, u, v, wrap_u, wrap_v, border_color, missing=None):
     return (float(rgba[0]), float(rgba[1]), float(rgba[2]), float(rgba[3]))
 
 
+# ---- the no-image stand-in a Viewport tier uploads ----
+# What sample() returns for a None buffer, as a whole image. A Viewport tier
+# uploads this when the image does not load instead of skipping the upload:
+# VP2 keeps the texture a shader was last given, so skipping left the PREVIOUS
+# image on the surface after fileName was cleared or pointed at a missing
+# file. 256 x 256 is the grid the compiled override bakes when it has no image
+# to size from, so a look that varies across the surface (a scan band) matches.
+# The shipped Viewport sources inline the same three values instead of
+# importing this module.
+MISSING_RGBA = (1.0, 0.0, 1.0, 1.0)
+MISSING_SIZE = 256
+# Texture-manager key for the stand-in. acquireTexture() hands back the texture
+# that already carries a name and ignores the new pixels, so the stand-in must
+# never share a key with an image. Every image key starts with "file:" (the
+# path) or "embedded:" (the md5 of the embedded bytes), so none can equal this
+# one on any OS.
+MISSING_KEY = "<missing>"
+
+
+def missing_pixels(h=MISSING_SIZE, w=MISSING_SIZE):
+    """The no-image stand-in: float32 HxWx4 filled with MISSING_RGBA."""
+    if np is None:
+        return None
+    buf      = np.empty((int(h), int(w), 4), dtype=np.float32)
+    buf[...] = MISSING_RGBA
+    return buf
+
+
 # ---- VP2 enum maps + GPU upload (Viewport path; lazy-import maya) ----
 def vp2_filter_for(mode):
     """Map our filterMode enum to MSamplerState filter constant."""

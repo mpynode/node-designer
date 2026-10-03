@@ -1282,18 +1282,38 @@ FILE_VIEW = r'''# --------------------------------------------------------------
 # instead of early returns (exactly like the production viewport source in
 # _defaults/file_defaults.py).
 # ----------------------------------------------------------------------
+import hashlib
+
 import maya.api.OpenMayaRender as omr
 
-# 1. Read the image the SAME way Compute does -> (H, W, 4) float32 [0,1],
-#    or None when the file is missing/unreadable (the framework caches the
-#    decode). We only do GPU work when we have BOTH a readable image AND a
-#    texture manager -- the texture manager is None when running headless
-#    (e.g. mayapy/batch). When either is missing we simply skip the upload
-#    and VP2 shows no texture (no magenta upload needed -- Compute owns the
-#    magenta fallback). Everything below is nested under this single guard
-#    so we never need a module-level ``return``.
-img = self.read_texture()
-if img is not None and self.texture_manager is not None:
+# 1. Read the image the SAME way Compute does -> (H, W, 4) float32 [0,1]:
+#    fileName first, then the node's embedded image, or None when neither
+#    loads (the framework caches the decode). No image is NOT a reason to
+#    skip the upload: VP2 keeps the texture a surface was last given, so
+#    skipping left the PREVIOUS image on screen after fileName was cleared
+#    or pointed at a missing file. Stand in what Compute samples with no
+#    image instead -- opaque magenta everywhere, on the 256 x 256 grid the
+#    compiled node bakes -- and grade it below like any image.
+#    The texture manager hands back a texture BY NAME and ignores new
+#    pixels, so the key names the image, not the fileName: "file:" + the
+#    path, "embedded:" + the md5 of the embedded bytes, or "<missing>" for
+#    the stand-in. Two nodes embedding different images, or new bytes under
+#    the same fileName, therefore never share a texture, and no image key
+#    can equal "<missing>" on any OS. GPU work needs a texture manager,
+#    which is None when running headless (e.g. mayapy/batch). Everything
+#    below is nested under that one guard so we never need a module-level
+#    ``return``.
+img = self.read_texture(self.fileName)
+key = "file:" + self.fileName
+if img is None:
+    img = self.read_texture()
+    if img is not None:
+        key = "embedded:" + hashlib.md5(self.embeddedImage).hexdigest()
+if img is None:
+    img = np.empty((256, 256, 4), dtype=np.float32)
+    img[...] = (1.0, 0.0, 1.0, 1.0)
+    key = "<missing>"
+if self.texture_manager is not None:
 
     # 2. Apply the EXACT brightness/contrast Compute uses, but vectorized
     #    over the whole image at once. Per RGB channel, matching Compute:
@@ -1363,7 +1383,7 @@ if img is not None and self.texture_manager is not None:
         # file/brightness/contrast settings get distinct texture-manager
         # cache entries (and so editing those inputs refreshes the surface).
         tex_name = "mpyfile_template::%s|b=%.4f|c=%.4f" % (
-            self.fileName, bright, contrast)
+            key, bright, contrast)
         texture = self.texture_manager.acquireTexture(
             tex_name, desc, processed.tobytes(), False,   # gen_mips=False
         )
@@ -5224,10 +5244,31 @@ FILE_SCAN_VIEW = r'''# ---------------------------------------------------------
 # so the VP2 surface scrolls in lock-step with the swatch. Nested guards (no
 # module-level return -- that would be a compile-time SyntaxError here).
 # ----------------------------------------------------------------------
+import hashlib
+
 import maya.api.OpenMayaRender as omr
 
-img = self.read_texture()
-if img is not None and self.texture_manager is not None:
+# The image Compute reads: fileName first, then the node's embedded image. No
+# image is no reason to skip the upload: VP2 keeps the texture a surface was
+# last given, so skipping left the previous image on screen after fileName was
+# cleared or pointed at a missing file. Stand in what Compute samples with no
+# image -- opaque magenta, which the scan below bands exactly as Compute does --
+# on the 256 x 256 grid the compiled node bakes. The texture manager hands back
+# a texture BY NAME and ignores new pixels, so the key names the image, not the
+# fileName: "file:" + the path, "embedded:" + the md5 of the embedded bytes, or
+# "<missing>" for the stand-in, which no image key can equal on any OS.
+path = getattr(self, "fileName", "")
+img = self.read_texture(path)
+key = "file:" + path
+if img is None:
+    img = self.read_texture()
+    if img is not None:
+        key = "embedded:" + hashlib.md5(self.embeddedImage).hexdigest()
+if img is None:
+    img = np.empty((256, 256, 4), dtype=np.float32)
+    img[...] = (1.0, 0.0, 1.0, 1.0)
+    key = "<missing>"
+if self.texture_manager is not None:
     bands = self.bands
     speed = self.speed
     intensity = self.intensity
@@ -5244,7 +5285,9 @@ if img is not None and self.texture_manager is not None:
     processed[..., 0] *= scan[:, None]
     processed[..., 1] *= scan[:, None]
     processed[..., 2] *= scan[:, None]
-    np.clip(processed[..., :3], 0.0, 1.0, out=processed[..., :3])
+    # NOT clipped. Compute writes `r * scan` unclamped, so clipping here
+    # made the viewport disagree with the swatch and the render for any
+    # colour space whose linear range runs past 1.0 (ACEScct, LogC).
     processed = np.ascontiguousarray(processed, dtype=np.float32)
 
     map_param = None
@@ -5276,7 +5319,7 @@ if img is not None and self.texture_manager is not None:
         desc.fEnvMapType = omr.MTextureDescription.kEnvNone
         # Keyed on frame (+ look inputs) so the viewport re-uploads and scrolls.
         tex_name = "mpyfile_scanline::%s|t=%.4f|b=%.3f|s=%.4f|i=%.3f" % (
-            getattr(self, "fileName", ""), t, bands, speed, intensity)
+            key, t, bands, speed, intensity)
         texture = self.texture_manager.acquireTexture(
             tex_name, desc, processed.tobytes(), False)
         if texture is not None:

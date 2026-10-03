@@ -912,18 +912,38 @@ for pname in self.shader.parameterList():
     if map_param and samp_param:
         break
 
-# 2. Upload the linearized pixels (helper defined in Init).
-linear = _load_linear_pixels(
-    self.fileName,
-    int(self.colorSpace),
-    bool(self.preFilter),
-    int(self.preFilterKernel),
-    float(self.preFilterRadius),
-)
-if linear is not None and map_param:
+# 2. Read the image the SAME way the Compute tab does -- self.read_texture()
+#    -- so the colour space, the pre-filter AND the embedded-image fallback
+#    all match it: fileName first, then the node's embedded image. With no
+#    image, upload what Compute samples instead: opaque magenta everywhere,
+#    on the 256 x 256 grid the compiled node bakes. Never skip the upload:
+#    VP2 keeps the texture a surface was last given, so skipping left the
+#    previous file on screen after fileName was cleared or pointed at a
+#    missing file.
+#    The texture manager hands back a texture BY NAME and ignores new pixels,
+#    so the key names the image, not the fileName: "file:" + the path,
+#    "embedded:" + the md5 of the embedded bytes, or "<missing>" for the
+#    stand-in. Two nodes embedding different images, or new bytes under the
+#    same fileName, therefore never share a texture, and no image key can
+#    equal "<missing>" on any OS.
+import hashlib
+
+linear = self.read_texture(self.fileName)
+key = "file:" + self.fileName
+if linear is None:
+    linear = self.read_texture()
+    if linear is not None:
+        key = "embedded:" + hashlib.md5(self.embeddedImage).hexdigest()
+if linear is None:
+    linear = np.empty((256, 256, 4), dtype=np.float32)
+    linear[...] = (1.0, 0.0, 1.0, 1.0)
+    key = "<missing>"
+
+# 3. Upload the linearized pixels (helper defined in Init).
+if map_param:
     texture = _upload_linear_texture(
         linear,
-        self.fileName,
+        key,
         int(self.colorSpace),
         int(self.mipmapMode),
         bool(self.preFilter),
@@ -939,7 +959,7 @@ if linear is not None and map_param:
         except Exception:
             pass
 
-# 3. Build + apply the sampler state.
+# 4. Build + apply the sampler state.
 if samp_param:
     border = np.asarray(self.borderColor, dtype=np.float32)
     desc = omr.MSamplerStateDesc()
