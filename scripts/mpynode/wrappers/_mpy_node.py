@@ -1563,12 +1563,15 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
             read, write = self._read_output_map, self._write_output_map
             adder, color_setter = self.add_output_attr, self.set_output_attr_color
         attr_map = read()
-        if set(new_order) != set(attr_map):
+        # A repeated name passes the set test but would be re-added twice --
+        # the second addAttr fails after everything has been deleted.
+        if len(new_order) != len(attr_map) or set(new_order) != set(attr_map):
             raise ValueError(
                 "reorder list must be a permutation of the existing %s attrs; "
                 "got %r vs %r" % (direction, sorted(new_order), sorted(attr_map))
             )
-        if list(self._ordered_attr_map(attr_map).keys()) == list(new_order):
+        old_order = list(self._ordered_attr_map(attr_map).keys())
+        if old_order == list(new_order):
             return  # already in this order -- nothing to do
         node = self._name
 
@@ -1581,11 +1584,16 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
         from mpynode._common.lifecycle import scene_state as scene_io
         scene_io.begin_attr_surgery()
         try:
-            # 1. Snapshot value + connections (both directions) for every attr.
+            # 1. Validate every re-add BEFORE anything is deleted: an entry
+            #    the re-add would reject raises here, with the node untouched.
+            for nm in new_order:
+                self._validate_readd_for_reorder(adder, nm, attr_map[nm])
+
+            # 2. Snapshot value + connections (both directions) for every attr.
             snaps = {nm: self._snapshot_attr_for_reorder(node, nm, attr_map[nm])
                      for nm in attr_map}
 
-            # 2. Delete every user attr of this direction (compound/array
+            # 3. Delete every user attr of this direction (compound/array
             #    children cascade with their parent).
             for nm in list(attr_map):
                 try:
@@ -1593,25 +1601,112 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
                 except Exception:
                     pass
 
-            # 3. Reset the stored map (so ``order`` re-stamps 0..n-1 in the new
-            #    sequence) and re-add in the requested order.
-            write({})
-            for nm in new_order:
-                self._readd_attr_for_reorder(adder, nm, attr_map[nm])
-                col = (attr_map[nm] or {}).get("ui_color")
-                if col:
-                    try:
-                        color_setter(nm, col)
-                    except Exception:
-                        pass
+            # 4. Reset the stored map (so ``order`` re-stamps 0..n-1 in the new
+            #    sequence) and re-add in the requested order. A failure that
+            #    validation could not foresee (Maya refusing the addAttr) puts
+            #    every attr back the way it was before re-raising.
+            try:
+                write({})
+                for nm in new_order:
+                    self._readd_attr_for_reorder(adder, nm, attr_map[nm])
+                    self._recolor_attr_for_reorder(color_setter, nm,
+                                                   attr_map[nm])
+            except Exception as exc:
+                lost = self._rollback_reorder(attr_map, old_order, snaps,
+                                              adder, color_setter, write)
+                if lost:
+                    raise RuntimeError(
+                        "reordering the %s attrs of %r failed (%s) and %s "
+                        "could not be restored" % (direction, node, exc, lost)
+                    ) from exc
+                raise
 
-            # 4. Restore values, then reconnect.
+            # 5. Restore values, then reconnect.
             for nm in new_order:
                 self._restore_attr_for_reorder(node, nm, snaps[nm])
         finally:
             scene_io.end_attr_surgery()
 
         _invalidate_affects()
+
+    def _validate_readd_for_reorder(self, adder, name: str, meta) -> None:
+        """Raise ``ValueError`` if :meth:`_readd_attr_for_reorder` would reject
+        ``name`` / ``meta``, so the reorder can refuse before deleting a thing.
+
+        Covers what the add path validates: the name (a reserved-name clash
+        only warns mid attr-surgery, so it is not checked), the type, packed
+        storage and the enum / numeric metadata it hands to ``cmds.addAttr``.
+        """
+        if not isinstance(meta, dict):
+            raise ValueError("attr %r has no metadata to re-add it from" % name)
+        if not isinstance(name, str) or not name.isidentifier() or keyword.iskeyword(name):
+            raise ValueError(
+                f"attribute name {name!r} must be a valid Python identifier and "
+                f"not a Python keyword (it is accessed as self.{name})"
+            )
+        attr_type = _attr_types.canonical(meta.get("attr_type", "double"))
+        if attr_type not in _ADD_ATTR_KIND:
+            raise ValueError("attr %r: no plug for attr_type %r" % (name, attr_type))
+        is_array = bool(meta.get("is_array", False))
+        packed = (adder == self.add_input_attr and is_array
+                  and bool(meta.get("packed")))
+        if packed:
+            _validate_packed(name, attr_type, is_array, bool(meta.get("sparse")))
+        enum_names = meta.get("enum_names")
+        if attr_type == "enum" and enum_names is not None:
+            if (not isinstance(enum_names, (list, tuple))
+                    or not all(isinstance(e, str) for e in enum_names)):
+                raise ValueError(
+                    "attr %r: enum_names must be a list of strings, got %r"
+                    % (name, enum_names))
+        if packed:
+            return  # min / max / default are not applied to a packed table
+        try:
+            _apply_numeric_limits({}, attr_type, meta.get("min_value"),
+                                  meta.get("max_value"), meta.get("default_value"))
+            _apply_enum_default({}, attr_type, meta.get("default_value"))
+        except (TypeError, ValueError) as exc:
+            raise ValueError("attr %r: bad min / max / default: %s" % (name, exc))
+
+    @staticmethod
+    def _recolor_attr_for_reorder(color_setter, name: str, meta) -> None:
+        col = (meta or {}).get("ui_color")
+        if col:
+            try:
+                color_setter(name, col)
+            except Exception:
+                pass
+
+    def _rollback_reorder(self, attr_map, old_order, snaps, adder,
+                          color_setter, write) -> list:
+        """Put a failed reorder back: every attr re-added in ``old_order``,
+        the original map written back as it was, values and connections
+        restored from ``snaps``. Returns the names that could not be re-added
+        (left out of the map, so it never names a missing plug)."""
+        node = self._name
+        for nm in attr_map:
+            try:
+                if mc.attributeQuery(nm, node=node, exists=True):
+                    mc.deleteAttr(node + "." + nm)
+            except Exception:
+                pass
+        write({})
+        lost = []
+        for nm in old_order:
+            try:
+                self._readd_attr_for_reorder(adder, nm, attr_map[nm])
+            except Exception:
+                lost.append(nm)
+                continue
+            self._recolor_attr_for_reorder(color_setter, nm, attr_map[nm])
+        # The original map, not the re-stamped one: same ``order`` values and
+        # every key, exactly as before the reorder began.
+        write({nm: meta for nm, meta in attr_map.items() if nm not in lost})
+        for nm in old_order:
+            if nm not in lost:
+                self._restore_attr_for_reorder(node, nm, snaps[nm])
+        _invalidate_affects()
+        return lost
 
     def _snapshot_attr_for_reorder(self, node: str, name: str, meta: dict) -> dict:
         snap = {"in": [], "out": [], "value": None, "matrix": False}
@@ -1659,11 +1754,14 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
             "max_value":     meta.get("max_value"),
             "default_value": meta.get("default_value"),
         }
-        if adder is self.add_input_attr and is_array and meta.get("sparse"):
+        # ``==``, not ``is``: every ``self.add_input_attr`` lookup builds a new
+        # bound method, so an identity test was never true and both flags were
+        # silently dropped on every reorder.
+        if adder == self.add_input_attr and is_array and meta.get("sparse"):
             kw["sparse"] = True
         # Packed is the plug KIND, so a reorder/re-add MUST carry it or the
         # attribute silently comes back as a numeric multi.
-        if adder is self.add_input_attr and is_array and meta.get("packed"):
+        if adder == self.add_input_attr and is_array and meta.get("packed"):
             kw["packed"] = True
         try:
             adder(name, attr_type, is_array, enum_names=enum_names, **kw)

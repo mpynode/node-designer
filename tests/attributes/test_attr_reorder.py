@@ -135,6 +135,92 @@ class TestWrapperReorder(unittest.TestCase):
                          ["alpha", "beta", "gamma", "delta"])
 
 
+class TestReorderLosesNothing(unittest.TestCase):
+    """The rebuild deletes every attr before re-adding them, so an error part
+    way through must not cost the node its attributes, values or wiring."""
+
+    def setUp(self):
+        mc.file(new=True, force=True)
+
+    def _wired(self):
+        n    = _node()
+        name = n.get_name()
+        mc.setAttr(name + ".beta", 7.5)
+        drv = mc.createNode("transform", name="lossDrv#")
+        mc.connectAttr(drv + ".translateX", name + ".gamma")
+        n.add_output_attr("outA", "float")
+        sink = mc.createNode("transform", name="lossSink#")
+        mc.connectAttr(name + ".outA", sink + ".translateY")
+        return n, name, drv, sink
+
+    def _assert_intact(self, n, name, drv, sink, before):
+        self.assertEqual(n._read_input_map(), before)
+        self.assertEqual(list(n.get_input_attr_map().keys()),
+                         ["alpha", "beta", "gamma", "delta"])
+        self.assertEqual(_user_attr_order(name),
+                         ["alpha", "beta", "gamma", "delta"])
+        self.assertAlmostEqual(mc.getAttr(name + ".beta"), 7.5, places=4)
+        self.assertEqual(
+            mc.listConnections(name + ".gamma", source=True,
+                               destination=False, plugs=True) or [],
+            [drv + ".translateX"])
+        self.assertEqual(
+            mc.listConnections(name + ".outA", source=False,
+                               destination=True, plugs=True) or [],
+            [sink + ".translateY"])
+
+    def test_invalid_entry_refused_before_anything_is_deleted(self):
+        # An entry the re-add would reject (an unknown type here) is found
+        # before the first deleteAttr, so the node is untouched.
+        n, name, drv, sink = self._wired()
+        bad                       = n._read_input_map()
+        bad["gamma"]["attr_type"] = "notAType"
+        n._write_input_map(bad)
+        with self.assertRaises(ValueError):
+            n.reorder_input_attrs(["delta", "gamma", "beta", "alpha"])
+        self._assert_intact(n, name, drv, sink, bad)
+
+    def test_readd_failure_restores_every_attr(self):
+        # A re-add that fails anyway (Maya refusing the addAttr) rolls the
+        # whole rebuild back: attrs, map, values, connections.
+        n, name, drv, sink = self._wired()
+        before = n._read_input_map()
+        real   = n.add_input_attr
+        calls  = []
+
+        def flaky(*args, **kwargs):
+            calls.append(args[0])
+            if len(calls) == 3:
+                raise RuntimeError("forced addAttr failure")
+            return real(*args, **kwargs)
+
+        n.add_input_attr = flaky
+        try:
+            with self.assertRaises(RuntimeError):
+                n.reorder_input_attrs(["delta", "gamma", "beta", "alpha"])
+        finally:
+            del n.add_input_attr
+        self.assertEqual(calls[:3], ["delta", "gamma", "beta"])
+        self._assert_intact(n, name, drv, sink, before)
+
+    def test_packed_and_sparse_survive(self):
+        # Packed is the plug KIND and sparse the read mode; a reorder that
+        # dropped them turned a packed table into a numeric multi.
+        from mpynode.wrappers._mpy_node import MPyNode
+
+        n = MPyNode.create(name="kindReord#")
+        n.add_input_attr("a", "float")
+        n.add_input_attr("tab", "double", is_array=True, packed=True)
+        n.add_input_attr("sp", "double", is_array=True, sparse=True)
+        name = n.get_name()
+        n.reorder_input_attrs(["sp", "tab", "a"])
+        attr_map = n.get_input_attr_map()
+        self.assertEqual(list(attr_map), ["sp", "tab", "a"])
+        self.assertTrue(attr_map["tab"].get("packed"))
+        self.assertTrue(attr_map["sp"].get("sparse"))
+        self.assertEqual(mc.getAttr(name + ".tab", type=True), "doubleArray")
+
+
 class TestReorderSuppressesTransientEval(unittest.TestCase):
     """Root cause of the quatSpring.ma reorder error: the destructive rebuild
     momentarily DELETES every user attr and writes an EMPTY schema map, so when
