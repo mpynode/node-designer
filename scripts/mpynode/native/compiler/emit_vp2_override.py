@@ -1486,8 +1486,11 @@ def inject_vp2_override(cpp: str, spec: Optional[dict] = None) -> str:
     # body still referenced them, and the TU failed to compile. Keyed on the
     # member names appearing as adjacent arguments to a kernel, so any future
     # kernel that threads the cache is picked up without editing this line.
-    has_texcache = bool(
-        re.search(r"nd_tex_\w+\([^;]*\b_texCache\s*,\s*_texMutex\b", cpp))
+    # Searched in the BODY that becomes nd_texel, not the whole node: the
+    # derived outSize tail loads fileName through the same cache after the
+    # body, and on a node whose body never samples (the Game of Life bake) it
+    # would otherwise thread a pair nd_texel never uses (2026-10-03).
+    _texcache_re = r"nd_tex_\w+\([^;]*\b_texCache\s*,\s*_texMutex\b"
 
     # (1) extract the compute body to become nd_texel. Two shapes: an AI PORT
     # region, or a deterministically-lowered guard. `full` is captured HERE,
@@ -1497,6 +1500,7 @@ def inject_vp2_override(cpp: str, spec: Optional[dict] = None) -> str:
         port_body, port_full = _lowered
     else:
         port_body, port_full = _port_region(cpp)
+    has_texcache = bool(re.search(_texcache_re, port_body))
 
     # Persistent per-instance state, threaded into nd_texel so the viewport bake
     # runs the SAME simulation as compute() instead of forking a second one.

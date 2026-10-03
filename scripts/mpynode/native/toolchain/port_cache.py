@@ -525,7 +525,33 @@ from typing import Optional
 # fileTexture, gameOfLifeTex and scanlineTex, in their templates and in the All
 # Templates Plugin, plus the orphaned brightContrastTex; the shipped artifacts
 # took the hunks by splice -- 2026-10-03.
-PORTER_RECIPE_VERSION = "40"
+# v41: a compiled attribute takes the interpreted node's flags and string
+# defaults. (1) Every mPyFile preset, spec-carried (with_preset_ssot) or base
+# (base_attr_members), takes MPyFile.initializer()'s flags from the SSOT
+# (_ssot_flag_lines): the compiled colorSpace, preFilterKernel, uvCoord and
+# uvFilterSize(X/Y) were keyable where the interpreted ones are not, and a
+# spec-carried fileName lacked usedAsFilename. (2) A single string / hex input
+# is keyable, as the interpreted addAttr makes every non-array input
+# (gameOfLifeTex's bakePath and the locators' displayText were not). (3)
+# fileName and osl are created at "" through MFnStringData, as the interpreted
+# initializer creates them; until v41 an unset one read None. A user string
+# attr stays bare: an addAttr -dt string takes no default and reads None
+# interpreted too. (4) The derived outSize loads the node's own fileName
+# whatever the compute reads, as the interpreted read_texture() does, so a
+# composite or Game of Life node reports the file's size instead of (0, 0):
+# through the texture cache (added for that load where the node had none), or
+# a raw-image port's own decode; the VP2 override threads the texture cache
+# into nd_texel only when the body uses it. (5) A node carrying baked
+# embeddedImage bytes retries them when fileName does not load, in the outSize
+# load and in the full-parity glue, as read_texture() does: a default mPyFile
+# rendered magenta and every node reported (0, 0) there; no shipped spec
+# carries the bytes. A SKELETON change invisible to the key. Moves 25 of 76
+# stage-1 files: compositeTexture, fileTexture, gameOfLifeTex, scanlineTex,
+# animatedText, circularText, meshRegionLocator, diskMeshCache,
+# jsonMeshReader, uvLayoutMesh, voxelizeMesh and ouch, in their templates and
+# in the All Templates Plugin, plus the orphaned brightContrastTex; the shipped
+# artifacts took the hunks by splice -- 2026-10-03.
+PORTER_RECIPE_VERSION = "41"
 
 # Spec keys excluded from the cache key -- provably irrelevant to the generated
 # C++. A deny-list, NOT an allow-list (design C1).

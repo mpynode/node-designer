@@ -1407,11 +1407,14 @@ def _generate_locator_cpp(spec, for_port=False):
             L.append("    tAttr.setAffectsAppearance(true);")
             L.append("    addAttribute(%s);" % mem)
         for s in strings:
+            # keyable, as the interpreted addAttr makes every non-array input
+            # (a compiled displayText was not until 2026-10-03). No default:
+            # an addAttr -dt string takes none, so both read None unset.
             mem = "a_" + s["member"]
             L.append('    %s = tAttr.create("%s", "%s", MFnData::kString);'
                      % (mem, s["plug"], s["plug"]))
             L.append("    tAttr.setStorable(true); tAttr.setWritable(true);")
-            L.append("    tAttr.setKeyable(false); tAttr.setAffectsAppearance(true);")
+            L.append("    tAttr.setKeyable(true); tAttr.setAffectsAppearance(true);")
             L.append("    addAttribute(%s);" % mem)
         for c in colors:
             mem = "a_" + c["member"]

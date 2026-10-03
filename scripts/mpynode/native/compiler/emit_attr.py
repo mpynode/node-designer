@@ -39,6 +39,11 @@ PACKED_INCLUDES = [
 # byte-identical. A `position` reads and writes as a double3 and needs none.
 DISTANCE_INCLUDE = "maya/MDistance.h"
 
+# The header a string attr created WITH a default needs (MFnStringData). NOT in
+# _INCLUDES: appended only when one is emitted (string_default), so every other
+# node's frag stays byte-identical.
+STRING_DATA_INCLUDE = "maya/MFnStringData.h"
+
 # `packed` array INPUT -> (MFnData enum, MFn*ArrayData class, M*Array class).
 # Element type stays double/int, so _CPP and every downstream consumer of
 # `std::vector<T> in_<member>` is unchanged -- only the plug KIND and the read
@@ -163,6 +168,20 @@ def _limit_lines(fn, meta, t):
         if meta.get(key) is not None:
             L.append("    %s.%s(%r);" % (fn, setter, cast(meta[key])))
     return L
+
+def string_default(m):
+    """The text a ``string`` member is created with, or ``None`` (created bare).
+
+    Read from ``string_default``, which only mPyFile's SSOT plugs carry
+    (file_texture_cpp._ssot_default: fileName and osl at ""). A recorded
+    ``default_value`` is NOT honoured: a user string attr is an addAttr -dt
+    string, which takes no default, so the interpreted node ignores it too.
+    A hex attr never takes one: its stored form is the encoded text."""
+    meta = m["meta"]
+    dv   = meta.get("string_default")
+    if meta.get("type") == "string" and isinstance(dv, str):
+        return dv
+    return None
 
 def _create_lines(m):
     """C++ lines that create + flag one attribute in initialize()."""
@@ -319,8 +338,28 @@ def _create_lines(m):
             _next_idx = _idx + 1
         L += _flags("eAttr", is_out)
     elif t in ("string", "hex"):
-        L.append("    %s = tAttr.create(%s, %s, MFnData::kString);" % (mem, a, a))
-        L += _flags("tAttr", is_out, keyable=False)
+        # An SSOT text default is created through MFnStringData, so an unset
+        # plug reads it instead of None: mPyFile's fileName and osl at "", as
+        # MPyFile.initializer() creates them. A user string attr is an addAttr
+        # -dt string, which takes no default and reads None interpreted too,
+        # so it is created bare (string_default).
+        sdv = string_default(m)
+        if sdv is None:
+            L.append("    %s = tAttr.create(%s, %s, MFnData::kString);"
+                     % (mem, a, a))
+        else:
+            L += [
+                "    {",
+                "        MFnStringData _sd;",
+                '        MObject _sdo = _sd.create("%s");' % _cpp_str(sdv),
+                "        %s = tAttr.create(%s, %s, MFnData::kString, _sdo);"
+                % (mem, a, a),
+                "    }",
+            ]
+        # A single string / hex INPUT is keyable, as the interpreted addAttr
+        # makes every non-array input (bakePath read keyable there and not
+        # compiled until 2026-10-03); an array is not, either side.
+        L += _flags("tAttr", is_out, keyable=not meta.get("is_array"))
     elif t == "nurbsCurve":
         # Typed kNurbsCurve attr, read into an MFnNurbsCurve local by _read_line
         # so the ported compute can query it in pure C++. Not keyable

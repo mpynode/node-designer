@@ -147,13 +147,16 @@ def _unbound_self_reads(ins, outs, spec) -> set:
 
 
 def _compute_lines(cls, ins, outs, spec, for_port, lowered=_UNSET,
-                   img_read=False, img_embedded=False, base_extra=()):
+                   img_read=False, img_embedded=False, base_extra=(),
+                   out_size=None):
     """Body of compute(); phase-1 stub or AI-fill port scaffold.
 
     ``img_read``/``img_embedded`` come from node_scaffold, which DECLARED the
     image caches -- this emitter must not re-derive them from the spec, or the
     body can call a cache the class body never declared (or, worse, promise the
-    porter a buffer that was suppressed).
+    porter a buffer that was suppressed). ``out_size`` is the same kind of
+    decision: the cache the derived outSize loads through
+    (file_texture_cpp.out_size_loader).
 
     ``base_extra`` are the mPyFile BASE plugs (node_scaffold owns their member
     names). They stay OUT of ``ins``/``outs`` so the ported / lowered body is
@@ -162,7 +165,8 @@ def _compute_lines(cls, ins, outs, spec, for_port, lowered=_UNSET,
     kUnknownParameter and read a stale value -- and be written by the derived
     tail at the end of finalize."""
     base_outs = [m for m in base_extra if m["kind"] == "outputs"]
-    derived   = file_texture_cpp.derived_output_lines(ins, outs, base_extra, spec)
+    derived = file_texture_cpp.derived_output_lines(ins, outs, base_extra, spec,
+                                                    out_size, img_embedded)
     # A compound output's child is normalised to its parent before the guard.
     L = compute_open_lines(cls, list(outs) + base_outs)
     if outs or base_outs:
@@ -221,7 +225,7 @@ def _compute_lines(cls, ins, outs, spec, for_port, lowered=_UNSET,
         L.append("    // --- verified file-texture pipeline (cached load + sample) ---")
         L += file_texture_cpp.compute_glue_lines(
             ins, outs, tail=file_texture_cpp.full_parity_tail(spec),
-            seq=file_texture_cpp.full_parity_seq(spec))
+            seq=file_texture_cpp.full_parity_seq(spec), embedded=img_embedded)
         L.append("")
         L.append("    // --- finalize ---")
         for o in scal_outs:

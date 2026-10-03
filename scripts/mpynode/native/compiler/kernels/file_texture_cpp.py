@@ -1954,6 +1954,40 @@ def _flag_lines(fn, flags):
             for k, v in (flags or {}).items() if k in _SSOT_FLAG_CALL]
 
 
+def _ssot_flag_lines(entry, member):
+    """The post-create flag calls that leave one SSOT plug as MPyFile.initializer()
+    leaves it.
+
+    The interpreted initializer applies the descriptor's ``flags`` to an attr
+    that otherwise keeps MFnAttribute's defaults; ``emit_attr._create_lines``
+    first applies the generic ones, which make every input keyable. So an input
+    whose descriptor never says ``keyable`` takes ``setKeyable(false)`` here --
+    Maya's default, and what the interpreted uvCoord and uvFilterSize report --
+    and a child's own flags follow its parent's (uCoord / vCoord are keyable
+    while uvCoord is not). Until 2026-10-03 a preset the spec carries took none
+    of these and a base plug took only the parent's, so the compiled
+    colorSpace, preFilterKernel, uvCoord and uvFilterSize were keyable and the
+    compiled fileName lacked usedAsFilename. A float2's children are the
+    ``<member>X`` / ``<member>Y`` locals ``_create_lines`` declares; a colour's
+    are created by createColor, and no colour child carries a flag."""
+    from mpynode.native.compiler.emit_attr import _fn_for
+    flags = dict(entry.get("flags") or {})
+    if entry["direction"] == "input":
+        flags.setdefault("keyable", False)
+    L = _flag_lines(_fn_for(entry["attr_type"]), flags)
+    for i, c in enumerate(entry.get("children") or []):
+        cflags = c.get("flags") or {}
+        if not cflags:
+            continue
+        if entry["attr_type"] != "float2":
+            raise UnsupportedSpec("mPyFile preset %r: flags on a %s child"
+                                  % (entry["long"], entry["attr_type"]))
+        L += ["    { MFnNumericAttribute _cf(%s%s); _cf.%s(%s); }"
+              % (member, "XY"[i], _SSOT_FLAG_CALL[k], "true" if v else "false")
+              for k, v in cflags.items() if k in _SSOT_FLAG_CALL]
+    return L
+
+
 def _ssot_limits(entry):
     """``min_value`` / ``max_value`` meta for one SSOT descriptor's ``min`` /
     ``max`` -- the range MPyFile.initializer() hands setMin / setMax."""
@@ -1962,16 +1996,22 @@ def _ssot_limits(entry):
 
 
 def _ssot_default(entry):
-    """``default_value`` meta for one SSOT descriptor's ``default`` -- the value
+    """Default meta for one SSOT descriptor's ``default`` -- the value
     MPyFile.initializer() creates the plug with -- for the types whose emit_attr
-    create call takes one: an enum's field index, a float / long / bool value.
-    No SSOT preset is a unit type, so the value is already in internal units. A
-    compound's children all default to 0, which is what emit_attr creates; a
-    string's "" is not a default emit_attr writes."""
+    create call takes one: an enum's field index, a float / long / bool value
+    as ``default_value``; a string's text as ``string_default``, its own key
+    because emit_attr honours no recorded string ``default_value`` (a user
+    string attr takes none). No SSOT preset is a unit type, so the value is
+    already in internal units. A compound's children all default to 0, which
+    is what emit_attr creates. fileName's "" is created through MFnStringData,
+    as the interpreted initializer does: without it an unset compiled fileName
+    read None where the interpreted one reads "" (until 2026-10-03)."""
     t = entry["attr_type"]
     if t == "enum" or (t in ("float", "double", "long", "bool")
                        and entry.get("default") is not None):
         return {"default_value": entry["default"]}
+    if t == "string" and isinstance(entry.get("default"), str):
+        return {"string_default": entry["default"]}
     return {}
 
 
@@ -1998,22 +2038,24 @@ def _ssot_meta(entry):
 
 
 def with_preset_ssot(spec: dict, members) -> list:
-    """``members`` with the SSOT default and min / max on each mPyFile preset the
-    SPEC carries.
+    """``members`` with the SSOT default, min / max and flags on each mPyFile
+    preset the SPEC carries.
 
     A preset the compute references (preFilterRadius, outAlpha) reaches the spec
     through ``build_porter_meta_table``, which keeps the type and little else, so
     it is created from the spec meta, not ``_ssot_meta``, and lost what that
-    projection drops: its range (until 2026-10-03) and its numeric default --
-    the compiled preFilterRadius registered 0 instead of 2, outAlpha 0 instead
-    of 1. The spec stays untouched (it is the port-cache key): the member gets a
-    COPY of its meta carrying the SSOT's default and range, each only where the
-    spec records none of its own (a recorded default or range wins). A ``None``
-    is not a record: emit_attr reads ``default_value`` / ``min_value`` /
-    ``max_value`` of ``None`` as absent, so a ``None`` key takes the SSOT's
-    value here instead of a create at 0 with no range. A plug whose direction
-    or type is not the SSOT's, and any other ``mpy_type``, come back as they
-    were."""
+    projection drops: its range (until 2026-10-03), its numeric default -- the
+    compiled preFilterRadius registered 0 instead of 2, outAlpha 0 instead of 1
+    -- and its flags (keyable colorSpace / preFilterKernel / uvCoord, a fileName
+    without usedAsFilename). The spec stays untouched (it is the port-cache
+    key): the member is a COPY carrying the SSOT's default and range, each only
+    where the spec records none of its own (a recorded default or range wins),
+    and ``extra_flags`` = the SSOT's flags, which node_scaffold applies after
+    the generic ones exactly as it does for a base plug. A ``None`` is not a
+    record: emit_attr reads ``default_value`` / ``min_value`` / ``max_value`` of
+    ``None`` as absent, so a ``None`` key takes the SSOT's value here instead of
+    a create at 0 with no range. A plug whose direction or type is not the
+    SSOT's, and any other ``mpy_type``, come back as they were."""
     if (spec or {}).get("mpy_type") != "mPyFile":
         return list(members or [])
     from mpynode._common.interface import file_texture_interface as _iface
@@ -2024,13 +2066,16 @@ def with_preset_ssot(spec: dict, members) -> list:
         if (e is not None and meta.get("type") == e["attr_type"]
                 and m["kind"] == ("inputs" if e["direction"] == "input"
                                   else "outputs")):
-            add = {}
-            if meta.get("default_value") is None:
-                add.update(_ssot_default(e))
+            add  = {}
+            dflt = _ssot_default(e)
+            # a string's "" always applies: no recorded text default is honoured
+            if "string_default" in dflt or meta.get("default_value") is None:
+                add.update(dflt)
             if meta.get("min_value") is None and meta.get("max_value") is None:
                 add.update(_ssot_limits(e))
-            if add:
-                m = dict(m, meta=dict(meta, **add))
+            m = dict(m, meta=dict(meta, **add),
+                     extra_flags=(list(m.get("extra_flags") or [])
+                                  + _ssot_flag_lines(e, m["member"])))
         out.append(m)
     return out
 
@@ -2055,7 +2100,7 @@ def base_attr_members(spec: dict, members) -> list:
     taken = {m["member"] for m in (members or [])}
     out   = []
 
-    def _add(plug, kind, meta, flags, affects):
+    def _add(plug, kind, meta, flags, affects, entry=None):
         if plug in have:
             return
         ident = _ident(plug)
@@ -2065,18 +2110,21 @@ def base_attr_members(spec: dict, members) -> list:
             i += 1
             mem = "%s%d" % (base, i)
         taken.add(mem)
+        extra = (_ssot_flag_lines(entry, mem) if entry is not None
+                 else _flag_lines(_fn_for(meta["type"]), flags))
         out.append({"plug": plug, "member": mem, "kind": kind, "meta": meta,
-                    "extra_flags": _flag_lines(_fn_for(meta["type"]), flags),
-                    "affects": affects})
+                    "extra_flags": extra, "affects": affects})
 
     for e in _iface.FILE_TEXTURE_ATTRS:
         is_in = e["direction"] == "input"
         _add(e["long"], "inputs" if is_in else "outputs", _ssot_meta(e),
-             e.get("flags"), bool(is_in and e.get("affects_output")))
+             e.get("flags"), bool(is_in and e.get("affects_output")), e)
     for e in _EXTRA_BASE_ATTRS:
         _add(e["plug"], "inputs", {"type": e["type"]}, e["flags"], False)
+    # created at "" through MFnStringData, as MPyFile.initializer() does
     for nm in _managed_shader_outputs():
-        _add(nm, "inputs", {"type": "string"}, _SHADER_OUT_FLAGS, False)
+        _add(nm, "inputs", {"type": "string", "string_default": ""},
+             _SHADER_OUT_FLAGS, False)
     return out
 
 
@@ -2114,13 +2162,83 @@ def base_affects_lines(ins, outs, base_extra, color_children):
     return L
 
 
-def derived_output_lines(ins, outs, base_extra, spec):
+# read_texture()'s arguments, in nd_tex_load_linear's order, and the local and
+# datablock accessor a BASE plug among them is read with.
+_PROBE_PRESETS = (("fileName", "MString", "_ndPFn", "asString"),
+                  ("colorSpace", "short", "_ndPCs", "asShort"),
+                  ("preFilter", "bool", "_ndPPf", "asBool"),
+                  ("preFilterKernel", "short", "_ndPKn", "asShort"),
+                  ("preFilterRadius", "float", "_ndPRd", "asFloat"))
+
+
+def _out_size_probe(ins, base_extra):
+    """``(decls, args)`` for the derived ``outSize`` texture-cache load, or
+    ``None`` when a preset is neither carried nor a base plug (not an mPyFile).
+
+    A preset the spec carries is its ``in_<member>`` local. A BASE plug has no
+    local -- the compute never reads it -- so it is read off the datablock into
+    ``decls``."""
+    base  = {m["plug"]: m for m in base_extra if m["kind"] == "inputs"}
+    decls = []
+    args  = []
+    for plug, ctype, local, acc in _PROBE_PRESETS:
+        mem = _member_by_plug(ins, plug)
+        if mem:
+            args.append("in_" + mem)
+            continue
+        if plug not in base:
+            return None
+        decls.append("        const %s %s = data.inputValue(%s).%s();"
+                     % (ctype, local, base[plug]["member"], acc))
+        args.append(local)
+    return decls, tuple(args)
+
+
+def out_size_loader(ins, base_extra, tex_cache, raw_cache):
+    """How the derived ``outSize`` loads the node's own ``fileName``.
+
+    ``"tex"`` through ``nd_tex_load_linear``, ``"raw"`` through
+    ``nd_img_load_raw``, ``None`` when there is no outSize to derive. The
+    interpreted node derives it through read_texture() whatever its compute
+    reads; until 2026-10-03 only a node carrying all five presets on the
+    texture path probed, so a composite or Game of Life node (no fileName in
+    the spec) reported (0, 0) where the interpreted one reports the file's
+    size. A node with the texture cache loads through it; a raw-image port
+    whose cached path IS its single fileName reads that same decode back;
+    any other node takes the texture cache for this load alone
+    (node_scaffold)."""
+    if not any(m["plug"] == "outSize" and m["kind"] == "outputs"
+               for m in base_extra):
+        return None
+    if _out_size_probe(ins, base_extra) is None:
+        return None
+    if tex_cache:
+        return "tex"
+    if raw_cache:
+        from mpynode.native.compiler.emit_attr import _pick_path_input
+        path = _pick_path_input(ins)
+        if (path is not None and path["plug"] == "fileName"
+                and not path["meta"].get("is_array")):
+            return "raw"
+    return "tex"
+
+
+def derived_output_lines(ins, outs, base_extra, spec, loader=None,
+                         embedded=False):
     """compute() tail that fills the base outputs the compute never authors.
 
     ``outTransparency = 1 - outAlpha`` per channel and ``outSize`` = the pixel
     dimensions of the node's own ``fileName``, exactly the derivations the
     interpreted mPyFile applies. Emitted at the END of finalize, so it reads the
     alpha the body just wrote. Empty when the node has neither base output.
+    ``loader`` is node_scaffold's ``out_size_loader`` decision (``None``: no
+    load, (0, 0)). ``embedded`` -> the node baked ``embeddedImage`` bytes
+    (node_scaffold emitted ``nd_img_embedded_path()``): a fileName that does
+    not load retries them, as the interpreted read_texture() does, through the
+    same cache the loader uses (the raw arm's is its second slot). Until
+    2026-10-03 the tail took no fallback, so a node carrying the bytes reported
+    (0, 0) on a blank or missing fileName where the interpreted one reports the
+    embedded image's size.
     """
     by_plug = {m["plug"]: m for m in base_extra if m["kind"] == "outputs"}
     ot, osz = by_plug.get("outTransparency"), by_plug.get("outSize")
@@ -2144,27 +2262,52 @@ def derived_output_lines(ins, outs, base_extra, spec):
             "    }",
         ]
     if osz:
-        # The image size is a property of the FILE, not of the compute, so read it
-        # through the SAME cached loader the body uses -- a hit, so it costs
-        # nothing extra. Needs the whole preset argument list; a node without it
-        # (the multi-layer composite has no single fileName) reports (0, 0).
-        need = ("fileName", "colorSpace", "preFilter", "preFilterKernel",
-                "preFilterRadius")
-        got = {p: _member_by_plug(ins, p) for p in need}
-        can_probe = (all(got.values())
-                     and (use_full_parity_glue(spec) or uses_blessed_texture(spec)))
+        # The image size is a property of the FILE, not of the compute: the
+        # interpreted node reads it through its own read_texture() whatever the
+        # compute reads. So read it through the SAME cached loader the body uses
+        # (a hit when the body loaded that file).
         L.append("    {")
         L.append("        float _ndW = 0.0f, _ndH = 0.0f;")
-        if can_probe:
-            L += [
+        if loader == "tex":
+            decls, args = _out_size_probe(ins, base_extra)
+            L += decls + [
                 "        unsigned _ndPW = 0, _ndPH = 0;",
-                "        if (nd_tex_load_linear(_texCache, _texMutex, in_%s, "
-                "(int)in_%s, in_%s != 0, (int)in_%s, (float)in_%s, _ndPW, _ndPH)) {"
-                % (got["fileName"], got["colorSpace"], got["preFilter"],
-                   got["preFilterKernel"], got["preFilterRadius"]),
+                "        if (nd_tex_load_linear(_texCache, _texMutex, %s, "
+                "(int)%s, %s != 0, (int)%s, (float)%s, _ndPW, _ndPH)) {" % args,
                 "            _ndW = (float)_ndPW; _ndH = (float)_ndPH;",
                 "        }",
             ]
+            if embedded:
+                L += [
+                    "        else {",
+                    "            MString _ndPEmb = nd_img_embedded_path();",
+                    "            if (_ndPEmb.length() > 0 && nd_tex_load_linear("
+                    "_texCache, _texMutex, _ndPEmb, (int)%s, %s != 0, "
+                    "(int)%s, (float)%s, _ndPW, _ndPH)) {" % args[1:],
+                    "                _ndW = (float)_ndPW; _ndH = (float)_ndPH;",
+                    "            }",
+                    "        }",
+                ]
+        elif loader == "raw":
+            L += [
+                "        unsigned int _ndPW = 0, _ndPH = 0;",
+                "        const unsigned char* _ndPPx = nullptr;",
+                "        if (nd_img_load_raw(_imgRawCache, _imgRawMutex, in_%s, "
+                "_ndPW, _ndPH, _ndPPx)) {" % _member_by_plug(ins, "fileName"),
+                "            _ndW = (float)_ndPW; _ndH = (float)_ndPH;",
+                "        }",
+            ]
+            if embedded:
+                L += [
+                    "        else {",
+                    "            MString _ndPEmb = nd_img_embedded_path();",
+                    "            if (_ndPEmb.length() > 0 && nd_img_load_raw("
+                    "_imgEmbedCache, _imgEmbedMutex, _ndPEmb, _ndPW, _ndPH, "
+                    "_ndPPx)) {",
+                    "                _ndW = (float)_ndPW; _ndH = (float)_ndPH;",
+                    "            }",
+                    "        }",
+                ]
         L += [
             "        MDataHandle _hOS = data.outputValue(%s);" % osz["member"],
             "        _hOS.set2Float(_ndW, _ndH);",
@@ -2541,7 +2684,7 @@ def make_blessed_lowerings(ins, outs, spec):
     return blessed, blessed_unpack
 
 
-def compute_glue_lines(ins, outs, tail=None, seq=None):
+def compute_glue_lines(ins, outs, tail=None, seq=None, embedded=False):
     """Deterministic C++ compute body for a full-parity mPyFile: cache-load the
     linearized pixels, bilinear-sample at uvCoord, write outColor/outAlpha.
 
@@ -2558,6 +2701,12 @@ def compute_glue_lines(ins, outs, tail=None, seq=None):
     (``{"frame_plug", "mode"}``) instead of the raw ``fileName`` -- the frame
     number is substituted into the ``#``-padded pattern and the path-keyed cache
     reloads the new file automatically.
+
+    *embedded* -> the node baked ``embeddedImage`` bytes (node_scaffold emitted
+    ``nd_img_embedded_path()``): a load that misses retries them, as the
+    interpreted read_texture() does and as the blessed lowering already did.
+    Until 2026-10-03 the glue took no fallback, so a default mPyFile carrying
+    the bytes rendered magenta on a blank or missing fileName.
     """
     fn = _member_by_plug(ins,  "fileName")
     uv = _member_by_plug(ins,  "uvCoord")
@@ -2596,6 +2745,18 @@ def compute_glue_lines(ins, outs, tail=None, seq=None):
         "    const float* _lin = nd_tex_load_linear(_texCache, _texMutex, %s,"
         % path_expr,
         "        %s, %s, %s, %s, _linW, _linH);" % (cs_e, pf_e, pk_e, pr_e),
+    ]
+    if embedded:
+        L += [
+            "    if (!_lin) {",
+            "        MString _linEmb = nd_img_embedded_path();",
+            "        if (_linEmb.length() > 0)",
+            "            _lin = nd_tex_load_linear(_texCache, _texMutex, _linEmb,",
+            "                %s, %s, %s, %s, _linW, _linH);"
+            % (cs_e, pf_e, pk_e, pr_e),
+            "    }",
+        ]
+    L += [
         "    float _u = in_%s[0], _v = in_%s[1];" % (uv, uv),
         "    float _border[3] = { in_%s[0], in_%s[1], in_%s[2] };" % (bc, bc, bc),
         "    float _miss[4] = { 1.0f, 0.0f, 1.0f, 1.0f };",

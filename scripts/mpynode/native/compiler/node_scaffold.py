@@ -11,7 +11,8 @@ from .spec_model import (_check, _geo_kind, _spec_has_hex,
                          LOWERED_GUARD_INCLUDE,
                          MESH_INTERSECTOR_INCLUDE)
 from .emit_attr import (_INCLUDES, _create_lines, _members, _pick_path_input,
-                        PACKED_INCLUDES, DISTANCE_INCLUDE)
+                        PACKED_INCLUDES, DISTANCE_INCLUDE, STRING_DATA_INCLUDE,
+                        string_default)
 from . import emit_geo_io
 from .emit_hex import _HEX_CPP
 from .nd_runtime import _nd_runtime_cpp
@@ -302,15 +303,30 @@ def _generate_cpp_impl(spec: dict, for_port: bool = False) -> str:
         # both; the porter then translates the read itself or emits
         # ND_PORT_INCOMPLETE, which is the honest outcome for a pathless node.
         raw_img_cache = False
+    # The derived outSize loads the node's own fileName, as the interpreted
+    # read_texture() does whatever the compute reads: through the texture cache
+    # when the node has one, through the raw cache when that already holds the
+    # fileName, else through a texture cache added for that load alone (the
+    # Game of Life bake, the composite's layer list). Kept OUT of
+    # need_tex_cache, which also retires the raw-image cache above.
+    out_size = file_texture_cpp.out_size_loader(ins, base_extra,
+                                                need_tex_cache,
+                                                raw_img_cache)
+    size_tex_cache  = out_size == "tex" and not need_tex_cache
+    tex_cache_block = need_tex_cache or size_tex_cache
     # Embedded-image fallback (#98): the node baked an embeddedImage byte buffer
-    # (read_texture() reads fileName first, then falls back to it). BOTH image
-    # paths carry it -- the custom-compute raw cache (a hand-rolled pixel tap)
-    # and the blessed nd_tex_* lowering -- so the staging helper is emitted for
-    # either. They differ only in the CACHE they retry through: the raw path
-    # needs a second slot (EMBEDDED_STAGE_MEMBERS below), while the blessed path
-    # reuses its by-path NdTexCache map and needs no extra member.
+    # (read_texture() reads fileName first, then falls back to it). Every image
+    # path carries it -- the custom-compute raw cache (a hand-rolled pixel tap),
+    # the blessed nd_tex_* lowering, the full-parity glue and the derived
+    # outSize load -- so the staging helper is emitted for any of them. They
+    # differ only in the CACHE they retry through: the raw path needs a second
+    # slot (EMBEDDED_STAGE_MEMBERS below), while the texture paths reuse their
+    # by-path NdTexCache map and need no extra member. Until 2026-10-03 the
+    # glue and the outSize load took no fallback: a default mPyFile carrying
+    # the bytes rendered magenta, and every node reported (0, 0), on a blank or
+    # missing fileName where the interpreted node reads the embedded image.
     embedded_b64 = ((sg.get("embedded_image_b64") or "")
-                    if (raw_img_cache or blessed_tex) else "")
+                    if (raw_img_cache or need_tex_cache or out_size) else "")
     # SINGLE decision for the whole TU: this function declares the caches, so the
     # body emitters (compute()/deform()) are TOLD whether a read was wired rather
     # than re-deriving it from the spec. Two independent deciders is what left the
@@ -344,9 +360,9 @@ def _generate_cpp_impl(spec: dict, for_port: bool = False) -> str:
         for _inc in file_texture_cpp.WRITE_INCLUDES:
             if _inc not in includes:
                 includes.append(_inc)
-    # Full-parity OR blessed-texture mPyFile needs the cache block's extra std
-    # headers (the NdTexCache math + load).
-    if need_tex_cache:
+    # Full-parity OR blessed-texture mPyFile (or the outSize load alone) needs
+    # the cache block's extra std headers (the NdTexCache math + load).
+    if tex_cache_block:
         for _inc in file_texture_cpp.CACHE_INCLUDES:
             if _inc not in includes:
                 includes.append(_inc)
@@ -376,6 +392,15 @@ def _generate_cpp_impl(spec: dict, for_port: bool = False) -> str:
     has_hex = _spec_has_hex(spec)
     if has_hex and "string" not in includes:
         includes.append("string")
+    # A string attr created with a default (mPyFile's fileName and osl, as the
+    # interpreted initializer creates them) builds it through MFnStringData.
+    # Gated so every other node's frag stays byte-identical. Placed beside
+    # MFnData.h, inside the fixed base block, not at the end: the shipped
+    # finals re-order the tail of the include list.
+    if (any(string_default(m) is not None for m in members + base_extra)
+            and STRING_DATA_INCLUDE not in includes):
+        includes.insert(includes.index("maya/MFnData.h") + 1,
+                        STRING_DATA_INCLUDE)
     # nurbsCurve INPUT: the read wraps the plug's kNurbsCurve MObject in an
     # MFnNurbsCurve, and the ported compute typically decomposes a basis matrix
     # to euler. Gated so every other node's frag stays byte-identical.
@@ -476,8 +501,9 @@ def _generate_cpp_impl(spec: dict, for_port: bool = False) -> str:
     lines.append("")
     # Verified, unit-tested file-texture math + per-instance cache, emitted just
     # above the class so compute() can call it (full-parity mPyFile OR a blessed-
-    # texture custom compute that lowered to the nd_tex_* kernels).
-    if need_tex_cache:
+    # texture custom compute that lowered to the nd_tex_* kernels OR the derived
+    # outSize load).
+    if tex_cache_block:
         lines.append(file_texture_cpp.MATH_CPP)
         if seq_desc:
             lines.append(file_texture_cpp.SEQ_CPP)
@@ -550,8 +576,9 @@ def _generate_cpp_impl(spec: dict, for_port: bool = False) -> str:
     # registry keyed on `this`, which dangles on reallocation, is never evicted,
     # and hands a deleted node's state to a new node at the same address.
     lines += nd_state_decls
-    # Per-instance linearized-pixel cache + lock (full-parity OR blessed-texture).
-    if need_tex_cache:
+    # Per-instance linearized-pixel cache + lock (full-parity OR blessed-texture
+    # OR the derived outSize load).
+    if tex_cache_block:
         lines.append(file_texture_cpp.CACHE_MEMBERS.rstrip("\n"))
     # Per-instance raw-image decode cache + lock (custom-compute file node).
     if raw_img_cache:
@@ -690,7 +717,7 @@ def _generate_cpp_impl(spec: dict, for_port: bool = False) -> str:
         lines += _compute_lines(cls, ins, outs, spec, for_port,
                                 lowered=nd_lowered, img_read=img_read,
                                 img_embedded=bool(embedded_b64),
-                                base_extra=base_extra)
+                                base_extra=base_extra, out_size=out_size)
     lines.append("")
 
     # registration
