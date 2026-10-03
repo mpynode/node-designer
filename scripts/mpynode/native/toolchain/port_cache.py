@@ -497,7 +497,23 @@ from typing import Optional
 # voxelizeMesh, in their templates and in the All Templates Plugin, plus the
 # orphaned brightContrastTex; (3) and (4) move none. The shipped artifacts took
 # the same hunks by splice, not a re-port -- 2026-10-02.
-PORTER_RECIPE_VERSION = "38"
+# v39: the mPyFile sampler presets carry the SSOT's range. preFilterRadius
+# (0..8), maxAnisotropy (1..16), mipLODBias (-8..8), minLOD and maxLOD (0..16)
+# are clamped by the interpreted initializer() but were created unclamped on a
+# compiled node: _ssot_meta dropped min / max for a base plug, and a preset the
+# spec carries (preFilterRadius) arrives through build_porter_meta_table with
+# its type only. Both now reach v38's setMin / setMax emission
+# (file_texture_cpp._ssot_meta, with_preset_limits -- a copy of the member, the
+# spec and so the key untouched). Also the VP2 override: only the uvCoord
+# preset is the uv (any float2 was), and a single matrix input reads through
+# MFnMatrixData, a single hex input through nd_hex_decode -- none of those was
+# parsed or compiled before; every shipped injection is byte-identical. A
+# SKELETON change invisible to the key. Moves 9 of 76 stage-1 files:
+# compositeTexture, fileTexture, gameOfLifeTex and scanlineTex, in their
+# templates and in the All Templates Plugin, plus the orphaned
+# brightContrastTex; the shipped artifacts took the hunks by splice --
+# 2026-10-03.
+PORTER_RECIPE_VERSION = "39"
 
 # Spec keys excluded from the cache key -- provably irrelevant to the generated
 # C++. A deny-list, NOT an allow-list (design C1).

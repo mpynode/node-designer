@@ -7,6 +7,11 @@ does not have -- and every unit / vector / colour / float2 / quaternion / hex
 MULTI was dropped from nd_texel because the multi parser only matched a bare
 ``eh.asX();`` and an argument-less gap fill. Either one fails to compile. The
 shipped templates' injections are unchanged (none uses such an input).
+
+Three SINGLE inputs had the same fate (2026-10-03): any float2 counted as the
+uv, so a second float2 left nd_texel's parameters; a matrix was read with
+``p.asMatrix()``, which MPlug does not have; a hex input was never parsed. Each
+failed to compile a body that used it.
 """
 from __future__ import annotations
 
@@ -147,6 +152,93 @@ class TestInjection(unittest.TestCase):
         self.assertIn("#include <maya/MFnMatrixData.h>", out)
         self.assertIn("_m_in_aMats[_e.logicalIndex()] = MFnMatrixData(_mo).matrix();", out)
         self.assertIn("texName += (double)_m_in_aMats[_i](3, 0);", out)
+
+
+class TestSingleInputs(unittest.TestCase):
+    """A second float2, a matrix and a hex input, each used by the body."""
+
+    @classmethod
+    def setUpClass(cls):
+        from mpynode.native import compiler as codegen
+        from mpynode.native.compiler import emit_vp2_override as vp2
+        from mpynode.native.spec.spec_extractor import normalize_attr
+
+        spec = _scanline_spec()
+        for name, t in (("f2", "float2"), ("mat", "matrix"), ("note", "hex")):
+            spec["inputs"][name] = normalize_attr({"attr_type": t})
+        spec["compute"] = ("g = self.f2[0] * 0.5 + self.mat[3, 0] * 0.1\n"
+                           "b = 0.0\n"
+                           "if self.note == \"hi\":\n"
+                           "    b = 0.3\n"
+                           "self.outColor = (0.5, g, b)\n"
+                           "self.outAlpha = 1.0\n")
+        cls.cpp     = codegen.generate_cpp(spec, for_port=True)
+        cls.out     = vp2.inject_vp2_override(cls.cpp, spec)
+        cls.vp2     = vp2
+        cls.codegen = codegen
+
+    def test_only_uvCoord_is_the_uv(self):
+        vp2 = self.vp2
+        self.assertTrue(vp2._Input("float2&", "in_aUvCoord", "aUvCoord",
+                                   "asFloat2()", "uvCoord").is_uv)
+        self.assertFalse(vp2._Input("float2&", "in_aF2", "aF2", "asFloat2()",
+                                    "f2").is_uv)
+
+    def test_the_body_lowers_and_every_input_joins_nd_texel(self):
+        self.assertNotIn(self.codegen.PORT_BEGIN, self.cpp)
+        self.assertNotEqual(self.out, self.cpp)
+        texel = self.out.split("static void nd_texel(", 1)[1].split(") {", 1)[0]
+        for param in ("const float2& in_aF2", "MMatrix in_aMat", "MString in_aNote"):
+            self.assertIn(param, texel)
+        self.assertIn("const float2& in_aUvCoord = _nd_uv;", self.out)
+
+    def test_updatedg_reads_each_off_its_plug(self):
+        for line in (
+                "_m_in_aF2[0] = p.child(0).asFloat();",
+                "if (st) { MObject _mo; if (p.getValue(_mo) == MS::kSuccess "
+                "&& !_mo.isNull()) _m_in_aMat = MFnMatrixData(_mo).matrix(); }",
+                'p = fn.findPlug("note", false, &st); if (st) _m_in_aNote = '
+                "nd_hex_decode(p.asString());",
+                "#include <maya/MFnMatrixData.h>"):
+            self.assertIn(line, self.out)
+        self.assertNotIn("p.asMatrix()", self.out)
+
+    def test_bake_key_folds_each(self):
+        self.assertIn("texName += (double)_m_in_aF2[1];", self.out)
+        self.assertIn("texName += (double)_m_in_aMat(3, 0);", self.out)
+        self.assertNotIn("(double)_m_in_aMat;", self.out)
+        self.assertIn("texName += _m_in_aNote;", self.out)
+
+
+class TestShippedInjectionsUnchanged(unittest.TestCase):
+    """Every shipped mPyFile 00_baseline IS its stage 1 with the override
+    spliced in: a change to this module that moved one would show here."""
+
+    def test_baselines_equal_the_injection(self):
+        import glob
+
+        from mpynode.native.compiler import emit_vp2_override as vp2
+
+        seen = 0
+        for man in glob.glob(os.path.join(_paths.ROOT, "templates", "MPyFile", "*",
+                                          "build", "manifest.json")):
+            build = os.path.dirname(man)
+            with open(man, encoding="utf-8") as fh:
+                rows = json.load(fh)["nodes"]
+            for row in rows:
+                stage = os.path.join(build, "stages", row["type_name"])
+                base  = os.path.join(stage, "3_optimized", "00_baseline.cpp")
+                if not os.path.isfile(base):
+                    continue
+                with open(os.path.join(stage, "1_transpiled.cpp"), encoding="utf-8",
+                          newline="") as fh:
+                    s1 = fh.read()
+                with open(base, encoding="utf-8", newline="") as fh:
+                    want = fh.read()
+                with self.subTest(node=row["type_name"]):
+                    self.assertEqual(vp2.inject_vp2_override(s1, row["spec"]), want)
+                seen += 1
+        self.assertGreaterEqual(seen, 4)
 
 
 if __name__ == "__main__":

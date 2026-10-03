@@ -1954,12 +1954,22 @@ def _flag_lines(fn, flags):
             for k, v in (flags or {}).items() if k in _SSOT_FLAG_CALL]
 
 
+def _ssot_limits(entry):
+    """``min_value`` / ``max_value`` meta for one SSOT descriptor's ``min`` /
+    ``max`` -- the range MPyFile.initializer() hands setMin / setMax."""
+    return {k: entry[s] for s, k in (("min", "min_value"), ("max", "max_value"))
+            if entry.get(s) is not None}
+
+
 def _ssot_meta(entry):
     """emit_attr meta for one SSOT descriptor.
 
     Mirrors ``file_texture_interface.build_porter_meta_table`` PLUS the numeric
     defaults that projection drops -- the porter does not need them, but a
-    compiled node does: without them maxLOD registers 0 instead of 16.
+    compiled node does: without them maxLOD registers 0 instead of 16. And the
+    min / max the interpreted initializer() sets: until 2026-10-03 these were
+    dropped too, so the compiled sampler presets took any value where the
+    interpreted ones clamp (preFilterRadius 0..8, maxLOD 0..16).
     """
     from mpynode._common.interface import file_texture_interface as _iface
     t    = entry["attr_type"]
@@ -1971,7 +1981,34 @@ def _ssot_meta(entry):
         meta["children"] = [c["long"] for c in entry["children"]]
     elif t in ("float", "double", "long", "bool") and entry.get("default") is not None:
         meta["default_value"] = entry["default"]
+    meta.update(_ssot_limits(entry))
     return meta
+
+
+def with_preset_limits(spec: dict, members) -> list:
+    """``members`` with the SSOT min / max on each mPyFile preset the SPEC carries.
+
+    A preset the compute references (preFilterRadius) reaches the spec through
+    ``build_porter_meta_table``, which keeps the type and nothing else, so it is
+    created from the spec meta, not ``_ssot_meta``, and lost its range the same
+    way. The spec stays untouched (it is the port-cache key): a member whose
+    meta has no recorded range of its own gets a COPY carrying the SSOT's. A
+    preset with no range, a type that is not the SSOT's, and any other
+    ``mpy_type`` come back as they were."""
+    if (spec or {}).get("mpy_type") != "mPyFile":
+        return list(members or [])
+    from mpynode._common.interface import file_texture_interface as _iface
+    ssot = {e["long"]: e for e in _iface.FILE_TEXTURE_ATTRS
+            if e["direction"] == "input" and _ssot_limits(e)}
+    out = []
+    for m in members or []:
+        e = ssot.get(m["plug"])
+        if (e is not None and m["kind"] == "inputs"
+                and m["meta"].get("type") == e["attr_type"]
+                and "min_value" not in m["meta"] and "max_value" not in m["meta"]):
+            m = dict(m, meta=dict(m["meta"], **_ssot_limits(e)))
+        out.append(m)
+    return out
 
 
 def base_attr_members(spec: dict, members) -> list:

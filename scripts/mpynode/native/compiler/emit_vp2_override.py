@@ -55,6 +55,15 @@ _INPUT_DECL_RE = re.compile(
     r"data\.inputValue\((?P<attr>\w+)\)\.(?P<read>[\w().]+);\s*$",
     re.M)
 
+# A single hex input, decoded on the way in (emit_attr._read_line):
+#   const MString in_aMsg = nd_hex_decode(data.inputValue(aMsg).asString());
+# _INPUT_DECL_RE wants data.inputValue right after the `=`, so until 2026-10-03
+# a hex input never reached nd_texel and a body using it did not compile.
+_HEX_DECL_RE = re.compile(
+    r"^\s*const\s+MString\s+(?P<var>in_\w+)\s*=\s*nd_hex_decode\("
+    r"data\.inputValue\((?P<attr>\w+)\)\.asString\(\)\);\s*$",
+    re.M)
+
 # One ARRAY (multi) compute input. Codegen does NOT declare these with a one-line
 # inputValue(); it fills a std::vector from an MArrayDataHandle:
 #     std::vector<MString> in_aLayers;
@@ -123,10 +132,10 @@ _ARRAY_TYPES = {
 
 class _Input:
     __slots__ = ("type", "var", "attr", "read", "plug", "multi", "elem", "fill",
-                 "elem_type")
+                 "elem_type", "hex")
 
     def __init__(self, type_, var, attr, read, plug, multi=False, elem="",
-                 fill="", elem_type=""):
+                 fill="", elem_type="", hex=False):
         self.type      = type_.replace(" ", "")  # 'float2&'
         self.var       = var                     # 'in_aBands'
         self.attr      = attr                    # 'aBands'
@@ -136,12 +145,25 @@ class _Input:
         self.elem      = elem                    # multi element ctype ('MString')
         self.fill      = fill                    # multi sparse-gap default
         self.elem_type = elem_type               # multi element spec type ('euler')
+        self.hex       = hex                     # single hex: decoded on read
 
     @property
     def is_uv(self):
+        # THE uv is the uvCoord preset. Any float2 used to qualify, so a second
+        # float2 input was mistaken for it: dropped from nd_texel's parameters
+        # while the body still read it (fails to compile). Only an input whose
+        # plug did not resolve falls back to the shape test.
         if self.multi:
             return False
+        if self.plug:
+            return self.plug == "uvCoord"
         return self.read.startswith("asFloat2") or self.type == "float2&"
+
+    @property
+    def is_matrix(self):
+        # A single matrix: compute reads asMatrix() off its data handle, which
+        # MPlug does not have.
+        return not self.multi and self.read == "asMatrix()"
 
     @property
     def is_time(self):
@@ -181,6 +203,23 @@ class _Input:
                     % (elem, dst)]
         return ["%s = %s;" % (dst, _elem_plug_read_expr(self.elem_type, elem))]
 
+    def single_plug_lines(self):
+        """updateDG lines reading this SINGLE (non-multi, non-compound) input off
+        its plug into ``_m_<var>``. A matrix goes through getValue +
+        MFnMatrixData (the multi element path's statement) and a hex string is
+        decoded exactly as compute decodes it; every other read is one
+        expression, emitted as before."""
+        head = '        p = fn.findPlug("%s", false, &st);' % self.plug
+        if self.is_matrix:
+            return [head,
+                    "        if (st) { MObject _mo; if (p.getValue(_mo) == MS::kSuccess "
+                    "&& !_mo.isNull()) _m_%s = MFnMatrixData(_mo).matrix(); }"
+                    % self.var]
+        if self.hex:
+            return ["%s if (st) _m_%s = nd_hex_decode(p.asString());"
+                    % (head, self.var)]
+        return ["%s if (st) _m_%s = p.%s;" % (head, self.var, self.plug_read)]
+
     @property
     def member_type(self):
         """C++ type for the override's cached member (time -> double)."""
@@ -217,6 +256,11 @@ def _parse_inputs(cpp: str) -> List[_Input]:
         found.append((d.start(),
                       _Input(d.group("type"), d.group("var"), attr,
                              d.group("read"), attr_to_plug.get(attr, ""))))
+    for d in _HEX_DECL_RE.finditer(scope):
+        attr = d.group("attr")
+        found.append((d.start(),
+                      _Input("MString", d.group("var"), attr, "asString()",
+                             attr_to_plug.get(attr, ""), hex=True)))
     for d in _MULTI_DECL_RE.finditer(scope):
         attr = d.group("attr")
         rhs  = d.group("rhs").strip()
@@ -746,8 +790,7 @@ def _make_override_block(cls, type_name, inputs, has_raw, extras=(), comp=None,
                    % (i.var, k, k, ai[2]) for k in range(ai[1])]
             dg.append("        }")
         else:
-            dg.append('        p = fn.findPlug("%s", false, &st); if (st) _m_%s = p.%s;'
-                      % (i.plug, i.var, i.plug_read))
+            dg += i.single_plug_lines()
     if comp:
         dg += [
             '        p = fn.findPlug("%s", false, &st);' % comp["plug"],
@@ -815,6 +858,11 @@ def _make_override_block(cls, type_name, inputs, has_raw, extras=(), comp=None,
             key_parts = [s for s in key_parts if s]
         elif i.member_type == "MString":
             key_parts.append("texName += _m_%s;" % i.var)
+        elif i.is_matrix:
+            # an MMatrix folds element by element, like a matrix multi's
+            key_parts += [("texName += MString(\",\"); " if k else "")
+                          + "texName += (double)%s;" % (c % ("_m_" + i.var))
+                          for k, c in enumerate(_ELEM_KEY_PARTS["MMatrix"])]
         else:
             key_parts.append("texName += (double)_m_%s;" % i.var)
 
@@ -1466,10 +1514,10 @@ def inject_vp2_override(cpp: str, spec: Optional[dict] = None) -> str:
     wrap_clamp = _parse_wrap_override(port_body, inputs) if texload else None
 
     # (2) includes after <mutex> (raw-cache) or before the class otherwise. A
-    # matrix multi's updateDG read needs MFnMatrixData, which a node reading its
-    # matrices off data handles never included -- added only then.
+    # matrix input's updateDG read (single or multi) needs MFnMatrixData, which a
+    # node reading its matrices off data handles never included -- added only then.
     incs = _OVERRIDE_INCLUDES
-    if (any(i.multi and i.elem_type == "matrix" for i in inputs)
+    if (any(i.is_matrix or (i.multi and i.elem_type == "matrix") for i in inputs)
             and "<maya/MFnMatrixData.h>" not in cpp):
         incs += "#include <maya/MFnMatrixData.h>\n"
     if "#include <mutex>\n" in cpp:
