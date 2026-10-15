@@ -607,7 +607,11 @@ from typing import Optional
 # invisible to the key. Moves 43 of 76 stage-1 files: every MPxNode-family row
 # in its template and in the All Templates Plugin, plus the orphaned
 # brightContrastTex; the glue itself moves none, no shipped node uses it. The
-# shipped artifacts took the hunks by splice -- 2026-10-15.
+# shipped artifacts took the hunks by splice, except 9 Mesh Maze / Voxelize
+# files (finals, sources, rounds 03-04 / 01, All Templates sources) where
+# optimizer code follows the plug guard directly: those took the same gate
+# lines by hand, right after the unchanged guard line, and no optimizer line
+# was edited. All gated -- 2026-10-15.
 PORTER_RECIPE_VERSION = "45"
 
 # Spec keys excluded from the cache key -- provably irrelevant to the generated

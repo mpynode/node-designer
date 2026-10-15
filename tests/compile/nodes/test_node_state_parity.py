@@ -15,8 +15,8 @@ measured), and the locator's gate is v44's setDependentsDirty override, so
 none of them gets this compute gate.
 
 Pinned here: the generator, every shipped lineage file stamped from the
-current stage 1, the files still waiting (optimizer rewrites at the insertion
-point, an open question), and the interpreted reference.
+current stage 1 -- all of them gated, the 9 the splice refused included (the
+gate inserted by hand) -- and the interpreted reference.
 """
 from __future__ import annotations
 
@@ -55,9 +55,10 @@ _UNGATED = ("MPyDeformer", "MPySkinCluster", "MPyBlendShape", "MPyIkSolver",
             "MPyTransform", "MPyLocator")
 
 # Lineage files the splice refused: an optimizer round rewrote the lines right
-# after the plug guard, where the gate goes. Left untouched pending the
-# user's call (no hand edit of optimizer-rewritten code).
-_PENDING = {
+# after the plug guard, where the gate goes. The gate was inserted by hand,
+# directly after the unchanged guard line, and the stamp swapped for the
+# current stage 1's; no optimizer line was edited.
+_BY_HAND = {
     "templates/MPyMesh/Mesh Maze/build/meshMaze/meshMaze.cpp",
     "templates/MPyMesh/Mesh Maze/build/source/meshMaze.cpp",
     "templates/MPyMesh/Mesh Maze/build/stages/meshMaze/3_optimized/"
@@ -150,7 +151,7 @@ class TestShippedLineage(unittest.TestCase):
     """Every lineage file stamped from the current stage 1 carries the gate."""
 
     def test_every_current_lineage_file_is_gated(self):
-        seen, missing = 0, set()
+        seen, by_hand = 0, set()
         allt = os.path.join(_paths.ROOT, "templates", "All Templates Plugin",
                             "build")
         for build, fam, ty, _spec in _rows(_GATED):
@@ -164,22 +165,25 @@ class TestShippedLineage(unittest.TestCase):
                 for path in _lineage(b, ty):
                     text = _read(path)
                     if _stamp(text) != stamp:
-                        if _rel(path) in _PENDING:
-                            missing.add(_rel(path))
                         continue  # a foreign stamp: never spliced
                     with self.subTest(file=_rel(path)):
                         self.assertTrue(_gated(text))
                     seen += 1
+                    if _rel(path) in _BY_HAND:
+                        by_hand.add(_rel(path))
         # 42 moved stage-1 files (21 templates and their 21 All Templates
-        # copies) and the 128 lineage files spliced from them
-        self.assertEqual(seen, 170)
-        self.assertEqual(missing, _PENDING)
+        # copies), the 128 lineage files spliced from them and the 9 gated by
+        # hand
+        self.assertEqual(seen, 179)
+        self.assertEqual(by_hand, _BY_HAND)
 
-    def test_the_pending_files_are_not_gated(self):
-        for rel in sorted(_PENDING):
+    def test_the_hand_gated_files_are_all_gated(self):
+        for rel in sorted(_BY_HAND):
             with self.subTest(file=rel):
                 text = _read(os.path.join(_paths.ROOT, rel))
-                self.assertNotIn("data.inputValue(MPxNode::state)", text)
+                self.assertTrue(_gated(text))
+                reads = text.count("data.inputValue(MPxNode::state)")
+                self.assertEqual(reads, 1)
 
 
 class TestInterpretedReference(unittest.TestCase):
