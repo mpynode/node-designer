@@ -5894,11 +5894,15 @@ def _composite_layers(slf):
     contributes NOTHING rather than the opaque magenta sentinel. This function
     has to make the same choice or the viewport and the render disagree about a
     broken layer. Layers of different sizes are resized (bilinear) to the
-    largest enabled layer.
+    largest layer that loads.
     """
-    slots = [(path, op) for path, op in _layer_slots(slf) if op > 0.0]
-    if not slots:
-        return None
+    # NO `op > 0` FILTER. Compute has never had one -- it multiplies the
+    # layer's alpha by `op`, so 0 removes a layer exactly while a NEGATIVE
+    # weight subtracts and a NaN poisons the stack. Skipping those instead of
+    # weighting them is a DIFFERENT result, and it was this filter that made the
+    # viewport disagree with the swatch and the render. Whatever renders is what
+    # previews: weight every slot, exactly as `composite_layers` does.
+    slots = list(_layer_slots(slf))
     bufs = [(slf.read_texture(path), op) for path, op in slots]
     sizes = [b.shape for b, _op in bufs if b is not None]
     if not sizes:
@@ -5949,26 +5953,9 @@ FILE_COMPOSITE_COMPUTE = r'''# Composite texture -- Compute tier.
 #
 # The result is composited over black and comes out premultiplied, which is
 # what an unlit surfaceShader wants.
-u = self.uvCoord[0]
-v = self.uvCoord[1]
-
-# Accumulate over transparent black, bottom layer first.
-cr = 0.0
-cg = 0.0
-cb = 0.0
-ca = 0.0
-n_op = len(self.opacities)
-for i in range(len(self.layers)):
-    r, g, b, a_src = self.sample_texture(self.read_texture(self.layers[i]),
-                                         u, v, missing=(0.0, 0.0, 0.0, 0.0))
-    op = 1.0
-    if i < n_op:
-        op = float(self.opacities[i])
-    a = a_src * op
-    cr = r * a + cr * (1.0 - a)
-    cg = g * a + cg * (1.0 - a)
-    cb = b * a + cb * (1.0 - a)
-    ca = a + ca * (1.0 - a)
+cr, cg, cb, ca = self.composite_layers(
+    self.layers, self.opacities, self.uvCoord[0], self.uvCoord[1],
+    missing=(0.0, 0.0, 0.0, 0.0))
 
 self.outColor = (cr, cg, cb)
 self.outAlpha = ca
