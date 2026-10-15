@@ -18,7 +18,8 @@ a step leaves bound is what the surface shows. No GPU is needed.
 
 Each step reads the bound image at texel-exact UVs and compares it with the
 node's outColor / outAlpha at the same UVs, for the default node and the File
-Simple and File Scanline templates.
+Simple and File Scanline templates. The colour-space and pre-filter tests also
+cover File Composite, whose image is its `layers` stack.
 """
 from __future__ import annotations
 
@@ -44,6 +45,9 @@ _GRID    = os.path.join(_paths.SCRIPTS, "mpynode", "_demos", "data", "test_grid.
 _EMBED   = os.path.join(_paths.SCRIPTS, "mpynode", "_demos", "data", "red_square.png")
 _MISSING = os.path.join(_paths.ROOT, "tests", "no_such_texture_viewport.png")
 _KINDS   = ("default", "File Simple", "File Scanline")
+# File Composite reads every layer through the node's colour space and
+# pre-filter too, so the tests on those inputs cover it as well.
+_LOOK_KINDS = _KINDS + ("File Composite",)
 # Where to read the bound image, as fractions of its texel grid: interior
 # points, clear of the wrap seam at u = 1 / v = 0.
 _SPOTS = ((0.25, 0.30), (0.5, 0.5), (0.8, 0.65), (0.1, 0.9))
@@ -140,6 +144,15 @@ def _create(kind):
     cmd = _TemplateCreateCommand(payload, payload.get("native_type"),
                                  run_setup=False)
     return run_undoable(cmd) or cmd.created_name
+
+
+def _set_image(kind, node, path):
+    """Point a node at one image: File Composite stacks the paths in its
+    `layers` array, every other kind reads fileName."""
+    if kind == "File Composite":
+        mc.setAttr(node + ".layers[0]", path, type="string")
+    else:
+        mc.setAttr(node + ".fileName", path, type="string")
 
 
 class TestViewportShowsWhatComputeShows(unittest.TestCase):
@@ -288,18 +301,19 @@ class TestViewportShowsWhatComputeShows(unittest.TestCase):
     # so changing either under the same fileName kept the OLD texture: after
     # colorSpace went to ACEScct, File Simple's viewport still showed the sRGB
     # (0.0545, 0.5089, 0.0296) where compute gave (0.0, 1.0, 0.0) (parity pass
-    # 2026-10-15, commit 6).
+    # 2026-10-15, commit 6). File Composite's key named only its layer paths
+    # and opacities, the same bug (parity pass 2026-10-15, round 2).
 
     def _run_look(self, steps):
         """Each step changes one colour-space or pre-filter input under the
-        same fileName. The surface must show what compute shows, and a step
+        same image path. The surface must show what compute shows, and a step
         that changes the image must bind a different image."""
-        for kind in _KINDS:
+        for kind in _LOOK_KINDS:
             with self.subTest(node=kind):
                 mc.file(new=True, force=True)
                 node    = _create(kind)
                 surface = _Surface(node)
-                mc.setAttr(node + ".fileName", _GRID, type="string")
+                _set_image(kind, node, _GRID)
                 previous = self._check(node, surface, "%s grid" % kind)
                 for attr, value in steps:
                     mc.setAttr("%s.%s" % (node, attr), value)
@@ -333,14 +347,14 @@ class TestViewportShowsWhatComputeShows(unittest.TestCase):
     def test_two_nodes_differing_only_in_colour_space(self):
         """One texture manager, as in VP2: two nodes on the same file that
         differ only in colorSpace each show their own image."""
-        for kind in _KINDS:
+        for kind in _LOOK_KINDS:
             with self.subTest(node=kind):
                 mc.file(new=True, force=True)
                 manager = _TextureManager()
                 nodes   = []
                 for cs in (0, 20):
                     node = _create(kind)
-                    mc.setAttr(node + ".fileName", _GRID, type="string")
+                    _set_image(kind, node, _GRID)
                     mc.setAttr(node + ".colorSpace", cs)
                     nodes.append((node, _Surface(node, manager)))
                 for node, surface in nodes:

@@ -24,6 +24,7 @@
 #include <maya/MFnCompoundAttribute.h>
 #include <maya/MFnNumericData.h>
 #include <maya/MFnData.h>
+#include <maya/MFnStringData.h>
 #include <maya/MAngle.h>
 #include <maya/MTime.h>
 #include <maya/MMatrix.h>
@@ -348,26 +349,49 @@ MStatus BrightContrastTex::initialize() {
     MFnTypedAttribute   tAttr;
     MFnCompoundAttribute cAttr;
 
-    aFileName = tAttr.create("fileName", "fileName", MFnData::kString);
+    {
+        MFnStringData _sd;
+        MObject _sdo = _sd.create("");
+        aFileName = tAttr.create("fileName", "fn", MFnData::kString, _sdo);
+    }
+    tAttr.setStorable(true);
+    tAttr.setKeyable(true);
     tAttr.setUsedAsFilename(true);
     tAttr.setStorable(true);
+    tAttr.setKeyable(false);
     aBrightness = nAttr.create("brightness", "brightness", MFnNumericData::kFloat, 1.0);
     nAttr.setStorable(true);
     nAttr.setKeyable(true);
     aContrast = nAttr.create("contrast", "contrast", MFnNumericData::kFloat, 1.0);
     nAttr.setStorable(true);
     nAttr.setKeyable(true);
-    MObject aUvCoordX = nAttr.create("uCoord", "uCoord", MFnNumericData::kFloat, 0.0);
-    MObject aUvCoordY = nAttr.create("vCoord", "vCoord", MFnNumericData::kFloat, 0.0);
-    aUvCoord = nAttr.create("uvCoord", "uvCoord", aUvCoordX, aUvCoordY);
+    MObject aUvCoordX = nAttr.create("uCoord", "u", MFnNumericData::kFloat, 0.0);
+    MObject aUvCoordY = nAttr.create("vCoord", "v", MFnNumericData::kFloat, 0.0);
+    aUvCoord = nAttr.create("uvCoord", "uv", aUvCoordX, aUvCoordY);
     nAttr.setStorable(true);
     nAttr.setKeyable(true);
-    aOutAlpha = nAttr.create("outAlpha", "outAlpha", MFnNumericData::kFloat, 1.0);
+    nAttr.setHidden(false);
+    nAttr.setStorable(true);
+    nAttr.setKeyable(false);
+    { MFnNumericAttribute _cf(aUvCoordX); _cf.setKeyable(true); }
+    { MFnNumericAttribute _cf(aUvCoordY); _cf.setKeyable(true); }
+    aOutAlpha = nAttr.create("outAlpha", "oa", MFnNumericData::kFloat, 1.0);
     nAttr.setWritable(false);
     nAttr.setStorable(false);
-    aOutColor = nAttr.createColor("outColor", "outColor");
+    nAttr.setStorable(false);
+    nAttr.setWritable(false);
+    nAttr.setReadable(true);
+    MObject aOutColorR = nAttr.create("outColorR", "ocr", MFnNumericData::kFloat, 0.0);
+    MObject aOutColorG = nAttr.create("outColorG", "ocg", MFnNumericData::kFloat, 0.0);
+    MObject aOutColorB = nAttr.create("outColorB", "ocb", MFnNumericData::kFloat, 0.0);
+    aOutColor = nAttr.create("outColor", "oc", aOutColorR, aOutColorG, aOutColorB);
+    nAttr.setUsedAsColor(true);
     nAttr.setWritable(false);
     nAttr.setStorable(false);
+    nAttr.setStorable(false);
+    nAttr.setWritable(false);
+    nAttr.setReadable(true);
+    nAttr.setUsedAsColor(true);
 
     addAttribute(aFileName);
     addAttribute(aBrightness);

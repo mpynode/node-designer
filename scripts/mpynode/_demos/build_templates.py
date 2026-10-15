@@ -6005,7 +6005,17 @@ if img is not None and self.texture_manager is not None:
         desc.fTextureType = omr.MTextureDescription.kImage2D
         desc.fEnvMapType = omr.MTextureDescription.kEnvNone
 
-        tex_name = "mpyfile_composite::%s" % ("|".join(
+        # Keyed on every input the pixels depend on: the colour space and
+        # pre-filter that read_texture() applies to every layer (quantized
+        # exactly as the loader and the default node quantize them), then
+        # each layer's path and opacity. Leaving colorSpace or preFilter out
+        # kept the OLD texture after either changed under the same layers.
+        radius_q = (round(float(self.preFilterRadius), 1)
+                    if self.preFilterRadius else 0.0)
+        look = "cs=%d|pf=%d:%d:%.1f" % (
+            int(self.colorSpace), int(bool(self.preFilter)),
+            int(self.preFilterKernel), radius_q)
+        tex_name = "mpyfile_composite::%s|%s" % (look, "|".join(
             "%s@%.4f" % (p, o) for p, o in _layer_slots(self)))
         texture = self.texture_manager.acquireTexture(
             tex_name, desc, processed.tobytes(), False)
