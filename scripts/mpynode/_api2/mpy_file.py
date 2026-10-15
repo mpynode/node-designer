@@ -519,6 +519,14 @@ class MPyFile(om.MPxNode):
     # MPxNode hooks
     # ------------------------------------------------------------------
 
+    def postConstructor(self):
+        """Queue a node the file reader builds for the after-read sweep
+        (``dirty_affects.dirty_file_read_outputs``): it dirties what a user
+        input does, outColor / outAlpha and the user outputs."""
+        from mpynode._common.plugs import dirty_affects
+
+        dirty_affects.note_file_read_node(self)
+
     def setInternalValue(self, plug, data_handle):
         """Recompile cached code objects when the expression or
         viewport source plug changes."""

@@ -84,6 +84,15 @@ class MPyNode(om.MPxNode):
         MPyNode._profile_snapshot_data_attr = plugs["profile_snapshot_data"]
         MPyNode._watch_vars_data_attr       = plugs["watch_vars_data"]
 
+    def postConstructor(self):
+        """Queue a node the file reader builds: its restored inputs dirty no
+        user output, so the after-read sweep does
+        (``dirty_affects.dirty_file_read_outputs``). mPyConstraint inherits
+        it."""
+        from mpynode._common.plugs import dirty_affects
+
+        dirty_affects.note_file_read_node(self)
+
     def setInternalValue(self, plug, data_handle):
         """Track changes to the ``_computeSource`` attr by recompiling
         ``_expr_code`` on the spot.

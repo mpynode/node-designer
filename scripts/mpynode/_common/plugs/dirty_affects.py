@@ -221,7 +221,9 @@ def declare_user_affects(node_mobject, plug, affected_plugs, in_attr, out_attr,
     A plug is a TRIGGER when it is (part of) a user INPUT, OR it is the
     ``expression_attr`` (so editing the Compute source re-dirties outputs), OR
     its root name is in ``extra_trigger_names`` (e.g. MPyConstraint's preset
-    inputs). On trigger, each MObject in ``extra_outputs`` is appended too
+    inputs), OR the file-read sweep is replaying the node
+    (:func:`dirty_file_read_outputs`). On trigger, each MObject in
+    ``extra_outputs`` is appended too
     (native outputs like MPyFile's outColor/outAlpha) -- this happens even when
     the node has no user outputs.
 
@@ -263,8 +265,18 @@ def declare_user_affects(node_mobject, plug, affected_plugs, in_attr, out_attr,
             except Exception:
                 is_expression = False
         is_extra_trigger = _matches(extra_trigger_names)
+        # The file-read sweep replays, through this very path, the user-input
+        # change the file reader skipped (see dirty_file_read_outputs).
+        is_replay = False
+        if _replaying:
+            try:
+                is_replay = (om.MObjectHandle(node_mobject).hashCode()
+                             in _replaying)
+            except Exception:
+                is_replay = False
 
-        if not (is_user_input or is_expression or is_extra_trigger):
+        if not (is_user_input or is_expression or is_extra_trigger
+                or is_replay):
             return
 
         # Native (non-user) outputs the caller wants dirtied alongside the
@@ -303,6 +315,136 @@ def declare_user_affects(node_mobject, plug, affected_plugs, in_attr, out_attr,
                             affected_plugs.append(e.child(ci))
             except Exception:
                 pass
+    except Exception:
+        pass
+
+
+# ---------------------------------------------------------------------------
+# File-read sweep. The file reader restores every input value without calling
+# ``setDependentsDirty``, so no restored input dirties a DYNAMIC user output:
+# after an open, import or reference the interpreted node read each user
+# output's default until an input changed, while the compiled twin, whose
+# outputs are static attributes, computed (measured 2026-10-15 on every
+# mPyNode, mPyConstraint, mPyFile, mPyMesh, mPyNurbsCurve and mPyNurbsSurface
+# user output).
+#
+# ``dgdirty`` cannot repair it: on an output no propagation has ever reached it
+# has no effect at all (measured: plug, node, -a and -p alike), and it never
+# calls ``setDependentsDirty``. So the sweep replays the skipped propagation:
+# a same-value write to the node's ``_profileSnapshotData`` plug makes Maya
+# call ``setDependentsDirty`` at once, and :func:`declare_user_affects` treats
+# that call as a user-input change, appending exactly what one would dirty.
+# The plug is static on every family here (``helpers.build_internal_attrs``),
+# internal and not storable: the write sets no modified flag, adds no undo
+# entry and records no reference edit (measured on an opened and a referenced
+# node). Nothing computes: each output computes on its first pull.
+# ---------------------------------------------------------------------------
+_REPLAY_PLUG = "_profileSnapshotData"
+# MObjectHandles of the nodes built by the file read in progress.
+_file_read_nodes: list = []
+# hashCodes of the nodes whose setDependentsDirty is being replayed.
+_replaying: set = set()
+
+
+def note_file_read_node(node) -> None:
+    """``postConstructor`` hook: queue ``node`` when the file reader is
+    building it. Never raises."""
+    try:
+        import maya.OpenMaya as om1
+
+        if om1.MFileIO.isReadingFile():
+            _file_read_nodes.append(om.MObjectHandle(node.thisMObject()))
+    except Exception:
+        pass
+
+
+def forget_file_read_nodes() -> None:
+    """Drop the queue (kBeforeOpen / kBeforeNew: its nodes are going away)."""
+    del _file_read_nodes[:]
+
+
+def dirty_file_read_outputs() -> int:
+    """Dirty the user outputs of every node the last file read queued, as a
+    change of each node's user inputs would, then empty the queue. Returns the
+    number of nodes.
+
+    Called from the after-open / import / reference callbacks. A read nested
+    in another (a reference loading during an open) leaves the queue to the
+    outer read's after-event, so nothing is touched before the scene is
+    whole. A suspended node is skipped: it forwards no dirtiness
+    (:func:`api2_dirty_gate`).
+
+    Each node gets its own modifier, so a write that fails spoils only its
+    own node: one modifier for the whole queue stopped at the first failed
+    write and left every node queued after it at its defaults. A node whose
+    replay plug has an incoming connection refuses the write, so it is not
+    tried; it and any other node whose write fails keep their defaults until
+    an input changes, and are named in one warning. Never raises.
+    """
+    try:
+        import maya.OpenMaya as om1
+
+        if om1.MFileIO.isReadingFile():
+            return 0
+    except Exception:
+        pass
+    queued = list(_file_read_nodes)
+    del _file_read_nodes[:]
+    done    = 0
+    skipped = []
+    for handle in queued:
+        name = None
+        try:
+            if not handle.isValid():
+                continue
+            node_mobject = handle.object()
+            if api2_node_suspended(node_mobject):
+                continue
+            fn   = om.MFnDependencyNode(node_mobject)
+            name = fn.name()
+            # Re-read the schema: the reader set it without passing here.
+            invalidate(node_mobject)
+            plug = fn.findPlug(_REPLAY_PLUG, False)
+            if plug.isDestination:
+                skipped.append(name)
+                continue
+            key      = handle.hashCode()
+            modifier = om.MDGModifier()
+            modifier.newPlugValueString(plug, plug.asString())
+        except Exception:
+            if name is not None:
+                skipped.append(name)
+            continue
+        _replaying.add(key)
+        try:
+            modifier.doIt()
+            done += 1
+        except Exception:
+            skipped.append(name)
+        finally:
+            _replaying.discard(key)
+    if skipped:
+        _warn_not_dirtied(skipped)
+    return done
+
+
+def _warn_not_dirtied(names) -> None:
+    """Name the nodes :func:`dirty_file_read_outputs` could not dirty, on
+    stderr and in the log panel. Never raises."""
+    import sys
+
+    msg = ("[dirty_affects] after the file read, %d node(s) keep their user "
+           "outputs' defaults until an input changes (the %s write failed "
+           "or the plug is connected): %s"
+           % (len(names), _REPLAY_PLUG, ", ".join(names)))
+    try:
+        sys.stderr.write(msg + "\n")
+    except Exception:
+        pass
+    try:
+        from mpynode._common.util.log_bus import log as _log
+
+        _log(msg, level="warning")
     except Exception:
         pass
 

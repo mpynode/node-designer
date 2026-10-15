@@ -312,6 +312,26 @@ def _on_scene_change(_unused_client_data):
         _svs.evict_all()
     except Exception:
         pass
+    # Nodes queued by an earlier read belong to the scene going away.
+    try:
+        from mpynode._common.plugs import dirty_affects
+
+        dirty_affects.forget_file_read_nodes()
+    except Exception:
+        pass
+
+
+def _dirty_file_read_outputs():
+    """Dirty the user outputs of the nodes the file read just built
+    (``dirty_affects.dirty_file_read_outputs``). Run it before anything
+    below pulls an output, so no pull reads a default. Never raises."""
+    try:
+        from mpynode._common.plugs import dirty_affects
+
+        dirty_affects.dirty_file_read_outputs()
+    except Exception as exc:
+        sys.stderr.write(
+            "[init_registry] file-read output dirtying failed: %s\n" % exc)
 
 
 def _on_scene_new(_unused_client_data):
@@ -357,19 +377,22 @@ def _on_before_reference(_unused_client_data):
 
 def _on_after_reference(_unused_client_data):
     """kAfterReference / kAfterCreateReference / kAfterLoadReference: resolve
-    pickle-trust for the referenced data (reduce-only, like import). Stands down
-    during a scene open (kAfterOpen covers referenced nodes) and dedupes the
-    multiple after-events a single createReference can emit."""
+    pickle-trust for the referenced data (reduce-only, like import) and dirty
+    the referenced nodes' user outputs. Stands down during a scene open
+    (kAfterOpen covers referenced nodes) and dedupes the multiple after-events
+    a single createReference can emit."""
     global _REF_RESOLVE_PENDING
     if _OPEN_IN_PROGRESS:
         _REF_RESOLVE_PENDING = False
         return
-    if not _REF_RESOLVE_PENDING:
-        return  # already resolved this reference operation
-    _REF_RESOLVE_PENDING = False
-    # Trust resolution only: referenced plugs are locked, so their stored vars
-    # decode per-compute via the gated read path -- this flag is that gate.
-    _resolve_pickle_trust(is_import=True)
+    if _REF_RESOLVE_PENDING:
+        _REF_RESOLVE_PENDING = False
+        # Trust resolution only: referenced plugs are locked, so their stored
+        # vars decode per-compute via the gated read path -- this flag is that
+        # gate.
+        _resolve_pickle_trust(is_import=True)
+    # Outside the dedupe: the queue is empty after the first after-event.
+    _dirty_file_read_outputs()
 
 
 # One-shot latch for the v1-owns-the-type warning below. Static condition;
@@ -503,6 +526,10 @@ def _on_scene_opened(_unused_client_data):
             f"[init_registry] scene-open stored-var load failed: {_exc}\n"
         )
 
+    # The reader restored every input without dirtying a user output: dirty
+    # them before the transform force-eval below can pull one.
+    _dirty_file_read_outputs()
+
     # Transform-family nodes write their USER OUTPUTS as a side-effect of
     # asMatrix(), so a downstream pull on open reads stale data until something
     # pulls the matrix. Force a one-shot worldMatrix read -- no TRS touch, so it
@@ -573,6 +600,8 @@ def _on_after_import(_unused_client_data):
         sys.stderr.write(
             f"[init_registry] after-import stored-var load failed: {exc}\n"
         )
+    # Only the imported nodes are queued: the live ones stay clean.
+    _dirty_file_read_outputs()
     # only_new: re-running Init on already-live nodes would rebuild kernels and
     # clobber runtime state.
     try:

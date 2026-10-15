@@ -199,6 +199,14 @@ class MPyNurbsSurface(om.MPxNode):
             except Exception:
                 pass
 
+    def postConstructor(self):
+        """Queue a node the file reader builds for the after-read sweep
+        (``dirty_affects.dirty_file_read_outputs``), which dirties its user
+        outputs; outSurface is covered by its static attributeAffects."""
+        from mpynode._common.plugs import dirty_affects
+
+        dirty_affects.note_file_read_node(self)
+
     def setInternalValue(self, plug, data_handle):
         try:
             attr = plug.attribute()
