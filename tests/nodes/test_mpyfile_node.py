@@ -7,6 +7,7 @@ from __future__ import annotations
 
 # ===================== from test_phase32_mpyfile.py =====================
 import os
+import shutil
 import tempfile
 import unittest
 
@@ -809,13 +810,31 @@ class TestVP2Render(unittest.TestCase):
         self.plane = plane
 
     def test_ogsrender_does_not_crash(self):
-        out_path = os.path.join(tempfile.gettempdir(), "mpyfile_ogs.png")
+        # ogsRender takes no output path: it writes into the current
+        # project's images folder. Open a throwaway project first so the
+        # render never lands in the user's default Maya project.
+        out_dir = tempfile.mkdtemp(prefix="mpyfile_ogs_")
+        self.addCleanup(shutil.rmtree, out_dir, True)
+        previous = mc.workspace(query=True, rootDirectory=True)
+        mc.workspace(out_dir, openWorkspace=True)
         try:
-            mc.setAttr("defaultRenderGlobals.imageFormat", 32)  # PNG
-            mc.ogsRender(camera="persp", width=32, height=32)
-        except Exception as exc:
-            self.skipTest(f"ogsRender unavailable in this environment: {exc}")
-        # No assertion on pixel values -- this is a smoke test.
+            try:
+                mc.setAttr("defaultRenderGlobals.imageFormat", 32)  # PNG
+                result = mc.ogsRender(camera="persp", width=32, height=32)
+            except Exception as exc:
+                self.skipTest(
+                    f"ogsRender unavailable in this environment: {exc}")
+        finally:
+            mc.workspace(previous, openWorkspace=True)
+        # No assertion on pixel values -- this is a smoke test. The image
+        # must be inside the throwaway project.
+        if isinstance(result, (list, tuple)):
+            result = result[0] if result else ""
+        self.assertTrue(result, "ogsRender returned no image path")
+        image = os.path.normcase(os.path.realpath(result))
+        root  = os.path.normcase(os.path.realpath(out_dir))
+        self.assertEqual(os.path.commonpath([image, root]), root, image)
+        self.assertTrue(os.path.isfile(result), result)
 
 
 # ===========================================================================
