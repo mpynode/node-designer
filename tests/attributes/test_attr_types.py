@@ -1515,19 +1515,22 @@ class TestColorDefaultReachesTheSpec(unittest.TestCase):
         self.assertEqual(len(dv), 3)
         self.assertTrue(all(isinstance(v, float) for v in dv), dv)
 
-    def test_it_becomes_setdefault_in_the_generated_cpp(self):
+    def test_it_becomes_the_child_defaults_in_the_generated_cpp(self):
         # values compared numerically, not as literals: the plug is float32, so
         # 0.95 round-trips as 0.949999988079071 and an exact-string assert would
-        # be testing float formatting rather than the wiring.
+        # be testing float formatting rather than the wiring. Since port_cache
+        # v43 each named child carries its share (setDefault on createColor
+        # before), as the interpreted addAttr seeds them.
         import re
         from mpynode.native import compiler as codegen
 
         cpp = codegen._generate_locator_cpp(self._spec(), for_port=True)
-        m = re.search(r"nAttr\.setDefault\(([-\d.e]+)f, ([-\d.e]+)f, "
-                      r"([-\d.e]+)f\);", cpp)
-        self.assertIsNotNone(m, "no nAttr.setDefault for the colour input")
-        for got, want in zip(m.groups(), (0.25, 0.50, 0.95)):
-            self.assertAlmostEqual(float(got), want, places=6)
+        got = [re.search(r'nAttr\.create\("tint%s", "tint%s", '
+                         r'MFnNumericData::kFloat, ([-\d.e]+)\);' % (ax, ax), cpp)
+               for ax in "RGB"]
+        self.assertNotIn(None, got, "no child default for the colour input")
+        for m, want in zip(got, (0.25, 0.50, 0.95)):
+            self.assertAlmostEqual(float(m.group(1)), want, places=6)
 
         m = re.search(r"float\s+in_tint\[3\] = \{([-\d.e]+)f, ([-\d.e]+)f, "
                       r"([-\d.e]+)f\};", cpp)

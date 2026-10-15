@@ -806,7 +806,9 @@ class TestColorCodegen(unittest.TestCase):
                              {"outColor": {"attr_type": "color"}},
                              compute="self.outColor = (self.uIn, 0.0, 0.0)")
         cpp = codegen.generate_cpp(spec, for_port=True)
-        self.assertIn("createColor", cpp)
+        self.assertIn('nAttr.create("outColorR", "outColorR", '
+                      'MFnNumericData::kFloat, 0.0);', cpp)
+        self.assertIn("nAttr.setUsedAsColor(true);", cpp)
         # A `color` output written from a tuple literal lowers DETERMINISTICALLY
         # (nd_lower color writer -> set3Float), so there is NO AI PORT region.
         self.assertNotIn(codegen.PORT_BEGIN, cpp)

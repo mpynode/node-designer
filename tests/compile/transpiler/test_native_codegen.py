@@ -765,11 +765,13 @@ class TestColorTupleLowers(unittest.TestCase):
         cpp = codegen.generate_cpp(self._spec(), for_port=True)
         # Deterministic lowering: no AI PORT region.
         self.assertNotIn(codegen.PORT_BEGIN, cpp)
-        # createColor attr; the tuple packs an nd::Array, the color writer
-        # sets the float children.
-        self.assertIn("createColor",            cpp)
-        self.assertIn("h_aOutColor.set3Float",  cpp)
-        self.assertIn("nd::from_data<double>(", cpp)
+        # float3 colour attr with named children; the tuple packs an
+        # nd::Array, the color writer sets the float children.
+        self.assertIn('aOutColor = nAttr.create("outColor", "outColor", '
+                      'aOutColorR, aOutColorG, aOutColorB);', cpp)
+        self.assertIn("nAttr.setUsedAsColor(true);", cpp)
+        self.assertIn("h_aOutColor.set3Float",       cpp)
+        self.assertIn("nd::from_data<double>(",      cpp)
 
 
 class TestTransformMatrixInputScaffold(unittest.TestCase):
@@ -1199,9 +1201,13 @@ class TestLocatorColorInput(unittest.TestCase):
     def test_color_input_is_wired_into_draw(self):
         from mpynode.native import compiler as codegen
         cpp = codegen._generate_locator_cpp(_color_locator_spec(), for_port=True)
-        # attr created as a color, with the spec default applied
-        self.assertIn('nAttr.createColor("defaultColor"', cpp)
-        self.assertIn("nAttr.setDefault(", cpp)
+        # attr created as a color with named children (v43), each seeded
+        # with its share of the spec default
+        self.assertIn('nAttr.create("defaultColorR", "defaultColorR", '
+                      'MFnNumericData::kFloat, 0.2);', cpp)
+        self.assertIn('nAttr.create("defaultColorB", "defaultColorB", '
+                      'MFnNumericData::kFloat, 0.8);', cpp)
+        self.assertIn("nAttr.setUsedAsColor(true);", cpp)
         # DrawInputs carries the rgb triple
         self.assertIn("in_defaultColor[3]", cpp)
         # exposed to the (AI-ported) draw expression as an MColor local

@@ -64,11 +64,19 @@ def _flag_name(setter):
     return setter[:1].lower() + setter[1:]
 
 
+def _short(plug):
+    """The SSOT short name ``plug`` is created with (fn, uv, bcl, ...), as
+    MPyFile.initializer() creates it (port_cache v43)."""
+    from mpynode._common.interface import file_texture_interface as iface
+
+    return {e["long"]: e["short"] for e in iface.FILE_TEXTURE_ATTRS}[plug]
+
+
 def _created(cpp, plug):
     """``(member, lines)`` of ``plug``'s create statement through the next
     create (or the end of the create section)."""
     m = re.search(r'^ +(\w+) = [a-z]Attr\.create(?:Color)?\("%s", "%s"'
-                  % (plug, plug), cpp, re.M)
+                  % (plug, _short(plug)), cpp, re.M)
     if m is None:
         return None, []
     rest  = cpp[m.end():].split("\n")[1:]

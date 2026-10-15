@@ -8,7 +8,7 @@ from .emit_attr import (_array_read_lines, _create_lines, _image_read_hint_lines
                         _image_read_lines, _members, _out_handle_default,
                         _out_setclean, _pick_path_input, _read_line,
                         _setter_hint, compute_open_lines, PACKED_INCLUDES,
-                        DISTANCE_INCLUDE)
+                        DISTANCE_INCLUDE, TIME_IN_MEMBER, time_in_create_lines)
 from .emit_hex import _HEX_CPP
 from .nd_runtime import _nd_runtime_cpp
 from mpynode.native.compiler.kernels import nd_io_cpp, file_texture_cpp
@@ -465,6 +465,7 @@ def _generate_geo_cpp(spec: dict, kind: str, for_port: bool = False) -> str:
     L.append("    static MTypeId id;")
     for m in in_members:
         L.append("    static MObject %s;" % m["member"])
+    L.append("    static MObject %s;" % TIME_IN_MEMBER)
     L.append("    static MObject %s;" % out_member)
     for m in out_members:
         L.append("    static MObject %s;" % m["member"])
@@ -479,6 +480,7 @@ def _generate_geo_cpp(spec: dict, kind: str, for_port: bool = False) -> str:
     L.append("MTypeId %s::id(%s);" % (cls, type_id))
     for m in in_members:
         L.append("MObject %s::%s;" % (cls, m["member"]))
+    L.append("MObject %s::%s;" % (cls, TIME_IN_MEMBER))
     L.append("MObject %s::%s;" % (cls, out_member))
     for m in out_members:
         L.append("MObject %s::%s;" % (cls, m["member"]))
@@ -494,6 +496,9 @@ def _generate_geo_cpp(spec: dict, kind: str, for_port: bool = False) -> str:
     L.append("")
     for m in in_members:
         L += _create_lines(m)
+    # The interpreted type's hidden time input, created before the output as
+    # the interpreted initializer does; it dirties the geometry output.
+    L += time_in_create_lines()
     L.append('    %s = tAttr.create("%s", "%s", MFnData::%s);'
              % (out_member, out_attr, info["short"], info["data"]))
     L.append("    tAttr.setWritable(false);")
@@ -505,12 +510,14 @@ def _generate_geo_cpp(spec: dict, kind: str, for_port: bool = False) -> str:
     L.append("")
     for m in in_members:
         L.append("    addAttribute(%s);" % m["member"])
+    L.append("    addAttribute(%s);" % TIME_IN_MEMBER)
     L.append("    addAttribute(%s);" % out_member)
     for m in out_members:
         L.append("    addAttribute(%s);" % m["member"])
     L.append("")
     for m in in_members:
         L.append("    attributeAffects(%s, %s);" % (m["member"], out_member))
+    L.append("    attributeAffects(%s, %s);" % (TIME_IN_MEMBER, out_member))
     # Every input drives every scalar output too: compute() fills them all in
     # the one pass, so a pull on any output must see every input dirty it.
     for o in out_members:

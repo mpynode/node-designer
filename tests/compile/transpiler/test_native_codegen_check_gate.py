@@ -348,7 +348,8 @@ class TestGeoScalarOutputGate(unittest.TestCase):
         self.assertNotIn("MDataHandle h_", cpp)
         self.assertNotIn("scalar output handles", cpp)
         self.assertIn("if (plug != aOutMesh) return MS::kUnknownParameter;", cpp)
-        self.assertEqual(cpp.count("attributeAffects("), 1)   # aStart -> aOutMesh
+        # aStart -> aOutMesh, and the interpreted type's _timeIn -> aOutMesh
+        self.assertEqual(cpp.count("attributeAffects("), 2)
 
     def test_compound_hex_and_array_outputs_are_rejected_loudly(self):
         from mpynode.native import compiler as codegen
@@ -386,8 +387,14 @@ class TestColorInputDefault(unittest.TestCase):
         cpp = codegen.generate_cpp(_geo_spec(
             {"wallColor": {"type": "color", "is_array": False,
                            "default_value": [0.2, 0.55, 0.2]}}))
-        self.assertIn('aWallColor = nAttr.createColor("wallColor", "wallColor");', cpp)
-        self.assertIn("nAttr.setDefault(0.2f, 0.55f, 0.2f);", cpp)
+        # each named child is created at its share of the default, as the
+        # interpreted addAttr seeds them (v43; createColor + setDefault before)
+        for ax, v in zip("RGB", ("0.2", "0.55", "0.2")):
+            self.assertIn('MObject aWallColor%s = nAttr.create("wallColor%s", '
+                          '"wallColor%s", MFnNumericData::kFloat, %s);'
+                          % (ax, ax, ax, v), cpp)
+        self.assertIn('aWallColor = nAttr.create("wallColor", "wallColor", '
+                      'aWallColorR, aWallColorG, aWallColorB);', cpp)
 
     def test_zero_or_absent_default_emits_nothing_extra(self):
         from mpynode.native import compiler as codegen
@@ -397,18 +404,19 @@ class TestColorInputDefault(unittest.TestCase):
             cpp = codegen.generate_cpp(_geo_spec({"tint": meta}))
             self.assertNotIn("setDefault(", cpp, repr(meta))
 
-    def test_default_follows_createColor_before_the_flags(self):
+    def test_default_rides_the_children_before_the_flags(self):
         from mpynode.native import compiler as codegen
         cpp = codegen.generate_cpp(_geo_spec(
             {"tint": {"type": "color", "is_array": False,
                       "default_value": [1.0, 0.9, 0.1]}}))
-        i_create  = cpp.index('nAttr.createColor("tint", "tint");')
-        i_default = cpp.index("nAttr.setDefault(1.0f, 0.9f, 0.1f);")
+        i_default = cpp.index('nAttr.create("tintG", "tintG", '
+                              'MFnNumericData::kFloat, 0.9);')
+        i_create = cpp.index('aTint = nAttr.create("tint", "tint", '
+                             'aTintR, aTintG, aTintB);')
         i_flag    = cpp.index("nAttr.setStorable(true);", i_create)
-        self.assertLess(i_create, i_default)
-        self.assertLess(i_default, i_flag,
-                        "setDefault must apply to the attr just created, before "
-                        "the flag lines that follow it")
+        self.assertLess(i_default, i_create)
+        self.assertLess(i_create, i_flag,
+                        "the flags must apply to the parent just created")
 
     def test_color_output_gets_no_default(self):
         # An output is computed every evaluation; a default is meaningless there
@@ -427,7 +435,10 @@ class TestColorInputDefault(unittest.TestCase):
             "portability": {"portable": True, "blockers": []},
         }
         cpp = codegen.generate_cpp(spec, for_port=True)
-        self.assertIn('nAttr.createColor("tint", "tint");', cpp)
+        self.assertIn('aTint = nAttr.create("tint", "tint", aTintR, aTintG, '
+                      'aTintB);', cpp)
+        self.assertIn('nAttr.create("tintR", "tintR", MFnNumericData::kFloat, '
+                      '0.0);', cpp)
         self.assertNotIn("setDefault(", cpp)
 
 
@@ -470,7 +481,7 @@ class TestDefaultValueContract(unittest.TestCase):
         "bool": (True, "true"), "enum": (1, '"p", 1);'),
         "doubleAngle":  (0.5, "kAngle, 0.5);"),
         "doubleLinear": (150.0, "kDistance, 150.0);"),
-        "color":        ([0.2, 0.55, 0.2], "setDefault(0.2f, 0.55f, 0.2f);"),
+        "color":        ([0.2, 0.55, 0.2], '"pG", MFnNumericData::kFloat, 0.55);'),
     }
     # distinctive literals that must NOT appear anywhere in initialize()
     IGNORED = {

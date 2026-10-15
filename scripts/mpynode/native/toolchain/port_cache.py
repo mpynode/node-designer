@@ -557,7 +557,27 @@ from typing import Optional
 # SKELETON change invisible to the key. Moves 2 of 76 stage-1 files:
 # meshRegionLocator, in its template and in the All Templates Plugin; the
 # shipped artifacts took the hunk by splice -- 2026-10-15.
-PORTER_RECIPE_VERSION = "42"
+# v43: a compiled attribute is DEFINED as the interpreted node defines it. (1)
+# Short names: an SSOT / framework plug takes the interpreted short name
+# (mPyFile's fn, uv, cs ... and their children's bcr, ocr, u, v; _timeIn's
+# _tin; outMesh's om; targetGeometry's tgeo, liveTargets' ltgt), and every
+# colour builds named R/G/B children instead of createColor's <short>r. (2) An
+# input is keyable unless an array -- mesh, curve, surface and matrix inputs
+# too -- and a compound array input's children are keyable. (3) An array input
+# uses the array data builder, and so do a compound array's children. (4) A
+# packed (typed-array) input is created with no default, as addAttr -dt makes
+# it. (5) The interpreted type's own plugs exist: _timeIn on the mesh, curve,
+# surface and transform generators (dirtying the output, not read), and
+# mPyConstraint's 17 preset plugs (targetTranslate ... targetWeight). (6) Two
+# Bone IK keeps _jointBindOffsets as the interpreted node does -- a hidden,
+# internal string starting "" holding the same JSON text -- instead of a
+# matrixArray, so a convert keeps the captured neutral. A SKELETON change invisible to the key.
+# Moves 57 of 76 stage-1 files: all but Bubble Sort, Hex Attribute, NURBS Wave,
+# Sine Ripple (and the MPyDeformer default), Linear Blend / Dual Quaternion
+# Skin, Animated Selection / Text and Widget Showcase, and their All Templates
+# copies. The shipped artifacts took the hunks by splice, none of them inside a
+# PORT region or an optimizer rewrite -- 2026-10-15.
+PORTER_RECIPE_VERSION = "43"
 
 # Spec keys excluded from the cache key -- provably irrelevant to the generated
 # C++. A deny-list, NOT an allow-list (design C1).

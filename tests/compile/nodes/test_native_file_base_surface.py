@@ -197,8 +197,8 @@ class TestFileBaseAttributeSurface(unittest.TestCase):
         """filterMode -> Anisotropic (2), mipmapMode -> Auto (1). A dropped
         default silently registers Point / None instead."""
         _spec, cpp, _inj = _generate("MPyFile/File Simple")
-        self.assertIn('eAttr.create("filterMode", "filterMode", 2)', cpp)
-        self.assertIn('eAttr.create("mipmapMode", "mipmapMode", 1)', cpp)
+        self.assertIn('eAttr.create("filterMode", "fm", 2)', cpp)
+        self.assertIn('eAttr.create("mipmapMode", "mmm", 1)', cpp)
 
     def test_base_surface_is_mpyfile_only(self):
         """The gate is mpy_type -- no other node type grows plugs."""

@@ -334,7 +334,8 @@ def _capture_bind_offsets(node_name, joint_names):
 def rebind_ik_solver(node_name):
     """Clear a solver's persisted bind offsets so the NEXT solve re-captures the
     joints' current offsets as the new neutral ('set current pose as rest').
-    Works on interpreted (string plug) and compiled (matrixArray plug) solvers.
+    Works on interpreted and compiled solvers: both a string plug, though a
+    compiled plug-in built before port recipe v43 has a matrixArray one.
     Returns True if the plug was cleared."""
     from maya import cmds
 

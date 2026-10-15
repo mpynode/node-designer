@@ -34,7 +34,8 @@ from .nd_runtime import _nd_runtime_cpp
 from mpynode.native.compiler.kernels import nd_io_cpp
 from .emit_attr import (_create_lines, _read_plug_decl, _read_plug_assign,
                         _read_plug_array_decl, _read_plug_array_assign,
-                        findplug_family_extras, findplug_local_hint)
+                        findplug_family_extras, findplug_local_hint,
+                        TIME_IN_MEMBER, time_in_create_lines)
 from . import emit_geo_io
 
 
@@ -327,6 +328,7 @@ def _transform_node_methods(cls, mcls, type_name, matrix_inputs, generic_inputs)
     L = []
     # ---- static attr definitions --------------------------------------------
     L.append("MObject %s::aOutLocalFlat;" % cls)
+    L.append("MObject %s::%s;" % (cls, TIME_IN_MEMBER))
     for plug, _local in matrix_inputs:
         L.append("MObject %s::a_%s;" % (cls, _ident(plug)))
     for gm in generic_inputs:
@@ -353,7 +355,9 @@ def _transform_node_methods(cls, mcls, type_name, matrix_inputs, generic_inputs)
             L.append("    if (!st) return st;")
             L.append("    mAttr.setStorable(true); mAttr.setWritable(true);")
             L.append("    mAttr.setReadable(true); mAttr.setConnectable(true);")
-            L.append("    mAttr.setKeyable(false);")
+            # keyable, as the interpreted addAttr makes every non-array input
+            # (aimTransform's matrix0 / matrix1 / parentWorld were not until v43)
+            L.append("    mAttr.setKeyable(true);")
             L.append("    st = %s::addAttribute(%s); if (!st) return st;"
                      % (cls, obj))
     # Generic scalar inputs: create via the shared emit_attr._create_lines (same
@@ -363,6 +367,14 @@ def _transform_node_methods(cls, mcls, type_name, matrix_inputs, generic_inputs)
         L += _create_lines(gm)
         L.append("    st = %s::addAttribute(%s); if (!st) return st;"
                  % (cls, gm["member"]))
+    # The interpreted type's hidden time input (_api1/mpy_transform.py), made
+    # before the opm carrier as there; it dirties the opm (attributeAffects
+    # and the setDependentsDirty trigger below, as there).
+    if not generic_inputs:
+        L.append("    MFnUnitAttribute uAttr;")
+    L += time_in_create_lines()
+    L.append("    st = %s::addAttribute(%s); if (!st) return st;"
+             % (cls, TIME_IN_MEMBER))
     # Hidden double[16] opm carrier (matrix output from MPxTransform.compute
     # segfaults; a double[] array does not -- same reason as the interpreted node).
     L.append("    aOutLocalFlat = nAttr.create(\"%s\", \"%s\", "
@@ -374,6 +386,8 @@ def _transform_node_methods(cls, mcls, type_name, matrix_inputs, generic_inputs)
     L.append("    nAttr.setReadable(true); nAttr.setHidden(true);")
     L.append("    st = %s::addAttribute(aOutLocalFlat); if (!st) return st;"
              % cls)
+    L.append("    %s::attributeAffects(%s, aOutLocalFlat);"
+             % (cls, TIME_IN_MEMBER))
     for plug, _local in matrix_inputs:
         L.append("    %s::attributeAffects(a_%s, aOutLocalFlat);"
                  % (cls, _ident(plug)))
@@ -441,6 +455,8 @@ def _transform_node_methods(cls, mcls, type_name, matrix_inputs, generic_inputs)
         L.append('        if (nm == "%s") trig = true;' % gm["plug"])
     for nm in _BUILTIN_TRIGGER_NAMES:
         L.append('        if (nm == "%s") trig = true;' % nm)
+    # time1.outTime -> _timeIn, as the interpreted _MATRIX_DIRTY_TRIGGERS
+    L.append('        if (nm == "_timeIn") trig = true;')
     # a compound child (translateX) resolves to its parent channel (translate).
     L.append("        if (!trig && plug.isChild()) {")
     L.append("            MString pn = MFnAttribute(plug.parent().attribute())"
@@ -636,6 +652,7 @@ def _generate_transform_cpp(spec: dict, for_port: bool = False) -> str:
     L.append("    static void*   creator() { return new %s(); }" % cls)
     L.append("    static MTypeId id;")
     L.append("    static MObject aOutLocalFlat;")
+    L.append("    static MObject %s;" % TIME_IN_MEMBER)
     for plug, _local in matrix_inputs:
         L.append("    static MObject a_%s;" % _ident(plug))
     for gm in generic_inputs:

@@ -162,8 +162,9 @@ class TestEmittedCpp(unittest.TestCase):
         cls.cpp = node_scaffold.generate_cpp(_bs_spec(), for_port=True)
 
     def test_target_geometry_is_declared_added_and_affects_output(self):
+        # short name "tgeo", as _api1/mpy_blend_shape.py creates it (v43)
         self.assertIn(
-            'tAttr.create("targetGeometry", "targetGeometry", MFnData::kMesh)',
+            'tAttr.create("targetGeometry", "tgeo", MFnData::kMesh)',
             self.cpp)
         self.assertIn("addAttribute(aTargetGeometry);", self.cpp)
         self.assertIn(

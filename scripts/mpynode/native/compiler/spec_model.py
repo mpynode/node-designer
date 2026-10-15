@@ -138,9 +138,12 @@ _GEO_KIND = {
     "mPyNurbsSurface": "surface",
 }
 
+# "short" is the output's short name on the interpreted type (_api2/mpy_mesh.py
+# "om", mpy_nurbs_curve.py "oc", mpy_nurbs_surface.py "os"). The mesh's was
+# "out" here until v43.
 _GEO_INFO = {
-    "mesh":    {"attr": "outMesh", "short": "out", "data": "kMesh",
-                "fn": "MFnMesh", "datafn": "MFnMeshData", "formns": None},
+    "mesh": {"attr": "outMesh", "short": "om", "data": "kMesh",
+             "fn": "MFnMesh", "datafn": "MFnMeshData", "formns": None},
     "curve":   {"attr": "outCurve", "short": "oc", "data": "kNurbsCurve",
                 "fn": "MFnNurbsCurve", "datafn": "MFnNurbsCurveData",
                 "formns": "MFnNurbsCurve"},

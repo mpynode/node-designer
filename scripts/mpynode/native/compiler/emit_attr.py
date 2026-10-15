@@ -183,6 +183,94 @@ def string_default(m):
         return dv
     return None
 
+def short_name(m):
+    """The short name a member's plug is created with.
+
+    The interpreted node decides. A user attr is an ``addAttr`` whose short
+    name IS its long name, so that stays the default. A plug the interpreted
+    type registers itself carries its own short name in the meta (``short``):
+    mPyFile's SSOT plugs (``fn``, ``uv``, ``cs`` ...), ``_timeIn`` (``_tin``),
+    mPyBlendShape's ``targetGeometry`` / ``liveTargets`` (``tgeo`` / ``ltgt``).
+    Until v43 every compiled plug reused its long name, so a short-name
+    reference -- ``connectAttr place2d.outUV <node>.uv``, an .ma written by the
+    interpreted node -- failed on the compiled one."""
+    return m["meta"].get("short") or m["plug"]
+
+
+# The child-name suffix and C++ local suffix of each numeric compound's
+# children, in creation order. The locals are ``<member><suffix>``.
+_COMPOUND_CHILD_SUFFIX = {
+    "double3":    "XYZ",
+    "euler":      "XYZ",
+    "position":   "XYZ",
+    "quaternion": "XYZW",
+    "float2":     "XY",
+    "color":      "RGB",
+}
+
+
+def color_create_lines(mem, long_name, short, kids, kid_shorts, rgb=None):
+    """Create a colour compound with NAMED children, as the interpreted node does.
+
+    ``createColor`` names its children ``<long>R`` / ``<short>r``, so a compiled
+    colour's children had short names (``colorr``) the interpreted node does
+    not have (``colorR``; mPyFile's ``bcr``). The interpreted node builds the
+    three float children itself and makes a float3 from them with
+    usedAsColor, so this does too. ``rgb`` is the input default, seeded per
+    child as the interpreted addAttr seeds it; ``None`` is black."""
+    L = []
+    for i, ax in enumerate("RGB"):
+        dv = repr(float(rgb[i])) if rgb else "0.0"
+        L.append('    MObject %s%s = nAttr.create("%s", "%s", '
+                 'MFnNumericData::kFloat, %s);'
+                 % (mem, ax, kids[i], kid_shorts[i], dv))
+    L.append('    %s = nAttr.create("%s", "%s", %sR, %sG, %sB);'
+             % (mem, long_name, short, mem, mem, mem))
+    L.append("    nAttr.setUsedAsColor(true);")
+    return L
+
+
+# The hidden time input the interpreted mesh / curve / surface / transform types
+# register (_api2/mpy_mesh.py, mpy_nurbs_curve.py, mpy_nurbs_surface.py,
+# _api1/mpy_transform.py): kTime "_timeIn" / "_tin", storable, not keyable, not
+# readable, hidden, dirtying the output (attributeAffects, as there). Until v43
+# no compiled one had it, so the time1.outTime -> _timeIn connection was dropped
+# on Convert to C++. compute() does not read it: no compiled generator consumes
+# time (the interpreted compute reads it into self.time), and that read would
+# land in compute bodies the optimizer rounds rewrote.
+TIME_IN_MEMBER = "a_timeIn"
+
+
+def time_in_create_lines(member=TIME_IN_MEMBER):
+    """Create the ``_timeIn`` plug as the interpreted types do (uAttr in scope)."""
+    return [
+        '    %s = uAttr.create("_timeIn", "_tin", MFnUnitAttribute::kTime, 0.0);'
+        % member,
+        "    uAttr.setStorable(true); uAttr.setKeyable(false);",
+        "    uAttr.setReadable(false); uAttr.setWritable(true);",
+        "    uAttr.setHidden(true);",
+    ]
+
+
+def _array_child_lines(mem, t, is_out):
+    """Flag the children of a compound ARRAY the way ``addAttr -multi`` does.
+
+    The interpreted array is an ``addAttr -multi`` whose children are added one
+    by one: every child uses the array data builder, and an INPUT's children are
+    keyable while the multi itself is not. Maya copies the parent's
+    ``setKeyable(false)`` onto children it has not been told otherwise about,
+    so without these calls the compiled metaballs halfExtentsX and spline cvX
+    were neither (measured, 2026-10-15). Applied after the parent's own flags;
+    a child flag set afterwards sticks."""
+    sfx = _COMPOUND_CHILD_SUFFIX.get(t)
+    if not sfx:
+        return []
+    calls = "_ac.setUsesArrayDataBuilder(true);"
+    if not is_out:
+        calls = "_ac.setKeyable(true); " + calls
+    return ["    { MFnAttribute _ac(%s%s); %s }" % (mem, s, calls) for s in sfx]
+
+
 def _create_lines(m):
     """C++ lines that create + flag one attribute in initialize()."""
     plug, mem, meta = m["plug"], m["member"], m["meta"]
@@ -190,20 +278,17 @@ def _create_lines(m):
     is_out = m["kind"] == "outputs"
     L      = []
     a      = '"%s"' % plug
+    sa     = '"%s"' % short_name(m)
     if meta.get("packed") and t in _PACKED_DATA and not is_out:
         # ONE typed-array plug, not a multi -- returns EARLY so the setArray()
         # tail below never runs (setArray on a typed array would make it an
-        # array OF arrays). The default MObject is required: a kDoubleArray attr
-        # created with MObject::kNullObj has no data on a fresh node.
-        kind, data_fn, _ = _PACKED_DATA[t]
-        L += [
-            "    {",
-            "        %s _pd;" % data_fn,
-            "        MObject _pdo = _pd.create();",
-            "        %s = tAttr.create(%s, %s, MFnData::%s, _pdo);"
-            % (mem, a, a, kind),
-            "    }",
-        ]
+        # array OF arrays). Created with NO default, like the interpreted
+        # `addAttr -dataType doubleArray`: an unset plug holds no data on
+        # either side, and every read treats that as an empty array. Until
+        # v43 the compiled one carried an empty data object instead.
+        kind = _PACKED_DATA[t][0]
+        L.append("    %s = tAttr.create(%s, %s, MFnData::%s);"
+                 % (mem, a, sa, kind))
         L += _flags("tAttr", is_out, keyable=False)
         return L
     if t in ("float", "double", "long", "bool"):
@@ -214,7 +299,7 @@ def _create_lines(m):
                 "long":   _num_default(meta, int, "0"),
                 "bool": _bool_default(meta)}[t]
         L.append("    %s = nAttr.create(%s, %s, MFnNumericData::%s, %s);"
-                  % (mem, a, a, data, dflt))
+                  % (mem, a, sa, data, dflt))
         L += _limit_lines("nAttr", meta, t)
         L += _flags("nAttr", is_out)
     elif t == "double3":
@@ -225,7 +310,7 @@ def _create_lines(m):
             L.append('    MObject %s = nAttr.create("%s%s", "%s%s", '
                      'MFnNumericData::kDouble, 0.0);' % (cm, plug, ax, plug, ax))
         L.append("    %s = nAttr.create(%s, %s, %s, %s, %s);"
-                  % (mem, a, a, cx, cy, cz))
+                  % (mem, a, sa, cx, cy, cz))
         L += _flags("nAttr", is_out)
     elif t in ("euler", "position"):
         # Like vector (double3 X/Y/Z) but the children are unit attrs: euler's
@@ -241,7 +326,7 @@ def _create_lines(m):
                      'MFnUnitAttribute::%s, 0.0);'
                      % (cm, plug, ax, plug, ax, unit))
         L.append("    %s = nAttr.create(%s, %s, %s, %s, %s);"
-                  % (mem, a, a, cx, cy, cz))
+                  % (mem, a, sa, cx, cy, cz))
         L += _flags("nAttr", is_out)
     elif t == "quaternion":
         # Maya's numeric double4 (kAttribute4Double, like
@@ -257,7 +342,7 @@ def _create_lines(m):
             L.append('    MObject %s = nAttr.create("%s%s", "%s%s", '
                      'MFnNumericData::kDouble, %s);' % (cm, plug, ax, plug, ax, dv))
         L.append("    %s = nAttr.create(%s, %s, %s, %s, %s, %s);"
-                  % (mem, a, a, cx, cy, cz, cw))
+                  % (mem, a, sa, cx, cy, cz, cw))
         L += _flags("nAttr", is_out)
     elif t == "float2":
         # 2-float numeric compound (e.g. uvCoord); read via asFloat2(). Stays a
@@ -271,32 +356,33 @@ def _create_lines(m):
         # compiled mPyFile with no uCoord plug while the outUV connect kept
         # working, which is exactly why it went unnoticed. uvFilterSize's
         # declared children ARE <plug>X/Y, so it is unchanged.
-        kids = meta.get("children") or [plug + "U", plug + "V"]
+        # The short names follow ``child_shorts`` when the SSOT declares them
+        # (uvCoord's u / v), else the long names, as an addAttr child's are.
+        kids   = meta.get("children") or [plug + "U", plug + "V"]
+        shorts = meta.get("child_shorts") or kids
         cx, cy = mem + "X", mem + "Y"
-        for cm, cn in ((cx, kids[0]), (cy, kids[1])):
+        for cm, cn, cs in ((cx, kids[0], shorts[0]), (cy, kids[1], shorts[1])):
             L.append('    MObject %s = nAttr.create("%s", "%s", '
-                     'MFnNumericData::kFloat, 0.0);' % (cm, cn, cn))
+                     'MFnNumericData::kFloat, 0.0);' % (cm, cn, cs))
         L.append("    %s = nAttr.create(%s, %s, %s, %s);"
-                  % (mem, a, a, cx, cy))
+                  % (mem, a, sa, cx, cy))
         L += _flags("nAttr", is_out)
     elif t == "color":
-        # createColor sets usedAsColor and auto-creates R/G/B children, so the
-        # attr binds to material.color + Arnold like a stock file node's outColor.
-        L.append("    %s = nAttr.createColor(%s, %s);" % (mem, a, a))
-        # createColor takes no default and, until 2026-09-14, none was ever
-        # set: every compiled node with a colour INPUT came up (0,0,0) where
-        # the Python node carried its recorded default. Mesh Maze's authored
-        # test asserts on those defaults (walls wallColor, tiles solutionColor)
-        # and read black off the compiled node while the Python passed;
-        # Voxelize's defaultColor and Mesh Regions' six colours were wrong the
-        # same way. Emitted only for a NON-ZERO recorded default (black is what
-        # createColor gives anyway), so every other node stays byte-identical.
-        # Float literals select the (float,float,float) overload the k3Float
-        # attr createColor makes expects; double literals would bind k3Double.
-        _cdv = _color_default(meta)
-        if _cdv and not is_out:
-            L.append("    nAttr.setDefault(%s);"
-                     % ", ".join("%rf" % c for c in _cdv))
+        # A float3 with usedAsColor, so the attr binds to material.color +
+        # Arnold like a stock file node's outColor. Its children are named as
+        # the interpreted node names them (color_create_lines): <plug>R/G/B,
+        # or the SSOT's ``children`` / ``child_shorts`` (borderColorR / bcr).
+        #
+        # The recorded default seeds each child. Until 2026-09-14 none was
+        # ever set: every compiled node with a colour INPUT came up (0,0,0)
+        # where the Python node carried its recorded default (Mesh Maze's
+        # wallColor / solutionColor, Voxelize's defaultColor, Mesh Regions'
+        # six colours). An output takes none, as the interpreted output path
+        # applies none.
+        kids   = meta.get("children") or [plug + ax for ax in "RGB"]
+        shorts = meta.get("child_shorts") or kids
+        _cdv   = None if is_out else _color_default(meta)
+        L += color_create_lines(mem, plug, short_name(m), kids, shorts, _cdv)
         L += _flags("nAttr", is_out)
     elif t in ("doubleAngle", "doubleLinear", "time"):
         unit = {"doubleAngle": "kAngle", "doubleLinear": "kDistance",
@@ -316,18 +402,20 @@ def _create_lines(m):
         dflt = (_num_default(meta, float, "0.0")
                 if t in ("doubleAngle", "doubleLinear") else "0.0")
         L.append("    %s = uAttr.create(%s, %s, MFnUnitAttribute::%s, %s);"
-                  % (mem, a, a, unit, dflt))
+                  % (mem, a, sa, unit, dflt))
         L += _limit_lines("uAttr", meta, t)
         L += _flags("uAttr", is_out)
     elif t == "matrix":
         L.append("    %s = mAttr.create(%s, %s, MFnMatrixAttribute::kDouble);"
-                  % (mem, a, a))
-        L += _flags("mAttr", is_out, keyable=False)
+                  % (mem, a, sa))
+        # keyable unless an array, as the interpreted addAttr makes every
+        # input (a compiled matrix input was not until v43)
+        L += _flags("mAttr", is_out, keyable=not meta.get("is_array"))
     elif t == "enum":
         # 3rd arg is the default field index -- follow the recorded
         # default_value (fallback 0 keeps a no-default enum byte-identical).
         L.append("    %s = eAttr.create(%s, %s, %s);"
-                  % (mem, a, a, _num_default(meta, int, "0")))
+                  % (mem, a, sa, _num_default(meta, int, "0")))
         # Field labels may be Maya/OCIO-supplied (e.g. mPyFile's colorSpace) and
         # the user can't sanitize them: C-string escape the label and honor an
         # explicit `Label=index`. A plain label is emitted byte-identically.
@@ -346,14 +434,14 @@ def _create_lines(m):
         sdv = string_default(m)
         if sdv is None:
             L.append("    %s = tAttr.create(%s, %s, MFnData::kString);"
-                     % (mem, a, a))
+                     % (mem, a, sa))
         else:
             L += [
                 "    {",
                 "        MFnStringData _sd;",
                 '        MObject _sdo = _sd.create("%s");' % _cpp_str(sdv),
                 "        %s = tAttr.create(%s, %s, MFnData::kString, _sdo);"
-                % (mem, a, a),
+                % (mem, a, sa),
                 "    }",
             ]
         # A single string / hex INPUT is keyable, as the interpreted addAttr
@@ -362,21 +450,22 @@ def _create_lines(m):
         L += _flags("tAttr", is_out, keyable=not meta.get("is_array"))
     elif t == "nurbsCurve":
         # Typed kNurbsCurve attr, read into an MFnNurbsCurve local by _read_line
-        # so the ported compute can query it in pure C++. Not keyable
-        # (geometry connection, not an animatable value).
-        L.append("    %s = tAttr.create(%s, %s, MFnData::kNurbsCurve);" % (mem, a, a))
-        L += _flags("tAttr", is_out, keyable=False)
+        # so the ported compute can query it in pure C++. A geometry input is
+        # keyable unless an array, as the interpreted addAttr makes every input:
+        # until v43 the compiled mesh / curve / surface inputs were not.
+        L.append("    %s = tAttr.create(%s, %s, MFnData::kNurbsCurve);" % (mem, a, sa))
+        L += _flags("tAttr", is_out, keyable=not meta.get("is_array"))
     elif t == "mesh":
         # Typed kMesh attr, read into an MFnMesh local by _read_line so the
         # ported compute can query points/topology (procrustes reads self.mesh
-        # -> MFnMesh::getPoints). Not keyable.
-        L.append("    %s = tAttr.create(%s, %s, MFnData::kMesh);" % (mem, a, a))
-        L += _flags("tAttr", is_out, keyable=False)
+        # -> MFnMesh::getPoints). Keyable unless an array, as nurbsCurve.
+        L.append("    %s = tAttr.create(%s, %s, MFnData::kMesh);" % (mem, a, sa))
+        L += _flags("tAttr", is_out, keyable=not meta.get("is_array"))
     elif t == "nurbsSurface":
         # Typed kNurbsSurface attr, read into an MFnNurbsSurface local by
-        # _read_line. Not keyable (geometry connection).
-        L.append("    %s = tAttr.create(%s, %s, MFnData::kNurbsSurface);" % (mem, a, a))
-        L += _flags("tAttr", is_out, keyable=False)
+        # _read_line. Keyable unless an array, as nurbsCurve.
+        L.append("    %s = tAttr.create(%s, %s, MFnData::kNurbsSurface);" % (mem, a, sa))
+        L += _flags("tAttr", is_out, keyable=not meta.get("is_array"))
     if meta.get("is_array"):
         fn = _fn_for(t)
         L.append("    %s.setArray(true);" % fn)
@@ -387,6 +476,13 @@ def _create_lines(m):
             # the channel box where arrays don't belong (compound and dt-typed
             # arrays already don't display). Still editable in the AE.
             L.append("    %s.setKeyable(false);" % fn)
+            # An `addAttr -multi` uses the array data builder, so the
+            # interpreted array input does; the compiled one did not until v43.
+            # A plug the interpreted TYPE registers itself says otherwise in its
+            # meta (mPyBlendShape's targetGeometry is a plain setArray).
+            if meta.get("array_data_builder", True):
+                L.append("    %s.setUsesArrayDataBuilder(true);" % fn)
+        L += _array_child_lines(mem, t, is_out)
     return L
 
 def _fn_for(t):

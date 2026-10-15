@@ -29,6 +29,58 @@ from .emit_compute import _self_attr_refs, _self_attr_writes
 from .errors import UnsupportedSpec
 
 
+# The preset INPUT plugs the interpreted mPyConstraint registers itself
+# (_api2/mpy_constraint.py initializer), as (long, short, kind): a point is
+# MFnNumericAttribute::createPoint, the weight a float at 1.0, each storable,
+# keyable and connectable, and each dirties every user output there
+# (setDependentsDirty's extra_trigger_names). A compiled constraint is a plain
+# MPxNode, so until v43 it had none of the 17 plugs (5 parents, 12 children)
+# and Convert to C++ dropped every connection to them.
+_CONSTRAINT_PRESETS = (
+    ("targetTranslate", "ttr", "point"),
+    ("targetRotate", "tro", "point"),
+    ("targetWeight", "twg", "weight"),
+    ("restTranslate", "rtr", "point"),
+    ("restRotate", "rro", "point"),
+)
+
+
+def _constraint_base_attr_members(spec, members):
+    """The mPyConstraint preset plugs as base members (mirrors
+    ``file_texture_cpp.base_attr_members``): ``create_lines`` replaces the
+    generic create, and ``affects`` wires each to every spec output through
+    ``file_texture_cpp.base_affects_lines``. A plug the spec already carries
+    is skipped. Empty for every other mpy_type."""
+    if (spec or {}).get("mpy_type") != "mPyConstraint":
+        return []
+    have = set()
+    for kind in ("inputs", "outputs"):
+        have |= set((spec.get(kind) or {}).keys())
+    taken = {m["member"] for m in (members or [])}
+    out   = []
+    for plug, short, kind in _CONSTRAINT_PRESETS:
+        if plug in have:
+            continue
+        base = "a" + plug[:1].upper() + plug[1:]
+        mem, i = base, 1
+        while mem in taken:
+            i += 1
+            mem = "%s%d" % (base, i)
+        taken.add(mem)
+        if kind == "point":
+            create = '    %s = nAttr.createPoint("%s", "%s");' % (mem, plug, short)
+            meta   = {"type": "double3"}
+        else:
+            create = ('    %s = nAttr.create("%s", "%s", MFnNumericData::kFloat, 1.0);'
+                      % (mem, plug, short))
+            meta = {"type": "float", "default_value": 1.0}
+        lines = [create, "    nAttr.setStorable(true); nAttr.setKeyable(true); "
+                          "nAttr.setConnectable(true);"]
+        out.append({"plug": plug, "member": mem, "kind": "inputs", "meta": meta,
+                    "create_lines": lines, "affects": True})
+    return out
+
+
 _MFNPLUGIN_INIT_DEFAULT = (
     '    MFnPlugin plugin(obj, "mpynode-native", "1.0", "Any");')
 
@@ -229,6 +281,8 @@ def _generate_cpp_impl(spec: dict, for_port: bool = False) -> str:
     # base does not provide (mPyBlendShape's targetGeometry). Appended, so the
     # member names it picks cannot collide with the texture ones.
     base_extra += _deformer_base_attr_members(spec, members + base_extra)
+    # ...and for mPyConstraint, whose preset inputs a plain MPxNode lacks.
+    base_extra += _constraint_base_attr_members(spec, members + base_extra)
 
     # Deterministic numpy->C++ lowering (generic compute() path only; deformers
     # harvest geometry via deform()). Decide up front so the nd:: runtime header
@@ -610,7 +664,7 @@ def _generate_cpp_impl(spec: dict, for_port: bool = False) -> str:
     lines.append("    MFnCompoundAttribute cAttr;")
     lines.append("")
     for m in members + base_extra:
-        lines += _create_lines(m)
+        lines += m.get("create_lines") or _create_lines(m)
         # SSOT flags the generic emitter does not carry (hidden / non-keyable /
         # connectable). AFTER _create_lines so a declared flag wins.
         lines += m.get("extra_flags", [])

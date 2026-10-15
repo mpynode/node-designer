@@ -8,7 +8,7 @@ from .spec_model import (PORT_BEGIN, PORT_END, lowered_guard,
 from .emit_attr import (_ident, _create_lines, _limit_lines, _read_plug_decl,
                         _read_plug_assign, _read_plug_array_decl,
                         _read_plug_array_assign, findplug_family_extras,
-                        findplug_local_hint)
+                        findplug_local_hint, color_create_lines)
 from . import emit_geo_io
 from .nd_runtime import _nd_runtime_cpp
 from mpynode.native.compiler.kernels import nd_io_cpp
@@ -1407,6 +1407,9 @@ def _generate_locator_cpp(spec, for_port=False):
             # the generic compiled mesh input is (emit_attr._flags); until v42
             # the locator's inMesh alone was not.
             L.append("    tAttr.setStorable(true); tAttr.setWritable(true);")
+            # keyable, as the interpreted addAttr makes every non-array input
+            # (the locator's inMesh was not until v43)
+            L.append("    tAttr.setKeyable(true);")
             L.append("    tAttr.setAffectsAppearance(true);")
             L.append("    addAttribute(%s);" % mem)
         for s in strings:
@@ -1422,14 +1425,15 @@ def _generate_locator_cpp(spec, for_port=False):
         for c in colors:
             mem = "a_" + c["member"]
             dv  = c["default_value"]
-            L.append('    %s = nAttr.createColor("%s", "%s");'
-                     % (mem, c["plug"], c["plug"]))
             try:
-                r, g, b = float(dv[0]), float(dv[1]), float(dv[2])
-                L.append("    nAttr.setDefault(%sf, %sf, %sf);"
-                         % (repr(r), repr(g), repr(b)))
+                rgb = (float(dv[0]), float(dv[1]), float(dv[2]))
             except Exception:
-                pass
+                rgb = None
+            # R/G/B children named as the interpreted addAttr names them
+            # (<plug>R, short <plug>R): createColor's short names were
+            # <plug>r until v43. The default seeds each child.
+            kids = [c["plug"] + ax for ax in "RGB"]
+            L += color_create_lines(mem, c["plug"], c["plug"], kids, kids, rgb)
             L.append("    nAttr.setStorable(true); nAttr.setKeyable(true);")
             L.append("    nAttr.setAffectsAppearance(true);")
             L.append("    addAttribute(%s);" % mem)

@@ -1930,7 +1930,7 @@ _SSOT_FLAG_CALL = {
 _EXTRA_BASE_ATTRS = [
     # Hidden kTime input the wrapper auto-connects from time1.outTime so
     # ``self.time`` is always available to an image-sequence expression.
-    {"plug": "_timeIn", "type": "time",
+    {"plug": "_timeIn", "type": "time", "short": "_tin",
      "flags": {"storable": True, "keyable": False, "readable": False,
                "writable": True, "hidden": True}},
 ]
@@ -2030,11 +2030,24 @@ def _ssot_meta(entry):
     meta = {"type": t}
     if t == "enum":
         meta["enum_names"] = _iface.enum_labels(entry)
-    elif t == "float2":
-        meta["children"] = [c["long"] for c in entry["children"]]
+    meta.update(_ssot_names(entry))
     meta.update(_ssot_default(entry))
     meta.update(_ssot_limits(entry))
     return meta
+
+
+def _ssot_names(entry):
+    """The plug's SSOT short name, and its children's long and short names,
+    as MPyFile.initializer() creates them (``fn``; uvCoord's ``u`` / ``v``;
+    borderColor's ``borderColorR`` / ``bcr``). Until v43 a compiled mPyFile
+    reused every long name as the short name, so ``connectAttr
+    place2d.outUV <node>.uv`` failed on all four compiled types."""
+    names = {"short": entry["short"]}
+    kids  = entry.get("children") or []
+    if entry["attr_type"] in ("float2", "color") and kids:
+        names["children"]     = [c["long"] for c in kids]
+        names["child_shorts"] = [c["short"] for c in kids]
+    return names
 
 
 def with_preset_ssot(spec: dict, members) -> list:
@@ -2066,7 +2079,7 @@ def with_preset_ssot(spec: dict, members) -> list:
         if (e is not None and meta.get("type") == e["attr_type"]
                 and m["kind"] == ("inputs" if e["direction"] == "input"
                                   else "outputs")):
-            add  = {}
+            add  = _ssot_names(e)
             dflt = _ssot_default(e)
             # a string's "" always applies: no recorded text default is honoured
             if "string_default" in dflt or meta.get("default_value") is None:
@@ -2120,7 +2133,8 @@ def base_attr_members(spec: dict, members) -> list:
         _add(e["long"], "inputs" if is_in else "outputs", _ssot_meta(e),
              e.get("flags"), bool(is_in and e.get("affects_output")), e)
     for e in _EXTRA_BASE_ATTRS:
-        _add(e["plug"], "inputs", {"type": e["type"]}, e["flags"], False)
+        _add(e["plug"], "inputs", {"type": e["type"], "short": e["short"]},
+             e["flags"], False)
     # created at "" through MFnStringData, as MPyFile.initializer() does
     for nm in _managed_shader_outputs():
         _add(nm, "inputs", {"type": "string", "string_default": ""},

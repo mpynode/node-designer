@@ -42,8 +42,9 @@ _IKSOLVER_INCLUDES = [
     "maya/MFloatVectorArray.h",
     # local_matrices writeback drives offsetParentMatrix (matrix plug I/O).
     "maya/MFnMatrixData.h",
-    # persisted per-joint bind offsets (a matrixArray attr on the solver node).
-    "maya/MFnMatrixArrayData.h", "maya/MMatrixArray.h",
+    # persisted per-joint bind offsets: JSON text in a string attr, as the
+    # interpreted node keeps them (strtod / atoi / signbit for the codec).
+    "maya/MFnStringData.h", "cstdlib",
 ]
 
 # Fixed C++ helper: gate-mix two row-vector (Maya) world matrices -- rotation /
@@ -109,27 +110,126 @@ static void nd_ik_set_offset(const MDagPath& path, const MMatrix& off) {
     }
 }
 
-// Persist the captured per-joint bind offsets to the solver's OWN storable
-// matrixArray plug. This mirrors the interpreted path's cmds.setAttr: the write
-// is routed through the command engine, NOT MPlug::setMObject. A direct plug
-// write on the solver's own node from inside doSolve re-dirties the node, so
-// Maya re-evaluates the handle -> doSolve recurses (the fresh value is not yet
-// readable via findPlug mid-eval, so the guard never trips) -> unbounded
-// recursion -> crash. The command-engine write is synchronous, batch-safe (no
-// idle loop needed), and serializes with the scene like any setAttr.
-static void nd_ik_persist_bind(const MString& plugName, const MMatrixArray& arr) {
+// The per-joint bind offsets live in the solver's OWN _jointBindOffsets plug as
+// the interpreted node keeps them (_api1/helpers.py _save_bind_offsets): JSON
+// text, one row of 16 numbers per walked joint (each 4x4 flattened row-major),
+// written as json.dumps writes it. Same plug type and same text on both sides,
+// so Convert to C++ (and back) carries the captured neutral across. Until v43
+// the compiled plug was a matrixArray, and a convert lost the offsets.
+
+// Append one double as Python's repr() spells it (json.dumps uses repr): the
+// shortest digits that round-trip, positional for 1e-4 <= |v| < 1e16 (with a
+// ".0" on an integral value), else d.ddde+XX.
+static void nd_ik_append_pyfloat(std::string& s, double v) {
+    if (v != v) { s += "NaN"; return; }
+    if (v > 1.7976931348623157e308) { s += "Infinity"; return; }
+    if (v < -1.7976931348623157e308) { s += "-Infinity"; return; }
+    if (std::signbit(v)) { s += "-"; v = -v; }
+    if (v == 0.0) { s += "0.0"; return; }
+    char b[40];
+    for (int p = 0; p < 17; ++p) {
+        snprintf(b, sizeof(b), "%.*e", p, v);
+        if (strtod(b, nullptr) == v) break;
+    }
+    std::string digits; int ex = 0;
+    for (const char* c = b; *c; ++c) {
+        if (*c >= '0' && *c <= '9') digits += *c;
+        else if (*c == 'e') { ex = atoi(c + 1); break; }
+    }
+    while (digits.size() > 1 && digits.back() == '0') digits.pop_back();
+    if (ex >= -4 && ex < 16) {
+        if (ex < 0) {
+            s += "0."; s.append((size_t)(-ex - 1), '0'); s += digits;
+        } else if ((int)digits.size() <= ex + 1) {
+            s += digits; s.append((size_t)(ex + 1 - (int)digits.size()), '0');
+            s += ".0";
+        } else {
+            s += digits.substr(0, ex + 1); s += "."; s += digits.substr(ex + 1);
+        }
+    } else {
+        s += digits[0];
+        if (digits.size() > 1) { s += "."; s += digits.substr(1); }
+        char eb[16]; snprintf(eb, sizeof(eb), "e%c%02d", ex < 0 ? '-' : '+',
+                              ex < 0 ? -ex : ex);
+        s += eb;
+    }
+}
+
+// Every number in one JSON value (a number, or a list nested to any depth),
+// appended to `out`; `p` is left past the value. False on anything else.
+static bool nd_ik_json_numbers(const char*& p, std::vector<double>& out) {
+    while (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r') ++p;
+    if (*p != '[') {
+        char* e = nullptr; double v = strtod(p, &e);
+        if (e == p) return false;
+        out.push_back(v); p = e; return true;
+    }
+    ++p;
+    while (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r') ++p;
+    if (*p == ']') { ++p; return true; }
+    for (;;) {
+        if (!nd_ik_json_numbers(p, out)) return false;
+        while (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r') ++p;
+        if (*p == ',') { ++p; continue; }
+        if (*p == ']') { ++p; return true; }
+        return false;
+    }
+}
+
+// Parse the stored text into `n` matrices. False when it is unset, not a list
+// of exactly `n` entries of 16 numbers, or unreadable -- the interpreted
+// _load_bind_offsets returns None for the same text, and both then re-capture.
+static bool nd_ik_parse_bind(const MString& text, int n, std::vector<MMatrix>& out) {
+    const char* p = text.asChar();
+    while (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r') ++p;
+    if (*p != '[') return false;
+    ++p;
+    std::vector<std::vector<double>> rows;
+    while (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r') ++p;
+    if (*p == ']') ++p;
+    else for (;;) {
+        rows.emplace_back();
+        if (!nd_ik_json_numbers(p, rows.back())) return false;
+        while (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r') ++p;
+        if (*p == ',') { ++p; continue; }
+        if (*p == ']') { ++p; break; }
+        return false;
+    }
+    while (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r') ++p;
+    if (*p != '\0' || (int)rows.size() != n) return false;
+    for (int j = 0; j < n; ++j)
+        if (rows[j].size() != 16) return false;
+    out.assign(n, MMatrix());
+    for (int j = 0; j < n; ++j)
+        for (int i = 0; i < 16; ++i) out[j].matrix[i / 4][i % 4] = rows[j][i];
+    return true;
+}
+
+// Persist the captured offsets. This mirrors the interpreted path's
+// cmds.setAttr: the write is routed through the command engine, NOT
+// MPlug::setString. A direct plug write on the solver's own node from inside
+// doSolve re-dirties the node, so Maya re-evaluates the handle -> doSolve
+// recurses (the fresh value is not yet readable via findPlug mid-eval, so the
+// guard never trips) -> unbounded recursion -> crash. The command-engine write
+// is synchronous, batch-safe (no idle loop needed), and serializes with the
+// scene like any setAttr. The text holds only numbers, brackets, commas and
+// spaces, so it needs no MEL escaping.
+static void nd_ik_persist_bind(const MString& plugName, const std::vector<MMatrix>& mats) {
+    std::string js = "[";
+    for (size_t m = 0; m < mats.size(); ++m) {
+        js += (m ? ", [" : "[");
+        for (int i = 0; i < 16; ++i) {
+            if (i) js += ", ";
+            nd_ik_append_pyfloat(js, mats[m].matrix[i / 4][i % 4]);
+        }
+        js += "]";
+    }
+    js += "]";
     MString cmd = "setAttr \"";
     cmd += plugName;
-    cmd += "\" -type \"matrixArray\" ";
-    char cb[24]; snprintf(cb, sizeof(cb), "%u", arr.length());
-    cmd += cb;
-    for (unsigned m = 0; m < arr.length(); ++m)
-        for (int r = 0; r < 4; ++r)
-            for (int c = 0; c < 4; ++c) {
-                char vb[40]; snprintf(vb, sizeof(vb), " %.17g", arr[m](r, c));
-                cmd += vb;
-            }
-    cmd += ";";
+    cmd += "\" -type \"string\" \"";
+    cmd += js.c_str();
+    cmd += "\";";
     MGlobal::executeCommand(cmd);
 }
 """
@@ -399,12 +499,19 @@ def _generate_iksolver_cpp(spec: dict, for_port: bool = False) -> str:
         for gm in generics:
             L += _create_lines(gm)
             L.append("    addAttribute(%s);" % gm["member"])
-    # persisted per-joint bind offsets (matrixArray, hidden + storable so it
-    # saves with the scene). Captured on the first solve; cleared by a re-bind.
-    L.append("    { MFnTypedAttribute bAttr; MFnMatrixArrayData bDef;")
-    L.append("      MObject bDefObj = bDef.create();")
-    L.append('      a_jointBindOffsets = bAttr.create("_jointBindOffsets", "_jointBindOffsets", MFnData::kMatrixArray, bDefObj);')
-    L.append("      bAttr.setStorable(true); bAttr.setHidden(true); bAttr.setWritable(true);")
+    # persisted per-joint bind offsets: the interpreted _jointBindOffsets
+    # (_api1/helpers.make_internal_string_attr) -- a hidden, storable,
+    # internal string starting "" that holds the JSON rows, not connectable,
+    # not readable, not keyable. Internal with no setInternalValue override,
+    # as interpreted: the value still lives in the datablock. Captured on the
+    # first solve; cleared by a re-bind. A matrixArray until v43, so Convert
+    # to C++ dropped the captured neutral.
+    L.append("    { MFnTypedAttribute bAttr; MFnStringData bDef;")
+    L.append('      MObject bDefObj = bDef.create("");')
+    L.append('      a_jointBindOffsets = bAttr.create("_jointBindOffsets", "_jointBindOffsets", MFnData::kString, bDefObj);')
+    L.append("      bAttr.setConnectable(false); bAttr.setReadable(false); bAttr.setWritable(true);")
+    L.append("      bAttr.setStorable(true); bAttr.setInternal(true); bAttr.setKeyable(false);"
+             " bAttr.setHidden(true);")
     L.append("      addAttribute(a_jointBindOffsets); }")
     L.append("    return MS::kSuccess;")
     L.append("}")
@@ -470,32 +577,22 @@ def _generate_iksolver_cpp(spec: dict, for_port: bool = False) -> str:
     L.append("    // Per-joint BIND offsets: captured (root->tip) on the FIRST solve")
     L.append("    // from the joints' current offsetParentMatrix (before any writeback,")
     L.append("    // so they are the neutral), then locked + persisted in the storable")
-    L.append("    // matrixArray plug (survives save/reload). A re-bind clears the plug")
-    L.append("    // so the next solve re-captures the current pose as the new neutral.")
+    L.append("    // _jointBindOffsets text (JSON, as the interpreted node writes it;")
+    L.append("    // survives save/reload). A re-bind clears the plug so the next")
+    L.append("    // solve re-captures the current pose as the new neutral.")
     L.append("    std::vector<MMatrix> bindOffsets(numJoints);")
     L.append("    { MFnDependencyNode _bfn(thisMObject());")
     L.append("      MStatus _bs; MPlug _bp = _bfn.findPlug(a_jointBindOffsets, false, &_bs);")
     L.append("      bool _have = false;")
-    L.append("      if (_bs == MS::kSuccess && !_bp.isNull()) {")
-    L.append("          MObject _bo = _bp.asMObject();")
-    L.append("          if (!_bo.isNull()) { MStatus _ms2; MFnMatrixArrayData _mad(_bo, &_ms2);")
-    L.append("              if (_ms2 == MS::kSuccess) {")
-    L.append("                  // Copy each MMatrix (value type) out of the array WHILE the")
-    L.append("                  // data MObject is alive: MFnMatrixArrayData::array() returns a")
-    L.append("                  // reference into the buffer owned by _bo, so keeping an")
-    L.append("                  // MMatrixArray alias would dangle (length reads 0 -> an")
-    L.append("                  // out-of-bounds index -> crash) once _bo/_mad leave scope.")
-    L.append("                  const MMatrixArray& _arr = _mad.array();")
-    L.append("                  if (_arr.length() == (unsigned)numJoints) {")
-    L.append("                      for (int j = 0; j < numJoints; ++j) bindOffsets[j] = _arr[j];")
-    L.append("                      _have = true; } } } }")
+    L.append("      if (_bs == MS::kSuccess && !_bp.isNull())")
+    L.append("          _have = nd_ik_parse_bind(_bp.asString(), numJoints, bindOffsets);")
     L.append("      if (!_have) {")
-    L.append("          MMatrixArray _cap; _cap.setLength(numJoints);")
-    L.append("          for (int j = 0; j < numJoints; ++j) {")
-    L.append("              bindOffsets[j] = nd_ik_get_offset(jointPaths[j]); _cap[j] = bindOffsets[j]; }")
+    L.append("          bindOffsets.assign(numJoints, MMatrix());")
+    L.append("          for (int j = 0; j < numJoints; ++j)")
+    L.append("              bindOffsets[j] = nd_ik_get_offset(jointPaths[j]);")
     L.append("          // persist via the command engine (see nd_ik_persist_bind): a direct")
     L.append("          // self-plug write here would recurse the solve to a crash.")
-    L.append("          if (!_bp.isNull()) nd_ik_persist_bind(_bp.name(), _cap); } }")
+    L.append("          if (!_bp.isNull()) nd_ik_persist_bind(_bp.name(), bindOffsets); } }")
     L.append("")
     L.append("    // REST world per joint: thread locals AND bind offsets from the root")
     L.append("    // parent (row-vector Maya: world = local * offset * parentWorld).")

@@ -49,8 +49,10 @@ def _cpp(family, template):
 
 
 def _block(cpp, plug):
-    """``plug``'s create line and the lines after it, to the next create."""
-    m = re.search(r'^ +\w+ = tAttr\.create\("%s", "%s"[^\n]*\n' % (plug, plug),
+    """``plug``'s create line and the lines after it, to the next create.
+    The short name is whatever the plug is created with: its long name for a
+    user attr, the SSOT's for an mPyFile plug (fileName -> fn, v43)."""
+    m = re.search(r'^ +\w+ = tAttr\.create\("%s", "[^"]+"[^\n]*\n' % plug,
                   cpp, re.M)
     if m is None:
         return None
@@ -74,14 +76,15 @@ class TestFrameworkStringsStartEmpty(unittest.TestCase):
         for tpl in ("File Simple", "Game Of Life Texture"):
             cpp = _cpp("MPyFile", tpl)
             self.assertIn("#include <maya/MFnStringData.h>", cpp)
-            for plug, mem in (("fileName", "aFileName"), ("osl", "aOsl")):
+            for plug, mem, short in (("fileName", "aFileName", "fn"),
+                                     ("osl", "aOsl", "osl")):
                 with self.subTest(template=tpl, plug=plug):
                     head = cpp.split('%s = tAttr.create("%s"' % (mem, plug), 1)[0]
                     self.assertEqual(
                         [l.strip() for l in head.rstrip().split("\n")[-2:]],
                         _EMPTY_DEFAULT)
                     self.assertIn('%s = tAttr.create("%s", "%s", '
-                                  'MFnData::kString, _sdo);' % (mem, plug, plug),
+                                  'MFnData::kString, _sdo);' % (mem, plug, short),
                                   cpp)
 
     def test_a_node_without_one_is_byte_identical(self):
@@ -148,8 +151,10 @@ class TestStringInputsAreKeyable(unittest.TestCase):
     def test_a_string_array_stays_unkeyable(self):
         block = _block(_cpp("MPyFile", "File Composite"), "layers")
         self.assertNotIn("tAttr.setKeyable(true);", block)
-        self.assertEqual(block[-2:], ["tAttr.setArray(true);",
-                                      "tAttr.setKeyable(false);"])
+        # ...and uses the array data builder, as an addAttr -multi does (v43)
+        self.assertEqual(block[-3:], ["tAttr.setArray(true);",
+                                      "tAttr.setKeyable(false);",
+                                      "tAttr.setUsesArrayDataBuilder(true);"])
 
 
 class TestInterpretedReference(unittest.TestCase):

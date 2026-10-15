@@ -46,10 +46,18 @@ def _defaulted():
             if e["attr_type"] in ("float", "long", "bool", "enum")]
 
 
+def _short(plug):
+    """The SSOT short name ``plug`` is created with (fn, pfr, ...), as
+    MPyFile.initializer() creates it (port_cache v43)."""
+    from mpynode._common.interface import file_texture_interface as iface
+
+    return {e["long"]: e["short"] for e in iface.FILE_TEXTURE_ATTRS}[plug]
+
+
 def _created_default(cpp, plug):
     """The default argument of ``plug``'s create call, as text."""
     m = re.search(r'[ne]Attr\.create\("%s", "%s", (?:MFnNumericData::k\w+, )?'
-                  r'([^)]+)\);' % (plug, plug), cpp)
+                  r'([^)]+)\);' % (plug, _short(plug)), cpp)
     return m.group(1) if m else None
 
 

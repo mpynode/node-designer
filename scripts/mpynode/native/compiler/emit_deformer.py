@@ -27,13 +27,17 @@ _DEFORMER_BASES = ("MPxDeformerNode", "MPxSkinCluster")
 # writing 167 meshes into every scene that touches one is not the point.
 _BASE_FRAMEWORK_ATTRS = {
     "mPyBlendShape": (
-        ("targetGeometry", {"type": "mesh", "is_array": True},
+        # Short names are the interpreted ones ("tgeo" / "ltgt"), and the
+        # target multi is a plain setArray there, with no array data builder.
+        ("targetGeometry", {"type": "mesh", "is_array": True, "short": "tgeo",
+                            "array_data_builder": False},
          ["    tAttr.setStorable(false);"]),
         # The live gate, matching the interpreted declaration in
         # _api1/mpy_blend_shape.py: ON by default, because following a connected
         # target is the behaviour the plug exists to expose rather than to
         # withhold. Switching it off pins the deform to the baked tables.
-        ("liveTargets", {"type": "bool", "default_value": True},
+        ("liveTargets", {"type": "bool", "default_value": True,
+                         "short": "ltgt"},
          ["    nAttr.setKeyable(false);"]),
     ),
 }
