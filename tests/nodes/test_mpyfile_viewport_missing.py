@@ -282,6 +282,71 @@ class TestViewportShowsWhatComputeShows(unittest.TestCase):
                         self._check(node, surface, "%s %s embedded %s" % (
                             kind, os.path.basename(path) or '""', name))
 
+    # -- texture keys cover the colour space and the pre-filter ---------------
+    # read_texture() applies colorSpace and the pre-filter, so they change the
+    # pixels. File Simple and File Scanline left them out of the texture name,
+    # so changing either under the same fileName kept the OLD texture: after
+    # colorSpace went to ACEScct, File Simple's viewport still showed the sRGB
+    # (0.0545, 0.5089, 0.0296) where compute gave (0.0, 1.0, 0.0) (parity pass
+    # 2026-10-15, commit 6).
+
+    def _run_look(self, steps):
+        """Each step changes one colour-space or pre-filter input under the
+        same fileName. The surface must show what compute shows, and a step
+        that changes the image must bind a different image."""
+        for kind in _KINDS:
+            with self.subTest(node=kind):
+                mc.file(new=True, force=True)
+                node    = _create(kind)
+                surface = _Surface(node)
+                mc.setAttr(node + ".fileName", _GRID, type="string")
+                previous = self._check(node, surface, "%s grid" % kind)
+                for attr, value in steps:
+                    mc.setAttr("%s.%s" % (node, attr), value)
+                    step = "%s %s=%s" % (kind, attr, value)
+                    tex  = self._check(node, surface, step)
+                    if attr == "preFilterRadius" and not mc.getAttr(
+                            node + ".preFilter"):
+                        continue  # the radius does nothing with it off
+                    self.assertFalse(
+                        np.array_equal(tex.pixels, previous.pixels),
+                        "%s: the surface still shows the previous image "
+                        "[texture %r]" % (step, tex.name))
+                    previous = tex
+
+    def test_colour_space_changes_reach_the_viewport(self):
+        self._run_look((
+            ("colorSpace", 20),  # ACEScct
+            ("colorSpace", 19),  # Raw
+            ("colorSpace", 0),  # sRGB again
+        ))
+
+    def test_prefilter_changes_reach_the_viewport(self):
+        self._run_look((
+            ("preFilterRadius", 3.0),
+            ("preFilter", True),
+            ("preFilterKernel", 0),  # box
+            ("preFilterRadius", 6.0),
+            ("preFilter", False),
+        ))
+
+    def test_two_nodes_differing_only_in_colour_space(self):
+        """One texture manager, as in VP2: two nodes on the same file that
+        differ only in colorSpace each show their own image."""
+        for kind in _KINDS:
+            with self.subTest(node=kind):
+                mc.file(new=True, force=True)
+                manager = _TextureManager()
+                nodes   = []
+                for cs in (0, 20):
+                    node = _create(kind)
+                    mc.setAttr(node + ".fileName", _GRID, type="string")
+                    mc.setAttr(node + ".colorSpace", cs)
+                    nodes.append((node, _Surface(node, manager)))
+                for node, surface in nodes:
+                    self._check(node, surface, "%s %s cs=%d" % (
+                        kind, node, mc.getAttr(node + ".colorSpace")))
+
     # -- BAREBONES_MODE (the inline diagnostic path) -------------------------
 
     def test_barebones_mode_too(self):

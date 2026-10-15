@@ -1380,10 +1380,20 @@ if self.texture_manager is not None:
         desc.fEnvMapType = omr.MTextureDescription.kEnvNone
 
         # Encode the look-affecting inputs into the texture name so distinct
-        # file/brightness/contrast settings get distinct texture-manager
-        # cache entries (and so editing those inputs refreshes the surface).
-        tex_name = "mpyfile_template::%s|b=%.4f|c=%.4f" % (
-            key, bright, contrast)
+        # settings get distinct texture-manager cache entries (and so editing
+        # those inputs refreshes the surface). That is every input the pixels
+        # depend on: the image key, the colour space and pre-filter that
+        # read_texture() applies (quantized exactly as the loader and the
+        # default node quantize them), then brightness and contrast. Leaving
+        # colorSpace or preFilter out kept the OLD texture after either
+        # changed under the same fileName.
+        radius_q = (round(float(self.preFilterRadius), 1)
+                    if self.preFilterRadius else 0.0)
+        look = "cs=%d|pf=%d:%d:%.1f" % (
+            int(self.colorSpace), int(bool(self.preFilter)),
+            int(self.preFilterKernel), radius_q)
+        tex_name = "mpyfile_template::%s|%s|b=%.4f|c=%.4f" % (
+            key, look, bright, contrast)
         texture = self.texture_manager.acquireTexture(
             tex_name, desc, processed.tobytes(), False,   # gen_mips=False
         )
@@ -5318,8 +5328,17 @@ if self.texture_manager is not None:
         desc.fTextureType = omr.MTextureDescription.kImage2D
         desc.fEnvMapType = omr.MTextureDescription.kEnvNone
         # Keyed on frame (+ look inputs) so the viewport re-uploads and scrolls.
-        tex_name = "mpyfile_scanline::%s|t=%.4f|b=%.3f|s=%.4f|i=%.3f" % (
-            key, t, bands, speed, intensity)
+        # The look inputs include the colour space and pre-filter that
+        # read_texture() applies (quantized as the loader quantizes them):
+        # without them the OLD texture stayed after either changed under the
+        # same fileName.
+        radius_q = (round(float(self.preFilterRadius), 1)
+                    if self.preFilterRadius else 0.0)
+        look = "cs=%d|pf=%d:%d:%.1f" % (
+            int(self.colorSpace), int(bool(self.preFilter)),
+            int(self.preFilterKernel), radius_q)
+        tex_name = "mpyfile_scanline::%s|%s|t=%.4f|b=%.3f|s=%.4f|i=%.3f" % (
+            key, look, t, bands, speed, intensity)
         texture = self.texture_manager.acquireTexture(
             tex_name, desc, processed.tobytes(), False)
         if texture is not None:
