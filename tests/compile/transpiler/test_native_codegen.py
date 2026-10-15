@@ -1519,8 +1519,10 @@ class TestNonHoverLocatorUnchanged(unittest.TestCase):
         self.assertIn("inp.wallClock = 0.0;", self.cpp)
 
     def test_no_qt_or_hover_service(self):
+        # The idle poll's redraw, not setGeometryDrawDirty itself: since v44
+        # every locator with an input calls it from setDependentsDirty.
         for tok in ("QtGui/QCursor", "MTimerMessage", "steady_clock",
-                    "setGeometryDrawDirty"):
+                    "setGeometryDrawDirty(h->second.object())"):
             self.assertNotIn(tok, self.cpp,
                              "%s must not appear for a non-hover locator" % tok)
 

@@ -479,7 +479,13 @@ class MPyLocator(omui.MPxLocatorNode):
         if plug_name in self._DRAW_DIRTY_TRIGGERS:
             return True
         try:
-            root = plug.partialName(useLongNames=True).split(".")[0].split("[")[0]
+            # The FULL attribute path: without it a compound child names only
+            # itself ("tintR", not "tint.tintR"), so a colour child set alone
+            # -- setAttr or a connection into it -- never reached its root
+            # and the gizmo did not redraw.
+            root = (plug.partialName(useLongNames=True,
+                                     useFullAttributePath=True)
+                    .split(".")[0].split("[")[0])
         except Exception:
             root = plug_name
         if root in self._DRAW_DIRTY_TRIGGERS:

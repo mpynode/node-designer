@@ -74,8 +74,7 @@ _LOCATOR_INCLUDES_GENERIC_COMMON = ["maya/MMatrix.h"]
 _LOCATOR_INCLUDES_GENERIC_PLUGIN = [
     "maya/MFnUnitAttribute.h", "maya/MFnCompoundAttribute.h",
     "maya/MFnMatrixAttribute.h", "maya/MFnMatrixData.h", "maya/MAngle.h",
-    # base function set: the only one that covers every generic attr type
-    # uniformly for setAffectsAppearance (see the generics loop in initialize())
+    # base function set (emit_attr._create_lines' per-child flag blocks)
     "maya/MFnAttribute.h",
 ]
 
@@ -1295,6 +1294,18 @@ def _generate_locator_cpp(spec, for_port=False):
 
     L.append("#ifndef MPYNODE_PROBE  // ===== plugin scaffold (excluded from probe) =====")
     L.append("")
+    # The plugs whose change redraws the gizmo, as the interpreted
+    # MPyLocator._is_draw_dirty_trigger decides: every user input. The
+    # compiled regionFaces stands in for the interpreted _storedVarsData (a
+    # region command stores its faces there) and is matched by name, since
+    # initialize() creates it without a static handle.
+    redraw_triggers = ["attr == a_%s" % x["member"]
+                       for x in scalars + meshes + strings + colors]
+    redraw_triggers += ["attr == %s" % gm["member"] for gm in generics]
+    if needs_region:
+        redraw_triggers.append(
+            'attr == MFnDependencyNode(thisMObject()).attribute("%s")'
+            % _REGION_ATTR)
     # ---- the locator node ----------------------------------------------------
     # The extent of each node's last drawing, for boundingBox() below.
     # Measured in prepareForDraw, where the buffers exist -- the node itself
@@ -1325,6 +1336,11 @@ def _generate_locator_cpp(spec, for_port=False):
     L.append("        if (it == g_bbox.end()) return MPxLocatorNode::boundingBox();")
     L.append("        return it->second;")
     L.append("    }")
+    if redraw_triggers:
+        L.append("    MStatus setDependentsDirty(const MPlug& plug, MPlugArray& affected) override;")
+        L.append("    // nodeState != Normal, cached as dirty_affects.api2_dirty_gate caches")
+        L.append("    // it: -1 unread, 0 live, 1 suspended.")
+        L.append("    short m_suspended = -1;")
     for s in scalars:
         L.append("    static MObject a_%s;" % s["member"])
     for m in meshes:
@@ -1379,25 +1395,21 @@ def _generate_locator_cpp(spec, for_port=False):
                          % (mem, plug, plug, _loc_input_default("float", s["default_value"], [])))
                 L.append("    nAttr.setStorable(true); nAttr.setKeyable(true);")
                 L += _limit_lines("nAttr", s, t)
-                L.append("    nAttr.setAffectsAppearance(true);")
             elif t == "long":
                 L.append('    %s = nAttr.create("%s", "%s", MFnNumericData::kInt, %s);'
                          % (mem, plug, plug, _loc_input_default("long", s["default_value"], [])))
                 L.append("    nAttr.setStorable(true); nAttr.setKeyable(true);")
                 L += _limit_lines("nAttr", s, t)
-                L.append("    nAttr.setAffectsAppearance(true);")
             elif t == "bool":
                 L.append('    %s = nAttr.create("%s", "%s", MFnNumericData::kBoolean, %s);'
                          % (mem, plug, plug, _loc_input_default("bool", s["default_value"], [])))
                 L.append("    nAttr.setStorable(true); nAttr.setKeyable(true);")
-                L.append("    nAttr.setAffectsAppearance(true);")
             elif t == "enum":
                 L.append('    %s = eAttr.create("%s", "%s", %s);'
                          % (mem, plug, plug, _loc_input_default("enum", s["default_value"], s["enum_names"])))
                 for i, fld in enumerate(s["enum_names"]):
                     L.append('    eAttr.addField("%s", %d);' % (fld, i))
                 L.append("    eAttr.setStorable(true); eAttr.setKeyable(true);")
-                L.append("    eAttr.setAffectsAppearance(true);")
             L.append("    addAttribute(%s);" % mem)
         for m in meshes:
             mem = "a_" + m["member"]
@@ -1410,7 +1422,6 @@ def _generate_locator_cpp(spec, for_port=False):
             # keyable, as the interpreted addAttr makes every non-array input
             # (the locator's inMesh was not until v43)
             L.append("    tAttr.setKeyable(true);")
-            L.append("    tAttr.setAffectsAppearance(true);")
             L.append("    addAttribute(%s);" % mem)
         for s in strings:
             # keyable, as the interpreted addAttr makes every non-array input
@@ -1420,7 +1431,7 @@ def _generate_locator_cpp(spec, for_port=False):
             L.append('    %s = tAttr.create("%s", "%s", MFnData::kString);'
                      % (mem, s["plug"], s["plug"]))
             L.append("    tAttr.setStorable(true); tAttr.setWritable(true);")
-            L.append("    tAttr.setKeyable(true); tAttr.setAffectsAppearance(true);")
+            L.append("    tAttr.setKeyable(true);")
             L.append("    addAttribute(%s);" % mem)
         for c in colors:
             mem = "a_" + c["member"]
@@ -1435,18 +1446,12 @@ def _generate_locator_cpp(spec, for_port=False):
             kids = [c["plug"] + ax for ax in "RGB"]
             L += color_create_lines(mem, c["plug"], c["plug"], kids, kids, rgb)
             L.append("    nAttr.setStorable(true); nAttr.setKeyable(true);")
-            L.append("    nAttr.setAffectsAppearance(true);")
             L.append("    addAttribute(%s);" % mem)
         # Generic inputs: create via the shared emit_attr._create_lines (correct
         # compound-child / unit / matrix construction for every type) so a
         # connected/AE value is readable by prepareForDraw's findPlug read.
         for gm in generics:
             L += _create_lines(gm)
-            # Via the BASE function set: _create_lines picks its own (numeric /
-            # unit / compound / matrix / typed) per type, so there is no single
-            # `xAttr` in scope to call this on.
-            L.append("    MFnAttribute(%s).setAffectsAppearance(true);"
-                     % gm["member"])
             L.append("    addAttribute(%s);" % gm["member"])
         if needs_region:
             # Settable face-region attr the companion commands write + the draw
@@ -1454,14 +1459,42 @@ def _generate_locator_cpp(spec, for_port=False):
             L.append("    { MObject _rgn = tAttr.create(\"%s\", \"rgnf\", MFnData::kIntArray);"
                      % _REGION_ATTR)
             L.append("      tAttr.setStorable(true); tAttr.setWritable(true);")
-            # setAffectsAppearance: writing regionFaces marks the VP2 draw dirty
-            # -- an explicit DG signal complementing the draw override's
-            # isAlwaysDirty=true. Valid on MFnTypedAttribute for a kIntArray.
-            L.append("      tAttr.setKeyable(false); tAttr.setAffectsAppearance(true);")
+            L.append("      tAttr.setKeyable(false);")
             L.append("      addAttribute(_rgn); }")
     L.append("    return MS::kSuccess;")
     L.append("}")
     L.append("")
+    if redraw_triggers:
+        # The interpreted mPyLocator's redraw, line for line
+        # (_api2/mpy_locator.py setDependentsDirty). Until v44 every input
+        # was created setAffectsAppearance(true) instead -- a flag the
+        # interpreted node's attrs do not carry.
+        L.append("// Redraw when an input changes, as the interpreted mPyLocator does")
+        L.append("// (_api2/mpy_locator.py setDependentsDirty). A locator has no DG output,")
+        L.append("// so Maya re-runs prepareForDraw only when its render item is marked")
+        L.append("// dirty. A suspended node (nodeState Has No Effect / Blocking) forwards")
+        L.append("// nothing; the fact is cached and dropped when nodeState itself changes,")
+        L.append("// as dirty_affects.api2_dirty_gate does. Otherwise a dirtied user input")
+        L.append("// (a compound child or an array element counts as its root) marks the")
+        L.append("// geometry draw dirty. setGeometryDrawDirty flags only the VP2 render")
+        L.append("// item, never the DG, so it is safe inside dirty propagation.")
+        L.append("MStatus %s::setDependentsDirty(const MPlug& plug, MPlugArray& affected) {" % cls)
+        L.append("    if (plug.attribute() == MPxNode::state) {")
+        L.append("        m_suspended = -1;")
+        L.append("        return MS::kSuccess;")
+        L.append("    }")
+        L.append("    if (m_suspended < 0)")
+        L.append("        m_suspended = MPlug(thisMObject(), MPxNode::state).asShort() != 0 ? 1 : 0;")
+        L.append("    if (m_suspended) return MS::kSuccess;")
+        L.append("    MPlug root(plug);")
+        L.append("    while (root.isChild() || root.isElement())")
+        L.append("        root = root.isElement() ? root.array() : root.parent();")
+        L.append("    const MObject attr = root.attribute();")
+        L.append("    if (%s)" % (" ||\n        ").join(redraw_triggers))
+        L.append("        MHWRender::MRenderer::setGeometryDrawDirty(thisMObject());")
+        L.append("    return MS::kSuccess;")
+        L.append("}")
+        L.append("")
     if has_commands:
         # Companion MPxCommand classes (region helpers + the recognised cmds).
         # Placed in the scaffold head AFTER <cls>::id is defined (the classes

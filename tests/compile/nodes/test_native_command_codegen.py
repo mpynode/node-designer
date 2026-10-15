@@ -261,11 +261,13 @@ class TestLocatorCommandWiring(unittest.TestCase):
         self.assertIn("regionFaces", cpp)
         self.assertIn("MFnData::kIntArray", cpp)
 
-    def test_region_attr_affects_appearance(self):
-        # setMeshRegion writes regionFaces; the attr must mark the draw dirty
-        # so VP2 refreshes, complementing isAlwaysDirty.
+    def test_region_attr_marks_the_draw_dirty(self):
+        # setMeshRegion writes regionFaces; a change must mark the draw dirty
+        # so VP2 refreshes, as the interpreted node's _storedVarsData does.
         cpp = self._gen([_cmd("setMeshRegion")])
-        self.assertIn("setAffectsAppearance(true)", cpp)
+        self.assertIn('attr == MFnDependencyNode(thisMObject())'
+                      '.attribute("regionFaces")', cpp)
+        self.assertNotIn("setAffectsAppearance", cpp)
 
     def test_probe_reads_faceids(self):
         # the probe must accept a face region, else the probe-vs-Python parity
@@ -491,13 +493,11 @@ def _loc_spec_every_input():
 
 class TestEveryInputMarksTheDrawDirty(unittest.TestCase):
     """A locator has NO DG output, so Maya only re-runs prepareForDraw when the
-    render item is marked dirty. A runtime-added input attr is not something
-    Maya recognises as draw-affecting, so without setAffectsAppearance changing
-    it leaves the gizmo frozen until an unrelated refresh -- which is exactly
-    what the interpreted node's setDependentsDirty override exists to prevent
-    (_api2/mpy_locator.py). The string and colour branches already did this;
-    the numeric, enum and mesh branches did not, so `offset` looked inert while
-    `selectOffset` appeared to work (selecting forces a repaint by itself)."""
+    render item is marked dirty. The interpreted node marks it from its
+    setDependentsDirty override (_api2/mpy_locator.py): a dirtied user input
+    calls MRenderer.setGeometryDrawDirty. The compiled node does the same
+    since v44 -- every input is a redraw trigger there, and no input carries
+    setAffectsAppearance, a flag the interpreted attrs do not have."""
 
     def _gen(self):
         from mpynode.native import compiler as codegen
@@ -509,43 +509,39 @@ class TestEveryInputMarksTheDrawDirty(unittest.TestCase):
         end   = cpp.index("addAttribute(", start)
         return cpp[start:end]
 
-    def test_float_input_affects_appearance(self):
-        self.assertIn("setAffectsAppearance(true)",
-                      self._create_block(self._gen(), "offset"))
+    def _member(self, cpp, attr):
+        """The static MObject this attr's create() assigns."""
+        import re
+        return re.search(r"(\w+) = \w+\.create\(\"%s\"" % attr, cpp).group(1)
 
-    def test_int_input_affects_appearance(self):
-        self.assertIn("setAffectsAppearance(true)",
-                      self._create_block(self._gen(), "steps"))
+    def _redraw(self, cpp):
+        """The setDependentsDirty definition, up to its redraw call."""
+        start = cpp.index("::setDependentsDirty(const MPlug& plug, "
+                          "MPlugArray& affected) {")
+        end = cpp.index("setGeometryDrawDirty(thisMObject());", start)
+        return cpp[start:end]
 
-    def test_bool_input_affects_appearance(self):
-        self.assertIn("setAffectsAppearance(true)",
-                      self._create_block(self._gen(), "enabled"))
-
-    def test_enum_input_affects_appearance(self):
-        self.assertIn("setAffectsAppearance(true)",
-                      self._create_block(self._gen(), "mode"))
-
-    def test_mesh_input_affects_appearance(self):
-        self.assertIn("setAffectsAppearance(true)",
-                      self._create_block(self._gen(), "inMesh"))
-
-    def test_string_and_color_inputs_still_affect_appearance(self):
-        # these two already worked -- guard against the fix regressing them
-        cpp = self._gen()
-        self.assertIn("setAffectsAppearance(true)",
-                      self._create_block(cpp, "regionTag"))
-        self.assertIn("setAffectsAppearance(true)",
-                      self._create_block(cpp, "tint"))
-
-    def test_every_declared_input_is_covered(self):
-        # the point is the CLASS of bug, not the five attrs above: no input may
-        # be left without a draw-dirty signal.
-        cpp = self._gen()
+    def test_every_declared_input_is_a_redraw_trigger(self):
+        # the point is the CLASS of bug: no input may be left without a
+        # draw-dirty signal.
+        cpp    = self._gen()
+        redraw = self._redraw(cpp)
         for attr in ("inMesh", "offset", "steps", "enabled", "mode",
                      "regionTag", "tint"):
-            self.assertIn("setAffectsAppearance(true)",
-                          self._create_block(cpp, attr),
+            self.assertIn("attr == %s" % self._member(cpp, attr), redraw,
                           "%s does not mark the draw dirty" % attr)
+
+    def test_no_input_carries_affects_appearance(self):
+        cpp = self._gen()
+        self.assertNotIn("setAffectsAppearance", cpp)
+        for attr in ("inMesh", "offset", "steps", "enabled", "mode",
+                     "regionTag", "tint"):
+            self.assertNotIn("AffectsAppearance",
+                             self._create_block(cpp, attr))
+
+    def test_override_is_declared_on_the_node(self):
+        self.assertIn("    MStatus setDependentsDirty(const MPlug& plug, "
+                      "MPlugArray& affected) override;", self._gen())
 
 
 class TestComponentTagsReachTheDraw(unittest.TestCase):

@@ -143,10 +143,8 @@ class TestStringInputsAreKeyable(unittest.TestCase):
         for tpl in ("Animated Text", "Circular Text"):
             with self.subTest(template=tpl):
                 block = _block(_cpp("MPyLocator", tpl), "displayText")
-                self.assertIn("tAttr.setKeyable(true); "
-                              "tAttr.setAffectsAppearance(true);", block)
-                self.assertNotIn("tAttr.setKeyable(false); "
-                                 "tAttr.setAffectsAppearance(true);", block)
+                self.assertIn("tAttr.setKeyable(true);", block)
+                self.assertNotIn("tAttr.setKeyable(false);", block)
 
     def test_a_string_array_stays_unkeyable(self):
         block = _block(_cpp("MPyFile", "File Composite"), "layers")

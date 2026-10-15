@@ -577,7 +577,19 @@ from typing import Optional
 # Skin, Animated Selection / Text and Widget Showcase, and their All Templates
 # copies. The shipped artifacts took the hunks by splice, none of them inside a
 # PORT region or an optimizer rewrite -- 2026-10-15.
-PORTER_RECIPE_VERSION = "43"
+# v44: a compiled locator redraws as the interpreted mPyLocator does. It
+# overrides setDependentsDirty: a suspended node (nodeState Has No Effect /
+# Blocking, cached until nodeState changes, as api2_dirty_gate caches it)
+# forwards nothing; otherwise a dirtied user input -- a compound child or an
+# array element counting as its root, regionFaces standing in for the
+# interpreted _storedVarsData -- calls MRenderer::setGeometryDrawDirty. The v19
+# setAffectsAppearance(true) on every input is gone: the interpreted node's
+# attrs do not carry it. A SKELETON change invisible to the key. Moves 10 of 76
+# stage-1 files: the 5 locators (Animated Selection, Animated Text, Circular
+# Text, Mesh Regions, Widget Showcase) and their All Templates copies; the
+# shipped artifacts took the hunks by splice, none of them inside a PORT region
+# or an optimizer rewrite -- 2026-10-15.
+PORTER_RECIPE_VERSION = "44"
 
 # Spec keys excluded from the cache key -- provably irrelevant to the generated
 # C++. A deny-list, NOT an allow-list (design C1).

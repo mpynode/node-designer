@@ -137,10 +137,10 @@ class TestFindPlugFamilies(unittest.TestCase):
                          base=_LOCATOR_BASE, mpy_type="mPyLocator"))
         self.assertIn("    nAttr.setStorable(true); nAttr.setKeyable(true);\n"
                       "    nAttr.setMin(0.0);\n    nAttr.setMax(1.0);\n"
-                      "    nAttr.setAffectsAppearance(true);", cpp)
+                      "    addAttribute(a_in_alpha);", cpp)
         self.assertIn("    nAttr.setStorable(true); nAttr.setKeyable(true);\n"
                       "    nAttr.setMin(2);\n"
-                      "    nAttr.setAffectsAppearance(true);", cpp)
+                      "    addAttribute(a_in_count);", cpp)
         self.assertIn("    uAttr.setMin(1.0);", cpp)
         flag = cpp.split('a_in_flag = nAttr.create("flag"', 1)[1].split("addAttribute", 1)[0]
         self.assertNotIn("setMin", flag)
