@@ -33,7 +33,7 @@ def setUpModule():
 
 
 _TEMPLATES = ("File Simple", "File Composite", "File Scanline",
-              "Game Of Life Texture", "File Brightness Contrast")
+              "Game Of Life Texture")
 
 # MFnAttribute's defaults: what an attr reports when nothing sets the flag.
 _MAYA_DEFAULTS = {"keyable": False, "storable": True, "hidden": False,

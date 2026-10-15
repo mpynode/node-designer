@@ -28,7 +28,7 @@ def setUpModule():
 
 
 _TEMPLATES = ("File Simple", "File Composite", "File Scanline",
-              "Game Of Life Texture", "File Brightness Contrast")
+              "Game Of Life Texture")
 
 
 def _spec(template="File Simple"):

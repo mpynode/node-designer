@@ -29,6 +29,9 @@ import unittest
 
 from tests import _paths
 from tests._setup import ensure_plugins_loaded, standalone_init
+from tests.compile.nodes.test_native_embedded_image import (_RAW_COMPUTE,
+                                                            _RAW_INIT,
+                                                            _file_spec)
 
 
 def setUpModule():
@@ -41,6 +44,14 @@ def _spec(template):
                        "manifest.json")
     with open(man, encoding="utf-8") as fh:
         return json.load(fh)["nodes"][0]["spec"]
+
+
+def _raw_spec():
+    """A hand-rolled pixel tap (a raw-image port). No shipped template is one
+    since File Brightness Contrast was retired, so build one the way
+    test_native_embedded_image does: File Simple's inputs, a raw Init and
+    Compute."""
+    return _file_spec("File Simple", init=_RAW_INIT, compute=_RAW_COMPUTE)
 
 
 def _tail(cpp):
@@ -112,11 +123,11 @@ class TestOutSizeProbe(unittest.TestCase):
                 self.assertEqual(cpp.count("    NdTexCache _texCache;"), 1)
 
     def test_a_raw_image_port_reads_its_own_decode_back(self):
-        # Brightness Contrast is a hand-ported pixel tap: its raw cache already
-        # holds fileName, so outSize reads that decode back -- no texture cache.
+        # A hand-rolled pixel tap: its raw cache already holds fileName, so
+        # outSize reads that decode back -- no texture cache.
         from mpynode.native import compiler as codegen
 
-        spec = _spec("File Brightness Contrast")
+        spec = _raw_spec()
         self.assertIn("fileName", spec["inputs"])
         cpp = codegen.generate_cpp(spec, for_port=True)
         self.assertIn("nd_img_load_raw(_imgRawCache, _imgRawMutex, in_aFileName, "
@@ -202,7 +213,7 @@ class TestEmbeddedFallback(unittest.TestCase):
         self.assertNotIn("nd_img_embedded_path()", _body(cpp))
 
     def test_the_raw_tail_retries_through_the_second_slot(self):
-        cpp = self._cpp(_with_bytes(_spec("File Brightness Contrast")))
+        cpp = self._cpp(_with_bytes(_raw_spec()))
         self.assertIn("NdImgRawCache _imgEmbedCache;", cpp)
         self.assertIn(_RAW_RETRY, _tail(cpp))
 
@@ -227,8 +238,7 @@ class TestEmbeddedFallback(unittest.TestCase):
         self.assertIn(_TEX_RETRY, _tail(cpp))
 
     def test_no_bytes_no_retry(self):
-        for tpl in ("File Simple", "File Composite",
-                    "File Brightness Contrast", "Game Of Life Texture"):
+        for tpl in ("File Simple", "File Composite", "Game Of Life Texture"):
             with self.subTest(template=tpl):
                 cpp = self._cpp(_spec(tpl))
                 self.assertNotIn("nd_img_embedded_path", cpp)

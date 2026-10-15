@@ -71,7 +71,7 @@ and no AI — which is what makes the freshness gates (section 5) possible.
 |---|---|
 | `scripts/` | The only Python root. Put it on `PYTHONPATH`; everything lives in `scripts/mpynode/`. |
 | `plug-ins/` | The two Maya entry points: `mpynode_api1.py` (OpenMaya 1.0 node types) and `mpynode_api2.py` (OpenMaya 2.0). Put this dir on `MAYA_PLUG_IN_PATH`. |
-| `templates/` | 37 shipped gallery templates, `templates/<Type>/<Name>/{template.mpn,description.md}` across all 12 node types — **and the compiled C++ for each one, in that same folder**: `<Type>/<Name>/build/` holds the generated sources, the full optimizer stage lineage and a `build.sh`/`build.bat` beside them, so everything for one template is in one place. 39 per-template build trees (40 node `.cpp` files — `MPyLocator/Mesh Regions` ships two types). Sources + stage lineage are committed; binaries are not. |
+| `templates/` | 37 shipped gallery templates, `templates/<Type>/<Name>/{template.mpn,description.md}` across all 12 node types — **and the compiled C++ for each one, in that same folder**: `<Type>/<Name>/build/` holds the generated sources, the full optimizer stage lineage and a `build.sh`/`build.bat` beside them, so everything for one template is in one place. 38 per-template build trees, one node `.cpp` each: the 37 templates and the family-level `MPyDeformer/build/` (`sineRippleDefault`). Sources + stage lineage are committed; binaries are not. |
 | `templates/All Templates Plugin/` | The multi-node build tree that links every template into one plug-in, plus the turnkey demo around it: `build/` (37 namespaced fragments + the generated `plugin_main.cpp`, and the full stage lineage), 39 `.ma` demo scenes, `reports/`, and one `<year>/` folder per Maya version you build for — where `mPyMega` lands (37/37 node types + 32 bundled commands). No binary is committed; its `build.sh` / `build.bat` compiles `build/` and writes the result to `2026/mPyMega.*` (the folder named after the Maya version). The filename must stay `mPyMega.*` — Maya takes the plug-in name from it and the scenes `requires "mPyMega"`. |
 | `tests/` | The unit suite, outside the package so shipping `scripts/mpynode/` does not ship the tests. 278 test modules grouped by area: `nodes/`, `ui/`, `authoring/`, `attributes/`, `framework/`, and `compile/` (split into `transpiler/`, `pipeline/`, `nodes/`, `optimizer/`, `freshness/`, `native/`). Shared bootstrap `_setup.py`, repo anchors `_paths.py`, fixtures in `data/` and `test_assets/`. `compile/native/` is the odd one out: eleven standalone transpiler oracle harnesses, named `*_test.py` / `*_parity.py` so discovery does **not** collect them — `compile/transpiler/test_native_transpiler_harnesses.py` subprocesses each one and asserts its printed marker. |
 | `docs/` | All reference material: `index.md` (the API guide), `CHEATSHEET.md` (the authoring quick reference), this file, `PORTING.md` (Windows/Linux finish-and-verify handoff), and `node_types/` (one `.md` per type + `_input_type_contract.md`). Only `index.md` and `node_types/` are reachable from the in-app Help menu — `docs_locator` enumerates exactly those. |
@@ -315,7 +315,7 @@ directory reads as a story (`00_baseline.cpp` -> `01_hoist_invariant.cpp` -> …
 `00_baseline.cpp` is also the rollback source, and a round that filed no source
 still gets an `NN_no_change.txt` so the numbering has no holes.
 
-On the shipped tree: 39 stage-1 files, **only 18 stage-2 files** — the assist
+On the shipped tree: 38 stage-1 files, **only 17 stage-2 files** — the assist
 stage is per node, not a fixed step — and 96 stage-3 round files.
 
 **The compiled `_timeIn` is created, not read.** Since v43 the compiled mesh,
@@ -382,8 +382,8 @@ mayapy subprocess under `PYTHONHASHSEED=0` (codegen order is only reproducible
 under a pinned seed) and is a **ratchet** over
 `tests/data/stage1_stale_baseline.json`: an artifact *not* in the baseline must
 match fresh codegen, and one *in* the baseline must **still be stale**, so the
-list can only shrink. It is currently **empty** — so all 76 stage-1 artifacts in
-the gated tree (`TREES = ("templates",)` — the 39 per-template trees
+list can only shrink. It is currently **empty** — so all 75 stage-1 artifacts in
+the gated tree (`TREES = ("templates",)` — the 38 per-template trees
 plus `All Templates Plugin`'s 37) must byte-match. Do not quote a count out of the baseline's `_comment`: its "86
 artifacts checked" is a dated 43-template-era measurement. The gate self-protects
 against vacuity: floors on artifact/manifest counts, an assertion the hash seed
@@ -410,8 +410,8 @@ different `// build: <hash>` values, the shipped artifact came from a stale
 cache. The fix is in the assertion message — bump `PORTER_RECIPE_VERSION` and
 rebuild, explicitly *not* edit the test. It also names the orphaned trees (source
 template gone, so nothing can regenerate them and gating them would be a
-permanent red); today that list is exactly one,
-`assertEqual(rels, ["MPyFile/File Brightness Contrast"])`. Its reach is narrower
+permanent red); today that list is empty, `assertEqual(rels, [])`, since the
+last orphan, `MPyFile/File Brightness Contrast`, was retired. Its reach is narrower
 than it looks: `_nodes()` walks `templates/<fam>/<tpl>/build`, so the
 family-level `templates/MPyDeformer/build/` tree (holding
 `sineRippleDefault`) is never visited — **unpinned**, not pinned. The mega tree
@@ -539,7 +539,7 @@ scan that passed every gate — compiled, deterministic, exact match — and was
 (`MMeshIntersector::getClosestPoint` vs `MFnMesh::getClosestPoint` with its
 NULL-defaulting accelerator: 714 s vs 0.125 s on a 40k-face sweep).
 
-Headline number, countable straight off the tree: of the 39 checked-in build
+Headline number, countable straight off the tree: of the 38 checked-in build
 trees, **21 have no `2_assisted.cpp` at all** — every compute lowered
 deterministically and no LLM was involved. Most nodes compile with no AI
 provider installed at all. When one *is* needed,

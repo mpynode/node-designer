@@ -25,7 +25,7 @@ A scriptable file texture: an `MPxNode` paired with an `MPxShadingNodeOverride` 
 ## Creating one
 
 * `MPyFile.create(name, seed_defaults=True, as_texture=True)`; `set_file_name(path)` and `get_file_name()` mirror the stock node; `reseed_defaults()` restores the shipped sources after an experiment.
-* Five shipped templates: File Simple, File Scanline, File Brightness Contrast, File Composite and a Game Of Life Texture.
+* Four shipped templates: File Simple, File Scanline, File Composite and a Game Of Life Texture.
 
 ## Common to all node types
 

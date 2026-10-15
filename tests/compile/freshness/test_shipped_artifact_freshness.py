@@ -193,11 +193,16 @@ class TestShippedArtifactsAreFresh(unittest.TestCase):
 
     def test_orphaned_build_trees_are_named(self):
         """A build tree with no source template cannot be rebuilt, so the gates
-        above skip it. Keep that list SHORT and visible rather than silent."""
+        above skip it. Keep that list SHORT and visible rather than silent.
+
+        Empty since 2026-10-15: the last one, MPyFile/File Brightness
+        Contrast (out of the All Templates Plugin since 2026-07-19, its job
+        done by File Simple), was retired, so a new orphan fails here by
+        name."""
         _, orphaned = _nodes()
         rels = sorted({e["rel"] for e in orphaned})
         self.assertEqual(
-            rels, ["MPyFile/File Brightness Contrast"],
+            rels, [],
             "the set of compiled build trees with no source template under "
             "templates/ changed. These are skipped by the freshness gates "
             "above because nothing can regenerate them. If a template was "

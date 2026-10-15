@@ -132,8 +132,8 @@ class TestGenerator(unittest.TestCase):
         for build, fam, ty, spec in rows:
             with self.subTest(type=ty):
                 self.assertTrue(_gated(codegen.generate_cpp(spec, for_port=True)))
-        # 21 templates and the orphaned brightContrastTex
-        self.assertEqual(len(rows), 22)
+        # 21 templates
+        self.assertEqual(len(rows), 21)
 
     def test_the_other_families_get_no_compute_gate(self):
         from mpynode.native import compiler as codegen
@@ -170,8 +170,9 @@ class TestShippedLineage(unittest.TestCase):
                     with self.subTest(file=_rel(path)):
                         self.assertTrue(_gated(text))
                     seen += 1
-        # 43 moved stage-1 files and the 128 lineage files spliced from them
-        self.assertEqual(seen, 171)
+        # 42 moved stage-1 files (21 templates and their 21 All Templates
+        # copies) and the 128 lineage files spliced from them
+        self.assertEqual(seen, 170)
         self.assertEqual(missing, _PENDING)
 
     def test_the_pending_files_are_not_gated(self):

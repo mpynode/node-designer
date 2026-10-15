@@ -278,9 +278,8 @@ without paying any Python overhead.
 
 ## Demo
 
-Create one from **New from Template → textures →
-`file_brightness_contrast`** (or the `textures` file-simple /
-file-scanline templates): a sphere + plane shaded by an `mPyFile` loaded
+Create one from **New from Template → MPyFile → File Simple** (or
+File Scanline): a sphere + plane shaded by an `mPyFile` loaded
 with the shipped `test_grid.png`. In Maya 2026 you'll see the 8x8 test
 grid wrapped around the sphere; open the Node Designer to read or edit
 the Init / Compute / Viewport sources.
