@@ -46,6 +46,13 @@ _PORT_END    = "// ===== END PORTED COMPUTE ====="
 _LOWERED_BEGIN = "// --- deterministic numpy->C++ lowered compute (no port) ---"
 _LOWERED_END   = "// --- finalize ---"
 
+# The third shape: the full-parity glue (emit_compute, the default mPyFile and
+# any node file_texture_cpp.use_full_parity_glue accepts) writes this banner and
+# no guard. Unrecognized until v45, so the default mPyFile shipped with no
+# override and Viewport 2.0 shaded it a flat colour, while the interpreted
+# default node shows its texture.
+_GLUE_BEGIN = "// --- verified file-texture pipeline (cached load + sample) ---"
+
 # One compute input declaration, e.g.
 #   const int in_aBands = data.inputValue(aBands).asInt();
 #   const double in_aFrame = data.inputValue(aFrame).asTime().value();
@@ -1376,6 +1383,25 @@ def _lowered_region(cpp: str):
     return full[t + len("try {"):c], full
 
 
+def _glue_region(cpp: str):
+    """``(body, full)`` for a full-parity glue compute, else ``None``.
+
+    ``full`` spans the banner through the last statement before ``finalize``;
+    ``body`` is the same text without the banner. The glue has no guard (its
+    kernels do not throw), so compute() calls nd_texel bare."""
+    i0 = cpp.find(_GLUE_BEGIN)
+    if i0 < 0:
+        return None
+    i1 = cpp.find(_LOWERED_END, i0)
+    if i1 < 0:
+        return None
+    full = cpp[i0:i1].rstrip()
+    body = full[len(_GLUE_BEGIN):]
+    if not body.strip():
+        return None
+    return body, full
+
+
 def _port_region(cpp: str):
     """``(body, full)`` for an AI-ported compute, else ``None``.
 
@@ -1423,9 +1449,9 @@ def skip_reason(cpp: str) -> str:
     """
     if "MPxShadingNodeOverride" in cpp:
         return "override already present"
-    reg = _port_region(cpp) or _lowered_region(cpp)
+    reg = _port_region(cpp) or _lowered_region(cpp) or _glue_region(cpp)
     if reg is None:
-        return "no ported or lowered compute region"
+        return "no ported, lowered or glue compute region"
     if _is_stateful(reg[0]) and _parse_state(cpp) is None:
         # Stateful bodies ARE supported (see _is_stateful), but only through the
         # hoisted-struct path -- which needs the struct to be findable. An
@@ -1492,14 +1518,15 @@ def inject_vp2_override(cpp: str, spec: Optional[dict] = None) -> str:
     # would otherwise thread a pair nd_texel never uses (2026-10-03).
     _texcache_re = r"nd_tex_\w+\([^;]*\b_texCache\s*,\s*_texMutex\b"
 
-    # (1) extract the compute body to become nd_texel. Two shapes: an AI PORT
-    # region, or a deterministically-lowered guard. `full` is captured HERE,
-    # before (2)/(3) insert text, so (4) can replace it by value.
+    # (1) extract the compute body to become nd_texel. Three shapes: an AI PORT
+    # region, a deterministically-lowered guard, or the full-parity glue.
+    # `full` is captured HERE, before (2)/(3) insert text, so (4) can replace
+    # it by value.
     _lowered = _lowered_region(cpp)
     if _lowered is not None:
         port_body, port_full = _lowered
     else:
-        port_body, port_full = _port_region(cpp)
+        port_body, port_full = _port_region(cpp) or _glue_region(cpp)
     has_texcache = bool(re.search(_texcache_re, port_body))
 
     # Persistent per-instance state, threaded into nd_texel so the viewport bake

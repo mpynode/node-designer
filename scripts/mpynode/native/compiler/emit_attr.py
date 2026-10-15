@@ -1014,6 +1014,34 @@ def compute_open_lines(cls, outs):
         ]
     return ["MStatus %s::compute(const MPlug& plug, MDataBlock& data) {" % cls]
 
+def suspended_gate_lines():
+    """``compute()``'s nodeState gate, placed right after the plug guard.
+
+    The interpreted MPxNode families (MPyNode, MPyConstraint, MPyFile, MPyMesh,
+    MPyNurbsCurve, MPyNurbsSurface) return at once from compute while
+    nodeState is not Normal (dirty_affects.api2_suspended_in_block, read off
+    the data block): Has No Effect, Blocking and the Waiting states alike. The
+    outputs are not written, so they keep their last value -- the default
+    before any evaluation. Inputs are not read either.
+
+    What a later pull does depends on the plug (measured 2026-10-15, compute
+    counted with dgtimer). A plain or compound output stays dirty: every pull
+    while suspended reaches compute again, and the first pull after nodeState
+    returns to Normal computes it. An array ELEMENT pulled while suspended is
+    left clean instead, and returning to Normal does not dirty it again: it
+    recomputes only when an input is set, and never while its input comes
+    through a connection, since that input, unread, stays dirty and stops the
+    propagation (De Boor Spline's samples[2], read with getAttr). The
+    interpreted twin keeps that element stale too. Until v45 no compiled
+    compute read nodeState at all."""
+    return [
+        "    // Suspended (nodeState not Normal): not evaluated, as the interpreted",
+        "    // compute returns (dirty_affects.api2_suspended_in_block). The outputs",
+        "    // are not written: they keep their last value.",
+        "    if (data.inputValue(MPxNode::state).asShort() != 0)",
+        "        return MS::kSuccess;",
+    ]
+
 def _setter_hint(m):
     """Human/AI hint: which setter call writes this output handle."""
     mem, t = m["member"], m["meta"]["type"]

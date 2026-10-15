@@ -200,6 +200,15 @@ static void nd_tex_linearize(const unsigned char* rgba, unsigned W, unsigned H,
 // ---- prefilter kernels (int(round()) -> nearbyintf = round-half-to-even) ----
 static inline int nd_tex_iround(float x) { return (int)nearbyintf(x); }
 
+// preFilterRadius quantised as the interpreted load_linear_pixels does it:
+// round(float(radius), 1), in double. The plug is a float, so radius * 10.0 is
+// exact in double and nearbyint rounds the exact tenth -- half to even only on
+// a true tie. The float form, nearbyintf(radius * 10.0f) / 10.0f, rounded the
+// product to an exact 0.5 first, so 0.05 went to 0 where Python takes 0.1.
+static inline double nd_tex_radius_q(float radius) {
+    return (radius != 0.0f) ? nearbyint((double)radius * 10.0) / 10.0 : 0.0;
+}
+
 static std::vector<float> nd_tex_gaussian_kernel(float radius) {
     float sigma = radius / 2.0f; if (sigma < 0.5f) sigma = 0.5f;
     int half = (int)ceilf(3.0f * sigma);
@@ -866,7 +875,7 @@ static const float* nd_tex_load_linear_uncached(NdTexCache& cache, std::mutex& m
                                        const MString& path, int cs, bool prefilter,
                                        int kernel, float radius,
                                        unsigned& outW, unsigned& outH) {
-    float rq = (radius != 0.0f) ? (nearbyintf(radius * 10.0f) / 10.0f) : 0.0f;
+    const double rq = nd_tex_radius_q(radius);
     char buf[96];
     snprintf(buf, sizeof(buf), "|cs=%d|pf=%d:%d:%.1f",
              cs, prefilter ? 1 : 0, kernel, rq);
@@ -893,7 +902,7 @@ static const float* nd_tex_load_linear_uncached(NdTexCache& cache, std::mutex& m
         std::vector<unsigned char> px8;
         if (nd_png_decode_file(path.asChar(), W, H, px8) && W > 0 && H > 0) {
             nd_tex_linearize(&px8[0], W, H, cs, lin, /*unpremult=*/false);
-            nd_tex_prefilter(lin, W, H, prefilter, kernel, rq);
+            nd_tex_prefilter(lin, W, H, prefilter, kernel, (float)rq);
             ok = !lin.empty();
         } else {
             W = 0; H = 0;
@@ -905,7 +914,7 @@ static const float* nd_tex_load_linear_uncached(NdTexCache& cache, std::mutex& m
                 if (px && W > 0 && H > 0) {
                     // MImage decodes with associated alpha -- see nd_tex_linearize.
                     nd_tex_linearize(px, W, H, cs, lin, /*unpremult=*/true);
-                    nd_tex_prefilter(lin, W, H, prefilter, kernel, rq);
+                    nd_tex_prefilter(lin, W, H, prefilter, kernel, (float)rq);
                     ok = !lin.empty();
                 }
             }
@@ -942,7 +951,7 @@ static const float* nd_tex_load_linear(NdTexCache& cache, std::mutex& mtx,
         std::string        path;
         unsigned long long cacheId = 0ull;
         int                cs = -1, pf = -1, kernel = -1;
-        float              rq = -1.0f;
+        double             rq = -1.0;
         const float*       lin = nullptr;
         unsigned           w = 0, h = 0;
         bool               valid = false;
@@ -951,7 +960,7 @@ static const float* nd_tex_load_linear(NdTexCache& cache, std::mutex& mtx,
     // a row it is about to ask for again on the next texel.
     static thread_local NdTexMemo memo[8];
     static thread_local unsigned  memoNext = 0u;
-    const float rq = (radius != 0.0f) ? (nearbyintf(radius * 10.0f) / 10.0f) : 0.0f;
+    const double rq = nd_tex_radius_q(radius);
     const char* pc = path.asChar();
     if (!pc) pc = "";
     const int pf = prefilter ? 1 : 0;
@@ -2770,12 +2779,14 @@ def compute_glue_lines(ins, outs, tail=None, seq=None, embedded=False):
             % (cs_e, pf_e, pk_e, pr_e),
             "    }",
         ]
+    # The sample point is _su/_sv, not _u/_v: emit_vp2_override lifts this body
+    # into nd_texel, whose own parameters are named _u/_v (2026-10-15).
     L += [
-        "    float _u = in_%s[0], _v = in_%s[1];" % (uv, uv),
+        "    float _su = in_%s[0], _sv = in_%s[1];" % (uv, uv),
         "    float _border[3] = { in_%s[0], in_%s[1], in_%s[2] };" % (bc, bc, bc),
         "    float _miss[4] = { 1.0f, 0.0f, 1.0f, 1.0f };",
         "    float _outc[4];",
-        "    nd_tex_sample(_lin, _linW, _linH, _u, _v, (int)in_%s, (int)in_%s, "
+        "    nd_tex_sample(_lin, _linW, _linH, _su, _sv, (int)in_%s, (int)in_%s, "
         "_border, _miss, _outc);" % (wu, wv),
     ]
     if tail is None:
@@ -2786,13 +2797,14 @@ def compute_glue_lines(ins, outs, tail=None, seq=None, embedded=False):
         return L
 
     # Recognized scanline modulation: scan = c0 + c1 * (c2 + c3 * sin((v*bands -
-    # tIn*speed) * twopi)); outColor *= scan (alpha passes through). _v is already
-    # declared above (the bilinear-sample u/v). std::sin in <cmath> (base include).
+    # tIn*speed) * twopi)); outColor *= scan (alpha passes through). _sv is
+    # already declared above (the bilinear-sample v). std::sin in <cmath> (base
+    # include).
     tin = _member_by_plug(ins, tail["tin"])
     L += [
         "    // scanline modulation (scrolling band; reads %s + uvCoord v)"
         % tail["tin"],
-        "    double _s = %r + %r * std::sin((_v * %r - (double)in_%s * %r) * %r);"
+        "    double _s = %r + %r * std::sin((_sv * %r - (double)in_%s * %r) * %r);"
         % (tail["c2"], tail["c3"], tail["bands"], tin, tail["speed"],
            tail["twopi"]),
         "    double _scan = %r + %r * _s;" % (tail["c0"], tail["c1"]),

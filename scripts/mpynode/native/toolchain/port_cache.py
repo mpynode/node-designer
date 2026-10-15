@@ -589,7 +589,26 @@ from typing import Optional
 # Text, Mesh Regions, Widget Showcase) and their All Templates copies; the
 # shipped artifacts took the hunks by splice, none of them inside a PORT region
 # or an optimizer rewrite -- 2026-10-15.
-PORTER_RECIPE_VERSION = "44"
+# v45: three compiled behaviours follow the interpreted node. (1)
+# preFilterRadius quantises as file_texture_ops.load_linear_pixels does,
+# round(float(radius), 1), in double (nd_tex_radius_q): the float
+# nearbyintf(radius * 10.0f) / 10.0f rounded the product to an exact 0.5 and
+# then half to even, so 0.05 went to 0 where the interpreted node takes 0.1
+# (29 of 801 radii differed on File Simple). (2) compute() on the MPxNode
+# families -- plain, constraint, mPyFile and the mesh / curve / surface
+# generators -- returns at once while nodeState is not Normal, as
+# dirty_affects.api2_suspended_in_block makes the interpreted compute return:
+# the outputs are not written and keep their last value (what a later pull
+# does: emit_attr.suspended_gate_lines). The deformer, skin, IK solver and
+# transform families already matched their twins, measured, and the locator
+# gate landed in v44. (3) The full-parity glue (the default mPyFile)
+# gets the VP2 shading override: emit_vp2_override recognises its region, so
+# Viewport 2.0 shows the texture instead of a flat colour. A SKELETON change
+# invisible to the key. Moves 43 of 76 stage-1 files: every MPxNode-family row
+# in its template and in the All Templates Plugin, plus the orphaned
+# brightContrastTex; the glue itself moves none, no shipped node uses it. The
+# shipped artifacts took the hunks by splice -- 2026-10-15.
+PORTER_RECIPE_VERSION = "45"
 
 # Spec keys excluded from the cache key -- provably irrelevant to the generated
 # C++. A deny-list, NOT an allow-list (design C1).

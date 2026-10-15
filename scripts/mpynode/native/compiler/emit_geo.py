@@ -8,7 +8,8 @@ from .emit_attr import (_array_read_lines, _create_lines, _image_read_hint_lines
                         _image_read_lines, _members, _out_handle_default,
                         _out_setclean, _pick_path_input, _read_line,
                         _setter_hint, compute_open_lines, PACKED_INCLUDES,
-                        DISTANCE_INCLUDE, TIME_IN_MEMBER, time_in_create_lines)
+                        DISTANCE_INCLUDE, TIME_IN_MEMBER, suspended_gate_lines,
+                        time_in_create_lines)
 from .emit_hex import _HEX_CPP
 from .nd_runtime import _nd_runtime_cpp
 from mpynode.native.compiler.kernels import nd_io_cpp, file_texture_cpp
@@ -544,6 +545,7 @@ def _generate_geo_cpp(spec: dict, kind: str, for_port: bool = False) -> str:
     _gate = ["plug != %s" % out_member] + ["plug != %s" % m["member"]
                                             for m in out_members]
     L.append("    if (%s) return MS::kUnknownParameter;" % " && ".join(_gate))
+    L += suspended_gate_lines()
     L.append("")
     L.append("    // --- inputs ---")
     for m in in_members:

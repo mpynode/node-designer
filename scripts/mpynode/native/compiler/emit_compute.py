@@ -13,6 +13,7 @@ from .emit_attr import (
     _UNSET, _array_read_lines, _array_write_lines, _image_read_lines,
     _out_handle_default, _out_setclean, _read_line, _scal_out_finalize,
     _scal_out_handle_lines, _scal_out_hint, _write_lines, compute_open_lines,
+    suspended_gate_lines,
 )
 from . import emit_geo_io
 
@@ -174,6 +175,7 @@ def _compute_lines(cls, ins, outs, spec, for_port, lowered=_UNSET,
                             for o in list(outs) + base_outs)
         L.append("    if (%s)" % guard)
         L.append("        return MS::kUnknownParameter;")
+    L += suspended_gate_lines()
     L.append("")
     L.append("    // --- inputs ---")
     for i in ins:

@@ -52,7 +52,7 @@ int main() {
                   &br, &bg, &bb) != 13) return 2;
         std::vector<unsigned char> raw((size_t)W * H * 4);
         for (size_t i = 0; i < raw.size(); ++i) { int t; scanf("%d", &t); raw[i] = (unsigned char)t; }
-        float rq = (radius != 0.0f) ? (nearbyintf(radius * 10.0f) / 10.0f) : 0.0f;
+        float rq = (float)nd_tex_radius_q(radius);
         std::vector<float> lin;
         nd_tex_linearize(raw.data(), W, H, cs, lin);
         nd_tex_prefilter(lin, W, H, pf != 0, kernel, rq);
@@ -519,9 +519,9 @@ class TestComputeGlueLinesScanlineTail(unittest.TestCase):
         self.assertIn("nd_tex_load_linear(", body)
         self.assertIn("nd_tex_sample(", body)
         # modulation: scan from std::sin over v + tIn, applied to outColor
-        self.assertIn("std::sin(", body)
-        self.assertIn("(double)in_aTIn", body)
-        self.assertIn("_v", body)
+        self.assertIn("std::sin(",        body)
+        self.assertIn("(double)in_aTIn",  body)
+        self.assertIn("std::sin((_sv * ", body)
         self.assertIn("_outc[0] * _scan", body)
         self.assertIn("_outc[1] * _scan", body)
         self.assertIn("_outc[2] * _scan", body)
