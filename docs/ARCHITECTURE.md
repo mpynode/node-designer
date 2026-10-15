@@ -318,6 +318,19 @@ still gets an `NN_no_change.txt` so the numbering has no holes.
 On the shipped tree: 39 stage-1 files, **only 18 stage-2 files** — the assist
 stage is per node, not a fixed step — and 96 stage-3 round files.
 
+**The compiled `_timeIn` is created, not read.** Since v43 the compiled mesh,
+curve, surface and transform types create the hidden `_timeIn` time input
+their interpreted twins register, so Convert to C++ keeps the
+`time1.outTime -> _timeIn` connection. Their compute does not read it: on 7 of
+the 10 shipped types the read would land in compute bodies the optimizer
+rounds rewrote, and the other 3 (Disk Mesh Cache, Game Of Life, JSON Mesh
+Reader), which ship stage-1 code, are left as the 7 are. So in DG mode, where
+Maya re-dirties only a plug that a read has cleaned, re-dirtying on later
+frames may stop after the first. Outputs are unaffected today, since no
+compiled generator uses time through `_timeIn` (the shipped ones that animate
+read a user `time` input, `frame` or `t`); revisit when one does. Details, and
+why mPyFile is outside this, in `native/compiler/TRANSPILER.md`.
+
 ### The port cache
 
 `native/toolchain/port_cache.py`. Key = sha256 of canonical JSON

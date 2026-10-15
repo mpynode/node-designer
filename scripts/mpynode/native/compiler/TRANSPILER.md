@@ -172,6 +172,37 @@ calls `double` / `long` / `doubleAngle` / `doubleLinear` / `float` /
 `double3` / `float2` by their artist names `float64` / `int` / `angle` /
 `distance` / `float32` / `vector` / `uv`.
 
+### `_timeIn`: created, not read
+
+The interpreted mesh, curve, surface and transform types register a hidden
+kTime input, `_timeIn` (`_tin`), which a time-driven node takes from
+`time1.outTime` (opt-in: nothing connects it by default), and their compute
+reads it (into `self.time`; the transform reads it only to clean it). Since
+v43 the compiled twins create the same plug, with the same `attributeAffects`
+onto the output (`emit_attr.time_in_create_lines`, called from `emit_geo` and
+`emit_transform`), so Convert to C++ keeps the connection. Their compute does
+**not** read it. On 7 of the 10 shipped types that create it, the read would
+land in compute bodies the optimizer rounds rewrote; the other 3 (Disk Mesh
+Cache, Game Of Life, JSON Mesh Reader) ship their stage-1 compute, where a read
+could be spliced, and are left as the 7 are.
+
+The cost is DG-only. Maya re-dirties a plug only while it is clean, and only a
+read cleans it, so an unread `_timeIn` stays dirty after the first frame change
+and re-dirtying on later frames may stop there, short of the output. That is
+the failure `_api1/mpy_transform.py` describes for the interpreted transform
+(it "freezes after its first evaluation"), and why that compute reads a
+`_timeIn` it never uses. The interpreted mesh, curve and surface also
+`dgdirty` their output from a `timeChanged` callback; the compiled ones have
+none. **Outputs are unaffected today**: no compiled generator uses time
+through `_timeIn`. The shipped ones that animate (Game Of Life, Disk Mesh
+Cache, JSON Mesh Reader, NURBS Helix, NURBS Ripple) take it through a user
+`time` input (`frame`, `t`), which compute reads like any other input. Revisit
+when one reads `self.time`.
+
+mPyFile is outside this: its `_timeIn` is kept out of `attributeAffects` on
+both sides (a kTime source breaks the VP2 texture binding), and both sides
+refresh per frame from a `timeChanged` callback.
+
 ## Extending the transpiler
 
 To add a new op deterministically (rather than leaving it on the porter path):
