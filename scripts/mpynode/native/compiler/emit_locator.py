@@ -1403,7 +1403,10 @@ def _generate_locator_cpp(spec, for_port=False):
             mem = "a_" + m["member"]
             L.append('    %s = tAttr.create("%s", "%s", MFnData::kMesh);'
                      % (mem, m["plug"], m["plug"]))
-            L.append("    tAttr.setStorable(false); tAttr.setWritable(true);")
+            # Storable, as the interpreted add_input_attr makes every input and
+            # the generic compiled mesh input is (emit_attr._flags); until v42
+            # the locator's inMesh alone was not.
+            L.append("    tAttr.setStorable(true); tAttr.setWritable(true);")
             L.append("    tAttr.setAffectsAppearance(true);")
             L.append("    addAttribute(%s);" % mem)
         for s in strings:

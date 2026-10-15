@@ -1098,6 +1098,12 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
         kwargs["keyable"]  = False
         kwargs["writable"] = False
         kwargs["readable"] = True
+        # Outputs are NOT storable: compute rebuilds them. The static outputs
+        # (mPyMesh outMesh, mPyFile outColor ...) and every compiled output
+        # are setStorable(false) already; a user output was the odd one out.
+        # The compound children below carry the same flag, and the same
+        # cachedInternally. See tests/attributes/test_output_storable.py.
+        kwargs["storable"] = False
         # addAttr defaults cachedInternally to False for a non-writable attr. A
         # non-cached TYPED output (matrix / string / mesh ...) drops its value
         # after every read, so each read re-ran the expression: once per pulled
@@ -1120,13 +1126,15 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
             for axis in ("X", "Y", "Z"):
                 mc.addAttr(
                     self._name,
-                    longName      = name + axis,
-                    shortName     = name + axis,
-                    attributeType = "double",
-                    parent        = name,
-                    keyable       = False,
-                    writable      = False,
-                    readable      = True,
+                    longName         = name + axis,
+                    shortName        = name + axis,
+                    attributeType    = "double",
+                    parent           = name,
+                    keyable          = False,
+                    writable         = False,
+                    readable         = True,
+                    storable         = False,
+                    cachedInternally = True,
                 )
         # euler is double3 with doubleAngle children, position double3 with
         # doubleLinear children.
@@ -1134,13 +1142,15 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
             for axis in ("X", "Y", "Z"):
                 mc.addAttr(
                     self._name,
-                    longName      = name + axis,
-                    shortName     = name + axis,
-                    attributeType = _UNIT_TRIPLE_CHILD[attr_type],
-                    parent        = name,
-                    keyable       = False,
-                    writable      = False,
-                    readable      = True,
+                    longName         = name + axis,
+                    shortName        = name + axis,
+                    attributeType    = _UNIT_TRIPLE_CHILD[attr_type],
+                    parent           = name,
+                    keyable          = False,
+                    writable         = False,
+                    readable         = True,
+                    storable         = False,
+                    cachedInternally = True,
                 )
         # quaternion — numeric double4; explicit X/Y/Z/W double children (W
         # default 1.0).
@@ -1148,40 +1158,46 @@ class MPyNode(InitSourceMixin, MethodsSourceMixin, MetadataMixin,
             for axis in ("X", "Y", "Z", "W"):
                 mc.addAttr(
                     self._name,
-                    longName      = name + axis,
-                    shortName     = name + axis,
-                    attributeType = "double",
-                    parent        = name,
-                    keyable       = False,
-                    writable      = False,
-                    readable      = True,
-                    defaultValue  = (1.0 if axis == "W" else 0.0),
+                    longName         = name + axis,
+                    shortName        = name + axis,
+                    attributeType    = "double",
+                    parent           = name,
+                    keyable          = False,
+                    writable         = False,
+                    readable         = True,
+                    storable         = False,
+                    cachedInternally = True,
+                    defaultValue     = (1.0 if axis == "W" else 0.0),
                 )
         # color — float3 + usedAsColor; explicit R/G/B float children.
         elif attr_type == "color":
             for axis in ("R", "G", "B"):
                 mc.addAttr(
                     self._name,
-                    longName      = name + axis,
-                    shortName     = name + axis,
-                    attributeType = "float",
-                    parent        = name,
-                    keyable       = False,
-                    writable      = False,
-                    readable      = True,
+                    longName         = name + axis,
+                    shortName        = name + axis,
+                    attributeType    = "float",
+                    parent           = name,
+                    keyable          = False,
+                    writable         = False,
+                    readable         = True,
+                    storable         = False,
+                    cachedInternally = True,
                 )
         # float2 — float2 parent + 2 float children (U/V), added explicitly.
         elif attr_type == "float2":
             for axis in ("U", "V"):
                 mc.addAttr(
                     self._name,
-                    longName      = name + axis,
-                    shortName     = name + axis,
-                    attributeType = "float",
-                    parent        = name,
-                    keyable       = False,
-                    writable      = False,
-                    readable      = True,
+                    longName         = name + axis,
+                    shortName        = name + axis,
+                    attributeType    = "float",
+                    parent           = name,
+                    keyable          = False,
+                    writable         = False,
+                    readable         = True,
+                    storable         = False,
+                    cachedInternally = True,
                 )
 
         attr_map = self._read_output_map()

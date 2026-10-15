@@ -551,7 +551,13 @@ from typing import Optional
 # jsonMeshReader, uvLayoutMesh, voxelizeMesh and ouch, in their templates and
 # in the All Templates Plugin, plus the orphaned brightContrastTex; the shipped
 # artifacts took the hunks by splice -- 2026-10-03.
-PORTER_RECIPE_VERSION = "41"
+# v42: a locator's mesh input is storable, as the interpreted add_input_attr
+# makes every input and the generic compiled mesh input already is: the
+# compiled meshRegionLocator inMesh alone was created setStorable(false). A
+# SKELETON change invisible to the key. Moves 2 of 76 stage-1 files:
+# meshRegionLocator, in its template and in the All Templates Plugin; the
+# shipped artifacts took the hunk by splice -- 2026-10-15.
+PORTER_RECIPE_VERSION = "42"
 
 # Spec keys excluded from the cache key -- provably irrelevant to the generated
 # C++. A deny-list, NOT an allow-list (design C1).
