@@ -793,9 +793,10 @@ class MPyFile(om.MPxNode):
                 return self
         except Exception:
             pass
-        # Suspended (nodeState != Normal): not evaluated. The plug stays
-        # dirty so un-suspending recomputes it -- the API 1.0 deformers'
-        # contract. Read off the data block: safe on an EM worker thread.
+        # Suspended (nodeState != Normal): not evaluated, and the outputs keep
+        # their last value. Leaving the suspended state dirties them again
+        # (dirty_affects.declare_user_affects), so the next read recomputes.
+        # Read off the data block: safe on an EM worker thread.
         from mpynode._common.plugs import dirty_affects as _dirty_affects
 
         if _dirty_affects.api2_suspended_in_block(self, data_block):

@@ -12,7 +12,7 @@ from .spec_model import (_check, _geo_kind, _spec_has_hex,
                          MESH_INTERSECTOR_INCLUDE)
 from .emit_attr import (_INCLUDES, _create_lines, _members, _pick_path_input,
                         PACKED_INCLUDES, DISTANCE_INCLUDE, STRING_DATA_INCLUDE,
-                        string_default)
+                        state_affects_lines, string_default)
 from . import emit_geo_io
 from .emit_hex import _HEX_CPP
 from .nd_runtime import _nd_runtime_cpp
@@ -740,6 +740,9 @@ def _generate_cpp_impl(spec: dict, for_port: bool = False) -> str:
         # excluded there by design -- see base_affects_lines.
         lines += file_texture_cpp.base_affects_lines(ins, outs, base_extra,
                                                      color_children)
+        # nodeState dirties each array output, as leaving a suspended state
+        # dirties the interpreted node's outputs (emit_attr.state_affects_lines).
+        lines += state_affects_lines(outs)
     lines.append("    return MS::kSuccess;")
     lines.append("}")
     lines.append("")

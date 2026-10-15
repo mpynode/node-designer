@@ -1028,12 +1028,13 @@ def suspended_gate_lines():
     counted with dgtimer). A plain or compound output stays dirty: every pull
     while suspended reaches compute again, and the first pull after nodeState
     returns to Normal computes it. An array ELEMENT pulled while suspended is
-    left clean instead, and returning to Normal does not dirty it again: it
-    recomputes only when an input is set, and never while its input comes
+    left clean instead, and returning to Normal did not dirty it again: it
+    recomputed only when an input was set, and never while its input came
     through a connection, since that input, unread, stays dirty and stops the
-    propagation (De Boor Spline's samples[2], read with getAttr). The
-    interpreted twin keeps that element stale too. Until v45 no compiled
-    compute read nodeState at all."""
+    propagation (De Boor Spline's samples[1], read with getAttr). Since v46
+    nodeState dirties every array output (:func:`state_affects_lines`), as
+    the interpreted node dirties its outputs when nodeState leaves a
+    suspended state. Until v45 no compiled compute read nodeState at all."""
     return [
         "    // Suspended (nodeState not Normal): not evaluated, as the interpreted",
         "    // compute returns (dirty_affects.api2_suspended_in_block). The outputs",
@@ -1041,6 +1042,27 @@ def suspended_gate_lines():
         "    if (data.inputValue(MPxNode::state).asShort() != 0)",
         "        return MS::kSuccess;",
     ]
+
+def state_affects_lines(outs):
+    """``initialize()``'s ``attributeAffects(MPxNode::state, <output>)`` for
+    every ARRAY output of an MPxNode-family compute (plain, constraint,
+    mPyFile; the mesh / curve / surface generators carry no array output).
+
+    The interpreted node dirties its outputs when nodeState leaves a
+    suspended state (dirty_affects.declare_user_affects). A compiled plain
+    or compound output needs nothing for that: the suspended compute leaves
+    it dirty (:func:`suspended_gate_lines`). An array element read while
+    suspended is left clean, though, and without this edge it kept its old
+    value after nodeState went back to Normal -- for good when its input came
+    through a connection, while the interpreted twin recomputed. The edge
+    dirties the array on every nodeState change, entering a suspended state
+    too; the suspended compute then returns at once and the elements keep
+    their value, so a read still matches the interpreted node (measured
+    2026-10-15: De Boor Spline samples[1], Procrustes Tags outMatrix[1],
+    nodeState 1-5, DG and parallel evaluation). Placed last, after every
+    input's affects."""
+    return ["    attributeAffects(MPxNode::state, %s);" % o["member"]
+            for o in outs if o["meta"].get("is_array")]
 
 def _setter_hint(m):
     """Human/AI hint: which setter call writes this output handle."""

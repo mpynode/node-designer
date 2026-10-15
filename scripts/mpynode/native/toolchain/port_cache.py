@@ -612,7 +612,19 @@ from typing import Optional
 # optimizer code follows the plug guard directly: those took the same gate
 # lines by hand, right after the unchanged guard line, and no optimizer line
 # was edited. All gated -- 2026-10-15.
-PORTER_RECIPE_VERSION = "45"
+# v46: nodeState dirties every ARRAY output of an MPxNode-family compute
+# (plain, constraint, mPyFile): attributeAffects(MPxNode::state, <array>) at
+# the end of initialize() (emit_attr.state_affects_lines). The interpreted node
+# now dirties its outputs when nodeState leaves a suspended state
+# (dirty_affects.declare_user_affects). A compiled plain output needed nothing,
+# since the suspended compute leaves it dirty, but an array element read while
+# suspended was left clean and kept its old value after nodeState went back to
+# Normal -- for good when its input came through a connection. A SKELETON
+# change invisible to the key. Moves 12 of 75 stage-1 files: Bubble Sort,
+# DNET, De Boor Spline, Spine, Spring Chain, Procrustes Tags and their All
+# Templates copies. The shipped artifacts took the hunk by splice, none of it
+# inside a PORT region or an optimizer rewrite -- 2026-10-15.
+PORTER_RECIPE_VERSION = "46"
 
 # Spec keys excluded from the cache key -- provably irrelevant to the generated
 # C++. A deny-list, NOT an allow-list (design C1).

@@ -204,9 +204,27 @@ def _io_names(node_mobject, in_attr, out_attr):
     return in_names, out_names
 
 
+def _leaves_suspension(state_plug) -> bool:
+    """True when the ``nodeState`` change now passing through
+    ``setDependentsDirty`` leaves a suspended state.
+
+    There the plug still holds the state being left, not the new one
+    (measured 2026-10-15 for setAttr, undo and redo), so a non-zero value
+    means the node was suspended. A connected ``nodeState`` is not read, since
+    the read would evaluate its source in the middle of the propagation: it
+    counts as leaving, which costs one extra compute that returns at once.
+    Never raises; an unreadable plug counts as leaving."""
+    try:
+        if state_plug.isDestination:
+            return True
+        return state_plug.asShort() != 0
+    except Exception:
+        return True
+
+
 def declare_user_affects(node_mobject, plug, affected_plugs, in_attr, out_attr,
                          expression_attr=None, extra_trigger_names=(),
-                         extra_outputs=()):
+                         extra_outputs=(), state_outputs=()):
     """If ``plug`` is a TRIGGER, append every user OUTPUT plug to
     ``affected_plugs``. Coarse but correct: any input can feed any output
     via the user expression, so any input change must dirty every output.
@@ -222,10 +240,34 @@ def declare_user_affects(node_mobject, plug, affected_plugs, in_attr, out_attr,
     ``expression_attr`` (so editing the Compute source re-dirties outputs), OR
     its root name is in ``extra_trigger_names`` (e.g. MPyConstraint's preset
     inputs), OR the file-read sweep is replaying the node
-    (:func:`dirty_file_read_outputs`). On trigger, each MObject in
-    ``extra_outputs`` is appended too
+    (:func:`dirty_file_read_outputs`), OR it is a ``nodeState`` change that
+    leaves a suspended state (:func:`_leaves_suspension`). On trigger, each
+    MObject in ``extra_outputs`` is appended too
     (native outputs like MPyFile's outColor/outAlpha) -- this happens even when
-    the node has no user outputs.
+    the node has no user outputs. On that ``nodeState`` change, so is each
+    MObject in ``state_outputs``.
+
+    Leaving a suspended state replays a user-input change. While the node is
+    suspended nothing dirties its outputs: :func:`api2_dirty_gate` drops every
+    user-input change, and Maya itself stops dirtying outMesh / outCurve /
+    outSurface for a changed dynamic input (measured 2026-10-15). A read in
+    the meantime leaves the plug clean at its last value, because the
+    suspended compute returns None. So the first read after nodeState went
+    back to Normal kept that value, and with a connected input the node never
+    recovered: the input, never read, stayed dirty, and a dirty plug stops
+    every later propagation. ``state_outputs`` carries the native geometry
+    output, which a user input reaches through Maya and not through this
+    function.
+
+    Entering a suspended state dirties nothing. Under the Evaluation Manager
+    a Blocking node's outputs dirtied on the way in stayed dirty while the EM
+    cleaned a downstream reader at its old value, and the dirtying on the way
+    out then stopped at those outputs (procrustesTags read through a
+    decomposeMatrix: stale after resuming). One such case remains: leave
+    Blocking and re-enter it with nothing evaluated in between, change an
+    input, leave again; under parallel evaluation the first read through the
+    downstream node keeps the old value (1 of 1080 probe reads, 2026-10-15),
+    while the compiled twin computes it.
 
     Safe to call from ``setDependentsDirty``: pure plug-array append, no
     ``cmds`` / no DG mutation.
@@ -265,10 +307,13 @@ def declare_user_affects(node_mobject, plug, affected_plugs, in_attr, out_attr,
             except Exception:
                 is_expression = False
         is_extra_trigger = _matches(extra_trigger_names)
+        # Leaving a suspended state replays the user-input changes the node
+        # dropped while suspended (see the docstring).
+        is_state = pname == "nodeState" and _leaves_suspension(plug)
         # The file-read sweep replays, through this very path, the user-input
         # change the file reader skipped (see dirty_file_read_outputs).
-        is_replay = False
-        if _replaying:
+        is_replay = is_state
+        if _replaying and not is_replay:
             try:
                 is_replay = (om.MObjectHandle(node_mobject).hashCode()
                              in _replaying)
@@ -282,7 +327,10 @@ def declare_user_affects(node_mobject, plug, affected_plugs, in_attr, out_attr,
         # Native (non-user) outputs the caller wants dirtied alongside the
         # user outputs (e.g. MPyFile's outColor/outAlpha). Appended even when
         # the node has no user outputs.
-        for out_mobj in extra_outputs:
+        natives = tuple(extra_outputs)
+        if is_state:
+            natives += tuple(state_outputs)
+        for out_mobj in natives:
             try:
                 if out_mobj is None or out_mobj.isNull():
                     continue
@@ -372,7 +420,8 @@ def dirty_file_read_outputs() -> int:
     in another (a reference loading during an open) leaves the queue to the
     outer read's after-event, so nothing is touched before the scene is
     whole. A suspended node is skipped: it forwards no dirtiness
-    (:func:`api2_dirty_gate`).
+    (:func:`api2_dirty_gate`), and returning it to Normal dirties its outputs
+    (:func:`declare_user_affects`).
 
     Each node gets its own modifier, so a write that fails spoils only its
     own node: one modifier for the whole queue stopped at the first failed
@@ -543,7 +592,23 @@ def api2_dirty_gate(node, plug) -> bool:
     The fact is cached ON THE NODE INSTANCE, so the hot path reads no plug.
     Maya passes the ``nodeState`` and ``_inputAttrs`` plugs through the
     override when they change; that is when the cache is dropped, to be rebuilt
-    on the next call once the new value is committed.
+    on the next call once the new value is committed. Both return False, so
+    the override goes on: when ``nodeState`` leaves a suspended state,
+    :func:`declare_user_affects` dirties the outputs the node let go stale.
+
+    Never while the Evaluation Manager builds its graph
+    (:func:`_em_building_graph`): the graph keeps the affects this override
+    declares until the topology changes, and a nodeState change is not one.
+    A graph built while the node was suspended had no edge from a user input
+    to a user output, so after nodeState went back to Normal an animated input
+    no longer reached the outputs: under parallel evaluation a keyed input
+    froze the output from the second frame on (mPyNode, mPyConstraint;
+    measured 2026-10-15), until ``evaluationManager -invalidate``. The
+    compiled twin declares the same edges with ``attributeAffects`` whatever
+    its state. A suspended node in the graph is scheduled, and its compute
+    returns at once (:func:`api2_suspended_in_block`): Mesh Maze suspended,
+    seed and solutionSteps keyed, graph built while suspended, paid 0.35
+    ms/frame where it paid 0.31, and ran no expression.
     """
     try:
         pname = plug.partialName(useLongNames=True)
@@ -565,7 +630,20 @@ def api2_dirty_gate(node, plug) -> bool:
             setattr(node, _GATE_ATTR, cache)
         except Exception:
             pass
-    return bool(cache.get("suspended"))
+    return bool(cache.get("suspended")) and not _em_building_graph()
+
+
+def _em_building_graph() -> bool:
+    """True while the Evaluation Manager builds its graph, which it does by
+    propagating dirtiness through every ``setDependentsDirty``. Read through
+    API 1.0, the only one with ``MEvaluationManager``. Never raises; an
+    unreadable state reads as not building."""
+    try:
+        import maya.OpenMaya as om1
+
+        return bool(om1.MEvaluationManager.graphConstructionActive())
+    except Exception:
+        return False
 
 
 def api2_suspended_in_block(node, data_block) -> bool:
