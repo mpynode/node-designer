@@ -147,6 +147,63 @@ def _unbound_self_reads(ins, outs, spec) -> set:
     return {r for r in refs if r not in declared and r not in written}
 
 
+def array_grow_lines(outs):
+    """``compute()``'s array-output sizing, placed right after the nodeState
+    gate (v47).
+
+    The interpreted node sizes every ARRAY output to its highest existing
+    logical index + 1 (``max(getExistingArrayAttributeIndices()) + 1``, inline
+    in ``_api2/_mpy_node.py`` and ``mpy_constraint.py``, and in
+    ``output_defaults.seed_user_output_defaults_api2``) and writes every index
+    below it. The compiled compute counts the output's data-block elements
+    (``elementCount()``), and a read of an element that does not exist yet adds
+    that one element only. So De Boor Spline's ``samples[3]``, read first on a
+    new node, counted 1 element: the compiled node computed one sample, at
+    index 0, and ``samples[3]`` read (0, 0, 0) on every read, input changes
+    included, where the interpreted node computed 4 samples. Outputs connected
+    at [0] and [4] did the same to [4] (measured 2026-10-15).
+
+    The block fills the gaps below the highest index first, so
+    ``elementCount()`` -- what a lowered body, a port and an optimizer round
+    all count -- is the interpreted count. On a probe node the data block's
+    indices equalled the plug's in all 46 computes measured (a first element
+    read, connect, disconnect, removeMultiInstance, a far element, reopen, DG
+    and parallel evaluation). A new element takes the attribute default until compute
+    writes it, as the interpreted pre-sized buffer does. Every array output is
+    filled, as the interpreted node sizes every one. No array output -> no
+    lines, so those nodes are unchanged."""
+    arrays = [o["member"] for o in outs if o["meta"].get("is_array")]
+    if not arrays:
+        return []
+    return [
+        "",
+        "    // Array outputs are sized as the interpreted node sizes them: the",
+        "    // highest logical index + 1, with every index below it. Reading an",
+        "    // element that does not exist yet adds that element alone, so the",
+        "    // gaps below it are filled before compute counts the array.",
+        "    {",
+        "        const MObject* _growAttrs[] = {%s};"
+        % ", ".join("&" + a for a in arrays),
+        "        for (const MObject* _growAttr : _growAttrs) {",
+        "            MArrayDataHandle _grow = data.outputArrayValue(*_growAttr);",
+        "            const unsigned _growN = _grow.elementCount();",
+        "            unsigned _growTop = 0;",
+        "            for (unsigned _i = 0; _i < _growN; ++_i) {",
+        "                const unsigned _li = _grow.elementIndex();",
+        "                if (_li >= _growTop) _growTop = _li + 1;",
+        "                _grow.next();",
+        "            }",
+        "            if (_growTop > _growN) {",
+        "                MArrayDataBuilder _growB = _grow.builder();",
+        "                for (unsigned _i = 0; _i < _growTop; ++_i)",
+        "                    if (!_grow.jumpToElement(_i)) _growB.addElement(_i);",
+        "                _grow.set(_growB);",
+        "            }",
+        "        }",
+        "    }",
+    ]
+
+
 def _compute_lines(cls, ins, outs, spec, for_port, lowered=_UNSET,
                    img_read=False, img_embedded=False, base_extra=(),
                    out_size=None):
@@ -176,6 +233,7 @@ def _compute_lines(cls, ins, outs, spec, for_port, lowered=_UNSET,
         L.append("    if (%s)" % guard)
         L.append("        return MS::kUnknownParameter;")
     L += suspended_gate_lines()
+    L += array_grow_lines(outs)
     L.append("")
     L.append("    // --- inputs ---")
     for i in ins:

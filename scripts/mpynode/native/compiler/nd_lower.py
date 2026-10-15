@@ -982,7 +982,10 @@ def _materialise_output_buffer(m, dst):
     ``lower_compute`` flushes the buffer to ``out_<member>`` after the body via
     the SAME writer the whole-assign path uses. ``data.outputArrayValue(<member>)
     .elementCount()`` is the compiled analogue of the connected-index span (the
-    AI porter reads the identical count for this node class).
+    AI porter reads the identical count for this node class): since v47 the
+    compute fills the gaps below the highest index first
+    (``emit_compute.array_grow_lines``), so the count is the interpreted
+    highest index + 1 even when a read added one far element.
 
     Returns ``(lines, CppType)`` or raises for an unliftable output type."""
     meta   = m["meta"]

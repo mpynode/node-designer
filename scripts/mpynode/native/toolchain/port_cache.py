@@ -624,7 +624,22 @@ from typing import Optional
 # DNET, De Boor Spline, Spine, Spring Chain, Procrustes Tags and their All
 # Templates copies. The shipped artifacts took the hunk by splice, none of it
 # inside a PORT region or an optimizer rewrite -- 2026-10-15.
-PORTER_RECIPE_VERSION = "46"
+# v47: an ARRAY output of an MPxNode-family compute (plain, constraint,
+# mPyFile) is sized as the interpreted node sizes it: the highest logical
+# index + 1, with every index below it. Right after the nodeState gate the
+# compute fills the gaps (emit_compute.array_grow_lines), so elementCount() --
+# what the lowered body, the ports and the optimizer rounds count -- is the
+# interpreted max(getExistingArrayAttributeIndices()) + 1. Reading an element
+# that did not exist yet added that one element only: De Boor Spline's
+# samples[3], read first, computed one sample and read (0, 0, 0) on every read,
+# input changes included, where the interpreted node computed 4; outputs
+# connected at [0] and [4] left [4] at (0, 0, 0) the same way. A SKELETON
+# change invisible to the key. Moves 12 of 75 stage-1 files: Bubble Sort,
+# DNET, De Boor Spline, Spine, Spring Chain, Procrustes Tags and their All
+# Templates copies. The shipped artifacts took the block by splice, right after
+# the unchanged gate, none of it inside a PORT region or an optimizer rewrite
+# -- 2026-10-15.
+PORTER_RECIPE_VERSION = "47"
 
 # Spec keys excluded from the cache key -- provably irrelevant to the generated
 # C++. A deny-list, NOT an allow-list (design C1).
