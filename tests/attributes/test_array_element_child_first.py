@@ -207,8 +207,10 @@ class TestAfterReopen(_Case):
     def test_a_child_read_first_after_open_computes(self):
         from mpynode._common.lifecycle import scene_state
 
-        # The opens below start the 10 s post-open grace window; close it
-        # again, or test_attr_reorder, run next, sees it.
+        # The opens below start the 10 s post-open grace window. Put the old
+        # stamp back, so later tests in this process do not start inside it,
+        # where should_defer_transient() is True and a compute error naming
+        # a missing plug, even a misspelt one, is not reported.
         self.addCleanup(setattr, scene_state, "_last_open_monotonic",
                         scene_state._last_open_monotonic)
         folder = tempfile.mkdtemp(prefix="child_first_")
