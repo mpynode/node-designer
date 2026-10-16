@@ -26,28 +26,46 @@ cannot run it until `build_compiled_templates.sh` has run. It says so and exits
 
 ## Enforced by the unit suite
 
-These are **not optional**. A test executes or imports each one, so deleting any
-of them turns the suite red.
+These 35 scripts are **not optional**. Deleting any one of them turns the unit
+suite red: a test runs, imports or reads it, or checks that it is there. The
+one exception is `_unittest_exit.py`: no test needs it, but both `run_tests`
+launchers run the suite through it, so without it they cannot start. Each row
+was measured by deleting the file in a copy of the tree and running the tests
+that name it. Deleting any other script here turns no test red.
 
 | Script | Enforced by |
 |---|---|
 | `check_stage1_freshness.py` | `test_stage1_codegen_freshness` — checked-in stage-1 C++ vs fresh transpiler output |
-| `regen_mega_transpiled.py` | `test_mega_stage1_freshness` — same, for the combined plug-in tree |
 | `regen_build_scripts.py` | `test_build_script_freshness` — every committed `build.sh`/`.bat` vs today's generators |
 | `regen_plugin_main.py` | `test_plugin_main_freshness` — every committed multi-node `plugin_main.cpp` vs today's generator, derived from the fragments beside it |
 | `regen_verify_scripts.py` | `test_shipped_verify_scripts` — every shipped `verify_in_maya.py` vs today's generator, from its manifest row's spec |
 | `check_std_includes.py` | `test_std_include_check` — a `std::` facility used with no include (libc++ forgives, MSVC does not) |
 | `scan_command_mpynode_deps.py` | `test_command_mpynode_deps` — what an embedded `@maya_command` can still reach |
 | `sync_harness_manifest.py`, `list_template_coverage.py` | `test_harness_manifest_coverage` — a template missing from the manifest is silently never audited |
-| `build_compiled_templates.sh` | `test_shipped_artifact_freshness` |
+| `migrate_attr_names.py` | `test_attr_type_table` — the attr type rename in each file kind, and that the repo is already migrated |
 | `sweep_compile_one.py` | `test_optimizer_live` |
-| `_unittest_exit.py` | `test_native_toolchain` |
-| `harness/benchmark_node.py`, `harness/compile_one.py`, `harness/optimize_node.py`, `harness/demo_specs.py` | see `harness/README.md` |
+| `run_tests.sh`, `run_tests.bat` | `test_native_toolchain` — every mayapy call goes through `_unittest_exit.py`, both anchor on the repo root and hand back the real exit status |
+| `run_parity_sweep.sh`, `run_parity_sweep.bat` | `test_native_toolchain` — the same, for the parity gate |
+| `_unittest_exit.py` | no test: the two `run_tests` launchers cannot start the suite without it |
+| `parity_sweep/run_parity_sweep.py` | `test_native_compile_pipeline` (`TestParitySweepWiring`), `test_native_toolchain` |
+| `parity_sweep/parity_<type>.py`, all 12 | `test_native_compile_pipeline` (`TestParitySweepWiring`) — each one is there and names no user's path |
+| `harness/benchmark_node.py` | `test_bench_gate`, `test_benchmark_harness_lock`, `test_benchmark_harness_scene`, `test_optimizer_compile_hook`, `test_ai_unavailable_status`, `test_native_compile_pipeline` |
+| `harness/demo_specs.py` | `test_harness_manifest_coverage` |
+| `harness/optimize_node.py` | `test_optimize_node_driver` |
+| `harness/idle_probe.py` | `test_idle_probe` — its Maya-free helpers |
+| `harness/viewport_bench.py` | `test_viewport_bench` — its Maya-free helpers |
+| `harness/rebench_shipped.py` | `test_rebench_shipped` — planning and record shape, no compile, no Maya |
+| `harness/reverify_shipped.py` | `test_reverify_shipped` — the same |
 
-`harness/benchmark_node.py` is the exception mentioned above: shipped code shells
-out to it at runtime (`native/ai/optimizer_live.py` and `optimizer_agent.py` hold
-its path in `_BENCHMARK_SCRIPT`). Move or rename it and every optimization
-silently becomes "unmeasurable" — no error, no failing test.
+`harness/templates.json` is not a script, but deleting it turns
+`test_harness_manifest_coverage` red too.
+
+`harness/benchmark_node.py` is also the one exception noted at the top: shipped
+code shells out to it at runtime (`native/ai/optimizer_live.py` and
+`optimizer_agent.py` hold its path in `_BENCHMARK_SCRIPT`). Move or rename it and
+the six test modules in its row turn red, and the compile preflight
+(`optimizer_live.benchmark_harness_problem`) refuses AI optimize up front with
+the missing path named; the deterministic build still ships.
 
 ## Building the compiled templates
 

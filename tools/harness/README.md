@@ -1,9 +1,13 @@
 # `tools/harness/` — out-of-suite mayapy drivers
 
-Nothing here runs in `tools/run_tests.sh`. These are attended drivers: they
-compile templates with the AI porter, build Maya scenes, render VP2 frames and
-link the combined plug-in — minutes to hours each, and several cost API calls.
-The unit suite covers their *logic*; these prove the end-to-end result.
+No end-to-end run of these happens in `tools/run_tests.sh`. These are attended
+drivers: they compile templates with the AI porter, build Maya scenes, render
+VP2 frames and link the combined plug-in — minutes to hours each, and several
+cost API calls. The unit suite covers their *logic*; these prove the end-to-end
+result. That suite does import or read seven of them — `benchmark_node.py`,
+`demo_specs.py`, `optimize_node.py`, `idle_probe.py`, `viewport_bench.py`,
+`rebench_shipped.py`, `reverify_shipped.py` — and `templates.json`, so deleting
+any of those turns it red (`../README.md`, "Enforced by the unit suite").
 
 Because they are attended, most are not reachable from any script. That is
 deliberate, and it is also how three of them rotted unnoticed before (they were
