@@ -173,6 +173,21 @@ def _write_build_script(spec: dict, out_dir: str) -> str:
     return build_path
 
 
+def _write_verify_script(spec: dict, out_dir: str) -> str:
+    """Emit the node's ``verify_in_maya.py`` beside its .cpp. Returns the path.
+
+    Written exactly as ``tools/regen_verify_scripts.py`` writes a shipped
+    script: the generator's text with ``newline=""``, so LF on every host. A
+    text-mode write on Windows turned every line ending into CRLF, so a
+    Windows build left a script that differed on every line from the LF one
+    the repository ships.
+    """
+    verify_path = os.path.join(out_dir, "verify_in_maya.py")
+    with open(verify_path, "w", newline="", encoding="utf-8") as f:
+        f.write(_verify_script(spec))
+    return verify_path
+
+
 def apply_type_name(spec: dict, type_name: str) -> dict:
     """Override the generated node *type* name (and derived class name).
 
@@ -285,9 +300,7 @@ def port_node(spec: dict, out_dir: str, complete_fn=None,
         ok, log, bundle = compile_cpp(cpp_path, spec, out_dir, maya=maya,
                                       log_cb=log_cb)
         _write_build_script(spec, out_dir)
-        verify_path = os.path.join(out_dir, "verify_in_maya.py")
-        with open(verify_path, "w", encoding="utf-8") as f:
-            f.write(_verify_script(spec))
+        verify_path = _write_verify_script(spec, out_dir)
         return {
             "ok": ok, "node": name, "cpp": cpp_path,
             "bundle": bundle if ok else None, "fix_rounds": 0,
@@ -408,9 +421,7 @@ def port_node(spec: dict, out_dir: str, complete_fn=None,
     # Always emit the build + verify helpers (platform-appropriate build
     # script: build.sh on macOS/Linux, build.bat on Windows).
     _write_build_script(spec, out_dir)
-    verify_path = os.path.join(out_dir, "verify_in_maya.py")
-    with open(verify_path, "w", encoding="utf-8") as f:
-        f.write(_verify_script(spec))
+    verify_path = _write_verify_script(spec, out_dir)
 
     return {
         "ok":            ok,

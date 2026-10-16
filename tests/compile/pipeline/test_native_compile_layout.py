@@ -240,6 +240,104 @@ class TestBuildScriptsMatchTheirRegenerator(unittest.TestCase):
                 self.assertNotIn(b"Built against", want)
 
 
+class TestVerifyScriptIsWrittenLF(unittest.TestCase):
+    """port_node writes verify_in_maya.py as tools/regen_verify_scripts.py
+    writes a shipped one: the generator's text byte for byte, so LF. A
+    text-mode write made it CRLF on Windows, so every Windows build left a
+    script that differed on every line from the one the repository ships.
+
+    Both write sites run, the deterministic branch (no PORT region) and the
+    AI branch, with a stub compile_cpp and the rest real. On Windows the real
+    text layer writes the file. On any other host a text-mode write is made
+    to translate line endings as it does on Windows, so a text-mode write of
+    the script fails this test there too."""
+
+    # A shipped spec that lowers with no PORT region.
+    _DETERMINISTIC = ("templates", "MPyNode", "De Boor Spline", "build",
+                      "manifest.json")
+
+    @staticmethod
+    def _windows_text_mode():
+        """Off Windows, text-mode writes turn "\\n" into "\\r\\n"."""
+        import builtins
+        import contextlib
+        from unittest import mock
+
+        if os.name == "nt":
+            return contextlib.nullcontext()
+        real = builtins.open
+
+        def _open(file, mode="r", buffering=-1, encoding=None, errors=None,
+                  newline=None, *args, **kwargs):
+            if "b" not in mode and newline is None and set(mode) & set("wax+"):
+                newline = "\r\n"
+            return real(file, mode, buffering, encoding, errors, newline,
+                        *args, **kwargs)
+
+        return mock.patch.object(builtins, "open", _open)
+
+    def _port(self, spec, complete_fn):
+        """Run port_node on ``spec``; return the verify script's bytes."""
+        from unittest import mock
+
+        from mpynode.native.ai import porter
+
+        def fake_compile(cpp_path, spec, out_dir, **kwargs):
+            plugin = os.path.join(out_dir, "x" + toolchain.plugin_ext())
+            return True, "", plugin
+
+        d = tempfile.mkdtemp(prefix="layout_verify_")
+        self.addCleanup(shutil.rmtree, d, True)
+        with mock.patch.object(porter, "compile_cpp", fake_compile), \
+                self._windows_text_mode():
+            res = porter.port_node(spec, d, complete_fn=complete_fn)
+        self.assertTrue(res["ok"], res)
+        path = os.path.join(d, "verify_in_maya.py")
+        self.assertEqual(res["verify_script"], path)
+        with open(path, "rb") as fh:
+            return fh.read()
+
+    def _assert_generator_text(self, spec, data):
+        from mpynode.native.ai import verify_scripts
+
+        self.assertEqual(data.count(b"\r"), 0, "verify_in_maya.py has CRs")
+        want = verify_scripts._verify_script(spec).encode("utf-8")
+        self.assertEqual(data.splitlines(True), want.splitlines(True))
+
+    def test_deterministic_branch_writes_lf(self):
+        import copy
+        import json
+
+        from mpynode.native import compiler as codegen
+        from tests import _paths
+
+        path = os.path.join(_paths.ROOT, *self._DETERMINISTIC)
+        with open(path, encoding="utf-8") as fh:
+            spec = json.load(fh)["nodes"][0]["spec"]
+        skeleton = codegen.generate_cpp(copy.deepcopy(spec), for_port=True)
+        self.assertFalse(codegen.PORT_BEGIN in skeleton,
+                         "this spec now has a PORT region: pick another")
+        asked = []
+        data  = self._port(spec, lambda system, user: asked.append(user))
+        self.assertEqual(asked, [])
+        self._assert_generator_text(spec, data)
+
+    def test_ai_branch_writes_lf(self):
+        from tests.compile.pipeline.test_native_compile_pipeline import (
+            _portable_spec)
+
+        asked = []
+
+        def complete_fn(system, user):
+            asked.append(user)
+            return "out = a * 2.0;"
+
+        spec = _portable_spec()
+        data = self._port(spec, complete_fn)
+        self.assertEqual(len(asked), 1)
+        self._assert_generator_text(spec, data)
+
+
 class TestCleanWorkingSubdirs(unittest.TestCase):
     """The controller's post-build scratch sweep: drop a built node's
     build/<type>/, keep a dropped node's for debugging, and MIGRATE away any
