@@ -247,6 +247,10 @@ def declare_user_affects(node_mobject, plug, affected_plugs, in_attr, out_attr,
     the node has no user outputs. On that ``nodeState`` change, so is each
     MObject in ``state_outputs``.
 
+    An ARRAY output's existing elements are appended, with their children,
+    and a compound array's children at the array level too, so a read of a
+    child of an element that does not exist yet computes.
+
     Leaving a suspended state replays a user-input change. While the node is
     suspended nothing dirties its outputs: :func:`api2_dirty_gate` drops every
     user-input change, and Maya itself stops dirtying outMesh / outCurve /
@@ -361,6 +365,19 @@ def declare_user_affects(node_mobject, plug, affected_plugs, in_attr, out_attr,
                     if e.isCompound:
                         for ci in range(e.numChildren()):
                             affected_plugs.append(e.child(ci))
+                # ARRAY COMPOUND outputs: and each child at the array level,
+                # with no element (MPlug(node, child attribute)). An element
+                # a read creates (samples[3] read as samples[3].samplesX, on
+                # a new node or past the computed elements) starts with clean
+                # children, so that read never reached compute and read 0,
+                # where the compiled node's attributeAffects reach the
+                # children of every element (measured 2026-10-15, DG and
+                # parallel). Compute counts per frame are unchanged.
+                if out_plug.isArray and out_plug.isCompound:
+                    fn_kids = om.MFnCompoundAttribute(out_plug.attribute())
+                    for ci in range(fn_kids.numChildren()):
+                        affected_plugs.append(
+                            om.MPlug(node_mobject, fn_kids.child(ci)))
             except Exception:
                 pass
     except Exception:
