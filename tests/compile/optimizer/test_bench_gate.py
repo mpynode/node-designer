@@ -849,6 +849,10 @@ class TestDrivesRespectDeclaredRanges(unittest.TestCase):
                     return lo is not None
                 if kw.get("maxExists"):
                     return hi is not None
+                if kw.get("softMinExists") or kw.get("softMaxExists"):
+                    return False
+                if kw.get("listChildren"):
+                    return None
                 if kw.get("minimum"):
                     return [lo]
                 if kw.get("maximum"):
@@ -856,23 +860,23 @@ class TestDrivesRespectDeclaredRanges(unittest.TestCase):
                 raise RuntimeError("unexpected query %r" % kw)
         return Cmds()
 
-    def test_clamps_to_the_first_node_that_declares_a_range(self):
-        from mpynode.native.toolchain.verify import _clamp_drive
+    def test_folds_into_the_range_any_node_declares(self):
+        from mpynode.native.toolchain.verify import _fit_drive
 
         cmds = self._cmds({("orig", "radius"): (0.0, 2.0)})
-        self.assertEqual(_clamp_drive(cmds, ("orig", "comp"), "radius", "float", -3.2), 0.0)
-        self.assertEqual(_clamp_drive(cmds, ("orig", "comp"), "radius", "float", 7.0),  2.0)
-        self.assertEqual(_clamp_drive(cmds, ("orig", "comp"), "radius", "float", 1.5),  1.5)
+        self.assertAlmostEqual(_fit_drive(cmds, ("orig", "comp"), "radius", "float", -3.2), 0.8)
+        self.assertAlmostEqual(_fit_drive(cmds, ("orig", "comp"), "radius", "float", 7.0), 1.0)
+        self.assertEqual(_fit_drive(cmds, ("orig", "comp"), "radius", "float", 1.5), 1.5)
         # the compiled node may carry the range too, or not: same answer
-        self.assertEqual(_clamp_drive(cmds, ("comp", "orig"), "radius", "float", -1.0), 0.0)
+        self.assertAlmostEqual(_fit_drive(cmds, ("comp", "orig"), "radius", "float", -1.0), 1.0)
 
     def test_unranged_and_non_scalar_pass_through(self):
-        from mpynode.native.toolchain.verify import _clamp_drive
+        from mpynode.native.toolchain.verify import _fit_drive
 
         cmds = self._cmds({})
-        self.assertEqual(_clamp_drive(cmds, ("orig",), "gain", "double", -3.2),     -3.2)
-        self.assertEqual(_clamp_drive(cmds, ("orig",), "v", "double3", [-9, 0, 0]), [-9, 0, 0])
-        self.assertEqual(_clamp_drive(cmds, ("orig",), "s", "string", "x"),         "x")
+        self.assertEqual(_fit_drive(cmds, ("orig",), "gain", "double", -3.2),     -3.2)
+        self.assertEqual(_fit_drive(cmds, ("orig",), "v", "double3", [-9, 0, 0]), [-9, 0, 0])
+        self.assertEqual(_fit_drive(cmds, ("orig",), "s", "string", "x"),         "x")
 
     def test_unregistered_type_is_a_named_skip(self):
         from mpynode.native.toolchain.verify import _unregistered_type

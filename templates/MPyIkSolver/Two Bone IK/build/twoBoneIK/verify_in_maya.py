@@ -16,6 +16,76 @@ MESH_INPUTS   = []
 TOL           = 1e-3
 
 
+# Every pick lands inside its attr's range: see _fit.
+_RANGED           = ("double", "float", "long", "short", "doubleAngle", "doubleLinear")
+_RANGED_COMPOUNDS = ("double3", "euler", "position", "color", "float2")
+_BOUNDS = (("minExists", "minimum", max),
+           ("maxExists", "maximum", min),
+           ("softMinExists", "softMin", max),
+           ("softMaxExists", "softMax", min))
+
+
+def _range(nodes, attr):
+    # The tightest hard bound any node declares, narrowed by a soft range
+    # unless the soft range contradicts it. Either end may be None.
+    b = [None, None, None, None]
+    for nd in nodes:
+        for i, (has, get, pick) in enumerate(_BOUNDS):
+            try:
+                if not cmds.attributeQuery(attr, node=nd, **{has: True}):
+                    continue
+                v = float(cmds.attributeQuery(attr, node=nd, **{get: True})[0])
+            except Exception:
+                continue
+            b[i] = v if b[i] is None else pick(b[i], v)
+    lo = b[0] if b[2] is None else (b[2] if b[0] is None else max(b[0], b[2]))
+    hi = b[1] if b[3] is None else (b[3] if b[1] is None else min(b[1], b[3]))
+    if lo is not None and hi is not None and lo > hi:
+        return b[0], b[1]
+    return lo, hi
+
+
+def _fold(v, lo, hi):
+    # A value inside comes back untouched; one outside is reflected off the
+    # bound it crossed, so out-of-range picks spread over the range.
+    if (lo is None or v >= lo) and (hi is None or v <= hi):
+        return v
+    if lo is not None and hi is not None:
+        if hi <= lo:
+            return lo
+        span = hi - lo
+        r    = (v - lo) % (2 * span)
+        return lo + (r if r <= span else 2 * span - r)
+    if lo is not None:
+        return 2 * lo - v
+    return 2 * hi - v
+
+
+def _fit(nodes, attr, t, v):
+    # v inside attr's range on every node that has attr; a numeric compound
+    # is fitted one child at a time.
+    nodes = [n for n in nodes if n and cmds.objExists(n + "." + attr)]
+    if t in _RANGED_COMPOUNDS and isinstance(v, (list, tuple)):
+        kids = []
+        for nd in nodes:
+            kids = cmds.attributeQuery(attr, node=nd, listChildren=True) or []
+            if kids:
+                break
+        if len(kids) != len(v):
+            return v
+        return [_fold(x, *_range(nodes, k)) for x, k in zip(v, kids)]
+    if t not in _RANGED or isinstance(v, bool):
+        return v
+    if not isinstance(v, (int, float)):
+        return v
+    lo, hi = _range(nodes, attr)
+    if t in ("long", "short"):
+        lo = None if lo is None else math.ceil(lo)
+        hi = None if hi is None else math.floor(hi)
+        return int(round(_fold(v, lo, hi)))
+    return _fold(v, lo, hi)
+
+
 def _chain(prefix, n=3, blen=5.0):
     cmds.select(clear=True)
     js = []
@@ -100,7 +170,8 @@ def run(samples=8):
         for h in (src_h, cmp_h):
             cmds.xform(h, ws=True, t=goal)
         for a, t in SCALAR_INPUTS.items():
-            v = _sample(t, ENUM_FIELDS.get(a, []))
+            v = _fit((src_solver, cmp_solver), a, t,
+                     _sample(t, ENUM_FIELDS.get(a, [])))
             _set(src_solver, a, v)
             _set(cmp_solver, a, v)
         cmds.refresh(force=True)

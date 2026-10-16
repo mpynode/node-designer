@@ -35,6 +35,7 @@ of them turns the suite red.
 | `regen_mega_transpiled.py` | `test_mega_stage1_freshness` — same, for the combined plug-in tree |
 | `regen_build_scripts.py` | `test_build_script_freshness` — every committed `build.sh`/`.bat` vs today's generators |
 | `regen_plugin_main.py` | `test_plugin_main_freshness` — every committed multi-node `plugin_main.cpp` vs today's generator, derived from the fragments beside it |
+| `regen_verify_scripts.py` | `test_shipped_verify_scripts` — every shipped `verify_in_maya.py` vs today's generator, from its manifest row's spec |
 | `check_std_includes.py` | `test_std_include_check` — a `std::` facility used with no include (libc++ forgives, MSVC does not) |
 | `scan_command_mpynode_deps.py` | `test_command_mpynode_deps` — what an embedded `@maya_command` can still reach |
 | `sync_harness_manifest.py`, `list_template_coverage.py` | `test_harness_manifest_coverage` — a template missing from the manifest is silently never audited |

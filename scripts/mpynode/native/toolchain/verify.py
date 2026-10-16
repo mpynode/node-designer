@@ -697,44 +697,230 @@ def _seed_packed(cmds, plug, dt, values):
         return False
 
 
+# Scalar types whose plug can carry a hard (min / max) or soft range: the types
+# the interpreted node hands addAttr -min/-max
+# (wrappers._mpy_node._NUMERIC_LIMIT_TYPES), plus short, which a native preset
+# can be.
 _RANGED_TYPES = frozenset(("double", "float", "long", "short", "doubleAngle",
                            "doubleLinear"))
+_INTEGRAL_TYPES = frozenset(("long", "short"))
+
+# Numeric compounds whose CHILDREN can each carry a range of their own. They
+# are fitted component by component.
+_RANGED_COMPOUNDS = frozenset(("double3", "euler", "position", "color",
+                               "float2"))
+
+# The unit types. The spec's min_value / max_value / default_value, addAttr
+# -min/-max and MFnUnitAttribute::setMin are all in INTERNAL units (radians,
+# centimetres); setAttr and attributeQuery use the scene's UI unit. An euler's
+# and a position's children are angles and distances in the same way.
+_UNIT_KIND = {"doubleAngle": "angle", "doubleLinear": "linear",
+              "euler": "angle", "position": "linear"}
+
+# How many of each UI unit make one internal unit (radian / centimetre), keyed
+# by what currentUnit(query=True) returns.
+_UI_PER_INTERNAL = {
+    "angle": {"rad": 1.0, "deg": 180.0 / math.pi,
+              "min": 60.0 * 180.0 / math.pi, "sec": 3600.0 * 180.0 / math.pi},
+    "linear": {"mm": 10.0, "cm": 1.0, "m": 0.01, "km": 1e-5,
+               "in": 1.0 / 2.54, "ft": 1.0 / 30.48, "yd": 1.0 / 91.44,
+               "mi": 1.0 / 160934.4},
+}
+
+# attributeQuery's (exists, value) flag pairs: hard min, hard max, soft min,
+# soft max. Both report in the UI units setAttr reads.
+_RANGE_QUERIES = (("minExists", "minimum"), ("maxExists", "maximum"),
+                  ("softMinExists", "softMin"), ("softMaxExists", "softMax"))
 
 
-def _clamp_drive(cmds, nodes, attr, t, v):
-    """Clamp a random scalar drive into the attribute's declared [min, max].
+def _to_ui_units(cmds, t, v):
+    """``v``, given in INTERNAL units, in the units setAttr takes.
 
-    A preset attribute can carry a range (mPyFile's ``preFilterRadius`` has
-    min 0) and ``setAttr`` REFUSES a value outside it -- which, raised from the
-    drive loop, read as "verify could not run" for every texture node. The range
-    is read off the FIRST node that declares one and the SAME clamped value goes
-    to every node, so the two sides still see identical inputs. Types without a
-    scalar range (compounds, matrices, strings) and attrs without limits pass
-    through unchanged."""
-    if t not in _RANGED_TYPES or not isinstance(v, (int, float)):
+    Only the unit types move (``_UNIT_KIND``), each component of a list alike.
+    Everything else, and ``None``, passes through."""
+    kind = _UNIT_KIND.get(t)
+    if kind is None or v is None:
         return v
+    try:
+        unit = cmds.currentUnit(query=True, **{kind: True})
+    except Exception:
+        unit = None
+    f = _UI_PER_INTERNAL[kind].get(unit, 1.0)
+    if isinstance(v, (list, tuple)):
+        return [float(x) * f for x in v]
+    return float(v) * f
+
+
+def _tighter(a, b, pick):
+    """The tighter of two optional bounds (``pick`` is max for a low bound,
+    min for a high one)."""
+    if a is None:
+        return b
+    if b is None:
+        return a
+    return pick(a, b)
+
+
+def _plug_ranges(cmds, nodes, attr):
+    """``[hard_lo, hard_hi, soft_lo, soft_hi]`` of ``attr`` across ``nodes``.
+
+    Each bound is the tightest any node declares, since every side has to take
+    the same value; None where no node declares it, or the node lacks the
+    attr. In the UI units setAttr reads."""
+    out = [None, None, None, None]
+    for nd in nodes:
+        for i, (exists, query) in enumerate(_RANGE_QUERIES):
+            try:
+                if not cmds.attributeQuery(attr, node=nd, **{exists: True}):
+                    continue
+                b = float(cmds.attributeQuery(attr, node=nd, **{query: True})[0])
+            except Exception:
+                continue
+            out[i] = _tighter(out[i], b, min if i % 2 else max)
+    return out
+
+
+def _drive_range(cmds, nodes, attr, t, meta=None):
+    """The ``(lo, hi)`` a drive of ``attr`` has to land in, in setAttr's units
+    (either end may be None), or None when nothing bounds it.
+
+    Every source counts and the tightest bound wins:
+      * the spec's ``min_value`` / ``max_value``, in internal units, so
+        converted for a unit type. The interpreted template node declares
+        them even where the harness rebuilt its twin bare;
+      * each live node's hard min / max. setAttr refuses a value past either:
+        Mesh Maze's solutionLength (max 1) stopped its whole generic verify;
+      * a soft range, where one is present, narrows the pick to the range the
+        attr is meant to be used in. It never widens the hard range, and one
+        that contradicts it is ignored.
+    """
     lo = hi = None
+    if meta:
+        lo = _to_ui_units(cmds, t, meta.get("min_value"))
+        hi = _to_ui_units(cmds, t, meta.get("max_value"))
+    hard_lo, hard_hi, soft_lo, soft_hi = _plug_ranges(cmds, nodes, attr)
+    lo        = _tighter(lo, hard_lo, max)
+    hi        = _tighter(hi, hard_hi, min)
+    narrow_lo = _tighter(lo, soft_lo, max)
+    narrow_hi = _tighter(hi, soft_hi, min)
+    if narrow_lo is None or narrow_hi is None or narrow_lo <= narrow_hi:
+        lo, hi = narrow_lo, narrow_hi
+    if lo is None and hi is None:
+        return None
+    return lo, hi
+
+
+def _fold_into(v, lo, hi):
+    """``v`` reflected back into ``[lo, hi]`` (either end may be None).
+
+    A value already inside comes back untouched, so an unbounded attr and an
+    in-range draw get exactly the input they always got, and no extra random
+    number is drawn. A value outside is mirrored off the bound it crossed (a
+    triangle wave over a two-sided range): out-of-range draws spread over the
+    range instead of piling onto its ends, as a clamp would."""
+    if (lo is None or v >= lo) and (hi is None or v <= hi):
+        return v
+    if lo is not None and hi is not None:
+        if hi <= lo:
+            return lo
+        span = hi - lo
+        r    = (v - lo) % (2 * span)
+        return lo + (r if r <= span else 2 * span - r)
+    if lo is not None:
+        return 2 * lo - v
+    return 2 * hi - v
+
+
+def _fit_scalar(v, rng, integral):
+    """One number fitted into ``rng`` (see :func:`_fold_into`); an integral
+    attr keeps an int, and its bounds round inwards."""
+    if isinstance(v, bool) or not isinstance(v, (int, float)):
+        return v
+    lo, hi = rng
+    if integral:
+        lo = None if lo is None else math.ceil(lo)
+        hi = None if hi is None else math.floor(hi)
+    out = _fold_into(v, lo, hi)
+    return int(round(out)) if integral else out
+
+
+def _drive_fitter(cmds, nodes, attr, t, meta=None):
+    """``fit(v)`` that puts a drive of ``attr`` inside its declared range(s),
+    or None when nothing bounds it. Built once per attr, so a K-element array
+    drive queries the plugs once.
+
+    A scalar is fitted to :func:`_drive_range`. A numeric compound is fitted
+    one component at a time, each to its child's live range. Anything else
+    (matrices, strings, bool, enum, time) has no range here."""
+    if t in _RANGED_TYPES:
+        rng = _drive_range(cmds, nodes, attr, t, meta)
+        if rng is None:
+            return None
+        integral = t in _INTEGRAL_TYPES
+        return lambda v: _fit_scalar(v, rng, integral)
+    if t not in _RANGED_COMPOUNDS:
+        return None
+    kids = []
     for nd in nodes:
         try:
-            if cmds.attributeQuery(attr, node=nd, minExists=True):
-                lo = cmds.attributeQuery(attr, node=nd, minimum=True)[0]
-            if cmds.attributeQuery(attr, node=nd, maxExists=True):
-                hi = cmds.attributeQuery(attr, node=nd, maximum=True)[0]
+            kids = cmds.attributeQuery(attr, node=nd, listChildren=True) or []
         except Exception:
-            continue
-        if lo is not None or hi is not None:
+            kids = []
+        if kids:
             break
-    if lo is not None and v < lo:
-        v = lo
-    if hi is not None and v > hi:
-        v = hi
-    return v
+    rngs = [_drive_range(cmds, nodes, k, None) for k in kids]
+    if not any(rngs):
+        return None
+
+    def fit(v):
+        if not isinstance(v, (list, tuple)) or len(v) != len(rngs):
+            return v
+        return [x if r is None else _fit_scalar(x, r, False)
+                for x, r in zip(v, rngs)]
+
+    return fit
+
+
+def _fit_drive(cmds, nodes, attr, t, v, meta=None):
+    """``v`` moved inside ``attr``'s declared range(s); see
+    :func:`_drive_fitter`. The SAME fitted value goes to every node, so the
+    two sides still see identical inputs."""
+    fit = _drive_fitter(cmds, nodes, attr, t, meta)
+    return v if fit is None else fit(v)
+
+
+def _input_fitters(cmds, nodes, in_meta):
+    """``{attr: fit}`` for every input with a range, built once per parity
+    pair (the ranges do not change while it is driven)."""
+    out = {}
+    for nm, m in (in_meta or {}).items():
+        if not isinstance(m, dict):
+            continue
+        fit = _drive_fitter(cmds, nodes, nm, m.get("type"), m)
+        if fit is not None:
+            out[nm] = fit
+    return out
+
+
+def _fitted(fitters, attr, v, is_array=False):
+    """``v`` (one value, or a list of array elements) through ``attr``'s
+    fitter, if it has one."""
+    fit = fitters.get(attr)
+    if fit is None:
+        return v
+    if is_array:
+        return [fit(ev) for ev in v]
+    return fit(v)
 
 
 def _drive_array_input(cmds, nodes, attr, t, values):
     """setAttr the multi ELEMENT plugs attr[0..K-1] to ``values`` on every node.
     A connected multi is left to its source (identical on both sides). A packed
-    (typed-array) input has no element plugs and is written whole instead."""
+    (typed-array) input has no element plugs and is written whole instead.
+    Each element is fitted inside the attr's range first (:func:`_fit_drive`)."""
+    fit = _drive_fitter(cmds, nodes, attr, t)
+    if fit is not None:
+        values = [fit(ev) for ev in values]
     for nd in nodes:
         base = nd + "." + attr
         try:
@@ -747,8 +933,7 @@ def _drive_array_input(cmds, nodes, attr, t, values):
             _seed_packed(cmds, base, dt, values)
             continue
         for i, ev in enumerate(values):
-            _set_plug(cmds, "%s[%d]" % (base, i), t,
-                      _clamp_drive(cmds, nodes, attr, t, ev))
+            _set_plug(cmds, "%s[%d]" % (base, i), t, ev)
 
 
 def _read_array_output(cmds, node, attr):
@@ -1024,7 +1209,7 @@ def _drive_input(cmds, nodes, attr, t, v):
             cmds.currentTime(v)
         except Exception:
             pass
-    v = _clamp_drive(cmds, nodes, attr, t, v)
+    v = _fit_drive(cmds, nodes, attr, t, v)
     for nd in nodes:
         plug = nd + "." + attr
         try:
@@ -2379,6 +2564,8 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
                 _bind_skin_node(cmds, _nd, joints, bind, weights)
 
         held_enums = _side_effect_gated_enums(spec)
+        # Every pick lands inside the input's range (_drive_fitter).
+        fitters = _input_fitters(cmds, (da, db), IN_META)
 
         def smp(nm, t):
             if t == "bool":
@@ -2427,9 +2614,11 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
                     else:
                         vals = _array_values(t, K_ARR, random,
                                              len(ENUM.get(a, [])) or 2)
-                    _drive_array_input(cmds, (da, db), a, t, vals)
+                    _drive_array_input(cmds, (da, db), a, t,
+                                       _fitted(fitters, a, vals, True))
                 else:
-                    _drive_input(cmds, (da, db), a, t, smp(a, t))
+                    _drive_input(cmds, (da, db), a, t,
+                                 _fitted(fitters, a, smp(a, t)))
             pa, pb = pts(sa), pts(sb)
             for i in range(min(len(pa), len(pb))):
                 maxerr = max(maxerr, abs(pa[i] - pb[i]))
@@ -2511,9 +2700,10 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
         jb = chain("cmpIk_" + name)
         hb = cmds.ikHandle(sj=jb[0], ee=jb[-1], sol=sb)[0]
 
-        rest   = ws(ja)
-        maxerr = 0.0
-        moved  = False
+        rest    = ws(ja)
+        maxerr  = 0.0
+        moved   = False
+        fitters = _input_fitters(cmds, (sa, sb), IN_META)
         for _ in range(8):
             goal = (random.uniform(2.0, 9.0), random.uniform(-4.0, 4.0),
                     random.uniform(-4.0, 4.0))
@@ -2525,11 +2715,13 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
                     continue  # string/geo input: left at default (identical both)
                 enum_n = len(ENUM.get(a, [])) or 2
                 if m.get("is_array"):
+                    vals = _array_values(t, K_ARR, random, enum_n)
                     _drive_array_input(cmds, (sa, sb), a, t,
-                                       _array_values(t, K_ARR, random, enum_n))
+                                       _fitted(fitters, a, vals, True))
                 else:
                     _drive_input(cmds, (sa, sb), a, t,
-                                 _elem_value(t, random, enum_n))
+                                 _fitted(fitters, a,
+                                         _elem_value(t, random, enum_n)))
             pa, pb = ws(ja), ws(jb)
             for i in range(min(len(pa), len(pb))):
                 maxerr = max(maxerr, abs(pa[i] - pb[i]))
@@ -2726,6 +2918,9 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
     carry_state          = _has_carry_state(spec)
     noncomparable_drives = 0
     raised_drives        = 0
+    # Picked inside each input's range, so the recorded set (replayed below)
+    # is one both nodes accept.
+    fitters = _input_fitters(cmds, (orig, comp), IN_META)
     for _ in range(30):
         drive = {}
         for a, m in IN_META.items():
@@ -2733,10 +2928,11 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
             if t in _NON_DRIVEABLE_IN or t in _GEO_IN_TYPES:
                 continue  # string peeled; geo already wired to an upstream shape
             if m.get("is_array"):
-                drive[a] = (t, True, _array_values(t, K_ARR, random,
-                                                   len(ENUM.get(a, [])) or 2))
+                vals = _array_values(t, K_ARR, random,
+                                     len(ENUM.get(a, [])) or 2)
+                drive[a] = (t, True, _fitted(fitters, a, vals, True))
             else:
-                drive[a] = (t, False, smp(t, a))
+                drive[a] = (t, False, _fitted(fitters, a, smp(t, a)))
         _apply_drive(cmds, (orig, comp), drive)
         if _reference_raised(cmds, orig, OUT_META):
             # The reference could not compute this input set at all; its
@@ -3075,7 +3271,14 @@ def _drive_geo_inputs(cmds, nodes, inputs, roles, cfg, random, fixtures=None):
     Scalars prefer their declared default; arrays get a role-seeded valid set;
     ``time`` inputs drive the shared timeline (a time plug may be auto-connected
     to time1 on the Python original -- currentTime drives that, setAttr the
-    unconnected compiled plug)."""
+    unconnected compiled plug).
+
+    Every value lands inside the input's range (:func:`_drive_fitter`): a
+    default perturbed by ``0.25 * cfg`` ran past Mesh Maze's solutionLength
+    maximum of 1 on cfg 3, and the setAttr error stopped the whole geo verify.
+    A unit type's scalar is picked in INTERNAL units, as its declared default
+    is, and converted to the UI units setAttr reads."""
+    fitters = _input_fitters(cmds, nodes, inputs)
     for nm, meta in inputs.items():
         t = meta.get("type")
         if t in _GEO_IN_TYPES:
@@ -3088,7 +3291,8 @@ def _drive_geo_inputs(cmds, nodes, inputs, roles, cfg, random, fixtures=None):
                             rewire=True)
             continue
         if meta.get("is_array"):
-            vals = _geo_array_value(roles.get(nm), t, cfg)
+            vals = _fitted(fitters, nm, _geo_array_value(roles.get(nm), t, cfg),
+                           True)
             for nd in nodes:
                 dt = _packed_dt(cmds, nd, nm)
                 if dt:
@@ -3109,6 +3313,7 @@ def _drive_geo_inputs(cmds, nodes, inputs, roles, cfg, random, fixtures=None):
         v = _geo_scalar_value(meta, t, cfg, random, roles.get(nm))
         if t == "string" and fixtures and nm in fixtures:
             v = fixtures[nm]      # a generated file both nodes read
+        v = _fitted(fitters, nm, _to_ui_units(cmds, t, v))
         if t == "time":
             cmds.currentTime(v)
             for nd in nodes:

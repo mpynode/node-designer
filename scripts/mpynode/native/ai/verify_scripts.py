@@ -14,6 +14,87 @@ from mpynode.native import compiler as codegen
 from mpynode.native.toolchain import toolchain
 
 
+# Every input the deformer / IK / scalar scripts pick is fitted inside the
+# attr's declared range before it is set. setAttr refuses a value past a hard
+# min or max (the generic verify stopped on Mesh Maze's solutionLength, max 1),
+# and a soft range, where present, is the span the attr is meant for.
+# attributeQuery reports both in the UI units setAttr reads, so a unit type
+# (doubleAngle, doubleLinear) needs no conversion here. The same text goes into
+# each script so it stays standalone; the harness twin is
+# native.toolchain.verify._drive_fitter.
+_FIT_HELPERS = r'''# Every pick lands inside its attr's range: see _fit.
+_RANGED = ("double", "float", "long", "short", "doubleAngle", "doubleLinear")
+_RANGED_COMPOUNDS = ("double3", "euler", "position", "color", "float2")
+_BOUNDS = (("minExists", "minimum", max),
+           ("maxExists", "maximum", min),
+           ("softMinExists", "softMin", max),
+           ("softMaxExists", "softMax", min))
+
+
+def _range(nodes, attr):
+    # The tightest hard bound any node declares, narrowed by a soft range
+    # unless the soft range contradicts it. Either end may be None.
+    b = [None, None, None, None]
+    for nd in nodes:
+        for i, (has, get, pick) in enumerate(_BOUNDS):
+            try:
+                if not cmds.attributeQuery(attr, node=nd, **{has: True}):
+                    continue
+                v = float(cmds.attributeQuery(attr, node=nd, **{get: True})[0])
+            except Exception:
+                continue
+            b[i] = v if b[i] is None else pick(b[i], v)
+    lo = b[0] if b[2] is None else (b[2] if b[0] is None else max(b[0], b[2]))
+    hi = b[1] if b[3] is None else (b[3] if b[1] is None else min(b[1], b[3]))
+    if lo is not None and hi is not None and lo > hi:
+        return b[0], b[1]
+    return lo, hi
+
+
+def _fold(v, lo, hi):
+    # A value inside comes back untouched; one outside is reflected off the
+    # bound it crossed, so out-of-range picks spread over the range.
+    if (lo is None or v >= lo) and (hi is None or v <= hi):
+        return v
+    if lo is not None and hi is not None:
+        if hi <= lo:
+            return lo
+        span = hi - lo
+        r = (v - lo) % (2 * span)
+        return lo + (r if r <= span else 2 * span - r)
+    if lo is not None:
+        return 2 * lo - v
+    return 2 * hi - v
+
+
+def _fit(nodes, attr, t, v):
+    # v inside attr's range on every node that has attr; a numeric compound
+    # is fitted one child at a time.
+    nodes = [n for n in nodes if n and cmds.objExists(n + "." + attr)]
+    if t in _RANGED_COMPOUNDS and isinstance(v, (list, tuple)):
+        kids = []
+        for nd in nodes:
+            kids = cmds.attributeQuery(attr, node=nd, listChildren=True) or []
+            if kids:
+                break
+        if len(kids) != len(v):
+            return v
+        return [_fold(x, *_range(nodes, k)) for x, k in zip(v, kids)]
+    if t not in _RANGED or isinstance(v, bool):
+        return v
+    if not isinstance(v, (int, float)):
+        return v
+    lo, hi = _range(nodes, attr)
+    if t in ("long", "short"):
+        lo = None if lo is None else math.ceil(lo)
+        hi = None if hi is None else math.floor(hi)
+        return int(round(_fold(v, lo, hi)))
+    return _fold(v, lo, hi)
+
+
+'''
+
+
 def _verify_script(spec: dict) -> str:
     """A Maya-side equivalence check: compiled node vs original mPyNode.
 
@@ -90,7 +171,7 @@ def _verify_script_deformer(spec: dict) -> str:
         "deformer to the other, then compares object-space points over random\n"
         "envelope/input samples.\n"
         '"""\n'
-        "import os, random\n"
+        "import os, math, random\n"
         "import maya.cmds as cmds\n\n"
         'BUNDLE = os.path.join(os.path.dirname(__file__), ' + repr(name + toolchain.plugin_ext()) + ")\n"
         "NODE_TYPE = " + repr(name) + "\n"
@@ -159,7 +240,7 @@ def run(samples=12):
         cmds.setAttr(src_d + ".envelope", env)
         cmds.setAttr(cmp_d + ".envelope", env)
         for a, t in USER_INPUTS.items():
-            v = _sample(t)
+            v = _fit((src_d, cmp_d), a, t, _sample(t))
             if cmds.objExists(src_d + "." + a):
                 _set(src_d, a, t, v)
             if cmds.objExists(cmp_d + "." + a):
@@ -182,7 +263,7 @@ def run(samples=12):
 if __name__ == "__main__":
     run()
 '''
-    return consts + body
+    return consts + _FIT_HELPERS + body
 
 
 def _verify_script_iksolver(spec: dict) -> str:
@@ -303,7 +384,8 @@ def run(samples=8):
         for h in (src_h, cmp_h):
             cmds.xform(h, ws=True, t=goal)
         for a, t in SCALAR_INPUTS.items():
-            v = _sample(t, ENUM_FIELDS.get(a, []))
+            v = _fit((src_solver, cmp_solver), a, t,
+                     _sample(t, ENUM_FIELDS.get(a, [])))
             _set(src_solver, a, v)
             _set(cmp_solver, a, v)
         cmds.refresh(force=True)
@@ -322,7 +404,7 @@ def run(samples=8):
 if __name__ == "__main__":
     run()
 '''
-    return consts + body
+    return consts + _FIT_HELPERS + body
 
 
 def _verify_script_scalar(spec: dict) -> str:
@@ -334,7 +416,7 @@ def _verify_script_scalar(spec: dict) -> str:
         '"""Equivalence check: compiled native node vs the original mPyNode.\n'
         "Run in Maya. Loads the .bundle, samples inputs, compares outputs.\n"
         '"""\n'
-        "import os, random\n"
+        "import os, math, random\n"
         "import maya.cmds as cmds\n\n"
         'BUNDLE = os.path.join(os.path.dirname(__file__), ' + repr(name + toolchain.plugin_ext()) + ")\n"
         "NODE_TYPE = " + repr(name) + "\n"
@@ -387,7 +469,7 @@ def run(samples=20):
     compared = 0
     for _ in range(samples):
         for a, t in INPUTS.items():
-            v = _sample(t)
+            v = _fit((comp, SOURCE), a, t, _sample(t))
             _set(comp, a, t, v)
             if cmds.objExists(SOURCE + "." + a):
                 _set(SOURCE, a, t, v)
@@ -421,4 +503,4 @@ def run(samples=20):
 if __name__ == "__main__":
     run()
 '''
-    return consts + body
+    return consts + _FIT_HELPERS + body
