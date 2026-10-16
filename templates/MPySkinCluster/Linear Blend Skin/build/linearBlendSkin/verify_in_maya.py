@@ -1,168 +1,34 @@
 """Equivalence check: compiled native DEFORMER vs the original mPy deformer.
-Run in Maya. Builds two identical spheres, applies the original mPy
-deformer (expression copied from the source) to one and the compiled
-deformer to the other, then compares object-space points over random
-envelope/input samples.
+Run in Maya. Runs the compile pipeline's own parity check,
+mpynode.native.toolchain.verify._verify_one, on the spec embedded
+below: it rebuilds the Python original, builds the compiled node,
+drives identical inputs on both, and compares
+the deformed points.
+It opens a new scene (file new, force) before it drives the nodes:
+save your work first.
 """
-import os, math, random
+import os, json
 import maya.cmds as cmds
 
-BUNDLE      = os.path.join(os.path.dirname(__file__), 'linearBlendSkin.mll')
-NODE_TYPE   = 'linearBlendSkin'
-SRC_TYPE    = 'mPySkinCluster'
-COMPUTE     = "# ----------------------------------------------------------------------\n# mPySkinCluster -- default Compute source: linear blend skinning (LBS)\n#\n# The skinning math is the blessed API method self.linear_blend(rest,\n# weights, joint, bind). Every operand is passed EXPLICITLY -- the method reads\n# nothing off self -- so the plug dependencies are visible right here. They are\n# the same plugs Maya's Component Editor / Paint Skin Weights / skinPercent edit:\n#   self.weightList     -> dense (N, J) per-vertex, per-influence weights\n#   self.matrix         -> (J, 4, 4) live joint WORLD matrices\n#   self.bindPreMatrix  -> (J, 4, 4) joint bind-pose inverse matrices\n# It blends M_j = bindPreMatrix_j @ jointWorld_j linearly (identity at the bind\n# pose, so the mesh stays at rest until a joint moves) and returns the deformed\n# object-space points (N, 3); the envelope + write stay here so partial-effect\n# composition is explicit.\n#\n# self.outputGeometry[0] is the writable mesh handle (object space). It holds a\n# copy of the input geometry, so getPoints() == rest and setPoints() commits the\n# deform. A deformer cannot change topology -- setPoints must keep the same N.\n# ----------------------------------------------------------------------\n\nmesh = self.outputGeometry[0]\nrest = mesh.getPoints()                         # (N, 3) object-space rest points\n\n# Linear blend skinning of the rest points (envelope=0 rest, 1 fully skinned).\nmesh.setPoints(rest + float(self.envelope) * (\n    self.linear_blend(rest, self.weightList, self.matrix, self.bindPreMatrix)\n    - rest))\n"
-INIT        = 'import numpy as np\n'
-USER_INPUTS = {}
-IS_SKIN     = True
-TOL         = 1e-3
+BUNDLE = os.path.join(os.path.dirname(__file__), 'linearBlendSkin.mll')
+SPEC   = json.loads('{"schema_version": 1, "source_node": "linearBlendSkin", "mpy_type": "mPySkinCluster", "suggested": {"node_type_name": "linearBlendSkin", "class_name": "LinearBlendSkin", "type_id": "0x00073d49", "mpx_base": "MPxSkinCluster", "note": "custom skinning", "heaviness": "hard"}, "inputs": {}, "outputs": {}, "variables": {}, "compute": "# ----------------------------------------------------------------------\\n# mPySkinCluster -- default Compute source: linear blend skinning (LBS)\\n#\\n# The skinning math is the blessed API method self.linear_blend(rest,\\n# weights, joint, bind). Every operand is passed EXPLICITLY -- the method reads\\n# nothing off self -- so the plug dependencies are visible right here. They are\\n# the same plugs Maya\'s Component Editor / Paint Skin Weights / skinPercent edit:\\n#   self.weightList     -> dense (N, J) per-vertex, per-influence weights\\n#   self.matrix         -> (J, 4, 4) live joint WORLD matrices\\n#   self.bindPreMatrix  -> (J, 4, 4) joint bind-pose inverse matrices\\n# It blends M_j = bindPreMatrix_j @ jointWorld_j linearly (identity at the bind\\n# pose, so the mesh stays at rest until a joint moves) and returns the deformed\\n# object-space points (N, 3); the envelope + write stay here so partial-effect\\n# composition is explicit.\\n#\\n# self.outputGeometry[0] is the writable mesh handle (object space). It holds a\\n# copy of the input geometry, so getPoints() == rest and setPoints() commits the\\n# deform. A deformer cannot change topology -- setPoints must keep the same N.\\n# ----------------------------------------------------------------------\\n\\nmesh = self.outputGeometry[0]\\nrest = mesh.getPoints()                         # (N, 3) object-space rest points\\n\\n# Linear blend skinning of the rest points (envelope=0 rest, 1 fully skinned).\\nmesh.setPoints(rest + float(self.envelope) * (\\n    self.linear_blend(rest, self.weightList, self.matrix, self.bindPreMatrix)\\n    - rest))\\n", "init": "import numpy as np\\n", "affects": "all", "methods": "@maya_test(label=\\"Skin deforms the arm; envelope 0 is rest; result is finite\\", digits=3)\\ndef test_skin(self):\\n    \\"\\"\\"Validate the node\'s INTENT (the SAME test passes on the interpreted node\\n    and its C++ compile -> parity, and on BOTH the linear-blend and dual-\\n    quaternion skin templates since it only asserts mode-agnostic skinning):\\n    a weighted two-joint bind actually deforms the mesh, the deform stays\\n    finite, and envelope 0 returns the mesh to its exact rest regardless of the\\n    joint pose.\\"\\"\\"\\n    from maya import cmds as mc\\n    import numpy as np\\n    import maya.api.OpenMaya as om2\\n    from mpynode._common.methods.test_helpers import assert_close, assert_true\\n\\n    name = self.get_name()\\n\\n    def _pts(shape):\\n        sl = om2.MSelectionList(); sl.add(shape)\\n        fn = om2.MFnMesh(sl.getDagPath(0))\\n        return np.array([[p.x, p.y, p.z]\\n                         for p in fn.getPoints(om2.MSpace.kObject)])\\n\\n    def _set(plug, *vals):\\n        # A demo/build may have CONNECTED this plug (keyframe/anim); break the\\n        # incoming connection first so the test can drive it, then set.\\n        for s in (mc.listConnections(plug, s=True, d=False, plugs=True) or []):\\n            mc.disconnectAttr(s, plug)\\n        mc.setAttr(plug, *vals)\\n\\n    def _read_env(shape, env):\\n        # Force a fresh eval of THIS deformer at the given envelope.\\n        _set(name + \\".envelope\\", env)\\n        mc.dgdirty(name + \\".outputGeometry\\")\\n        mc.getAttr(shape + \\".outMesh\\")\\n        return _pts(shape)\\n\\n    # Validate whatever mesh this skinCluster ALREADY deforms (the demo\'s arm, or\\n    # the cylinder create/build bound). A skinCluster already bound to one mesh\\n    # will NOT deform a second mesh (that is the interactive \\"max move 0.0000\\"\\n    # bug), so only build a fresh rig when self is unbound. This keeps the test on\\n    # self -- interpreted-vs-compiled parity -- and robust to a live,\\n    # demo-populated scene and to being run twice.\\n    try:\\n        bound = mc.skinCluster(name, q=True, geometry=True) or []\\n    except Exception:\\n        bound = []\\n\\n    if bound:\\n        shape = (mc.ls(bound[0], long=True) or [bound[0]])[0]\\n        # envelope 0 -> exact rest (skin bypassed); envelope 1 -> the deform at\\n        # whatever pose the joints currently hold (the demo posed the elbow).\\n        rest = _read_env(shape, 0.0)\\n        posed = _read_env(shape, 1.0)\\n        # Safety net: if the joints happen to sit at bind pose (nothing to\\n        # deform), bend the first influence to force a real deform, then re-read.\\n        if float(np.abs(posed - rest).max()) <= 0.1:\\n            infl = mc.skinCluster(name, q=True, influence=True) or []\\n            if infl:\\n                _set(infl[0] + \\".rotateZ\\", 45.0)\\n            posed = _read_env(shape, 1.0)\\n    else:\\n        # --- self drives nothing yet: build a fresh cylinder + 2-joint rig -----\\n        cyl = mc.polyCylinder(name=\\"skinTestArm#\\", radius=1.0, height=6.0,\\n                              subdivisionsX=10, subdivisionsY=10)[0]\\n        shape = mc.listRelatives(cyl, shapes=True, fullPath=True)[0]\\n        mc.select(clear=True)\\n        j0 = mc.joint(name=\\"skinTestBase#\\", position=(0.0, -3.0, 0.0))\\n        j1 = mc.joint(name=\\"skinTestMid#\\", position=(0.0, 0.0, 0.0))\\n        mc.select(clear=True)\\n        # Read rest heights BEFORE attaching (querying an attached, unpainted\\n        # skin would trigger the 0.5/0.5 first-eval lock-in), then paint weights.\\n        nvc = mc.polyEvaluate(cyl, vertex=True)\\n        ys = [mc.xform(\\"%s.vtx[%d]\\" % (cyl, v), q=True, os=True, t=True)[1] for v in range(nvc)]\\n        lo, hi = min(ys), max(ys)\\n        span = (hi - lo) or 1.0\\n        mc.deformer(name, e=True, g=cyl)\\n        for i, jnt in enumerate((j0, j1)):\\n            mc.connectAttr(jnt + \\".worldMatrix[0]\\", \\"%s.matrix[%d]\\" % (name, i), force=True)\\n            inv = mc.getAttr(jnt + \\".worldInverseMatrix[0]\\")\\n            mc.setAttr(\\"%s.bindPreMatrix[%d]\\" % (name, i), inv, type=\\"matrix\\")\\n        # Weights BEFORE the first eval (a kSkinCluster locks 0.5/0.5 otherwise).\\n        for v in range(nvc):\\n            t = (ys[v] - lo) / span\\n            mc.setAttr(\\"%s.weightList[%d].weights[0]\\" % (name, v), 1.0 - t)\\n            mc.setAttr(\\"%s.weightList[%d].weights[1]\\" % (name, v), t)\\n        rest = _read_env(shape, 0.0)     # envelope 0 -> exact rest\\n        _set(j1 + \\".rotateZ\\", 60.0)      # bend the elbow\\n        posed = _read_env(shape, 1.0)    # envelope 1 + bent elbow -> real deform\\n\\n    assert_true(np.isfinite(posed).all(), \\"skinned points must be finite\\")\\n    moved = float(np.abs(posed - rest).max())\\n    assert_true(moved > 0.1,\\n                \\"a bent, weighted bind must deform the mesh (max move %.4f)\\" % moved)\\n\\n    # envelope 0 at the current (bent) pose must still return to rest (skin off).\\n    env0_posed = _read_env(shape, 0.0)\\n    assert_close(env0_posed.ravel().tolist(), rest.ravel().tolist())\\n\\n\\n@maya_demo(label=\\"Skin a Two-Bone Arm (LBS)\\")\\ndef demo(self):\\n    \\"\\"\\"Import the bundled two-bone arm, extract the stock skinCluster\'s weights,\\n    detach it, and re-skin the SAME mesh with THIS mPySkinCluster running linear\\n    blend skinning -- reproducing the original deform from the extracted weights.\\n    Keyframes the elbow through a bend arc (on rotateY, the arm\'s hinge axis) so\\n    playing the timeline swings the arm. Falls back to a simple 2-joint cylinder\\n    if the bundled arm.ma is unavailable.\\"\\"\\"\\n    from maya import cmds as mc\\n    import os\\n    name = self.get_name()\\n\\n    def _mobj1(n):\\n        import maya.OpenMaya as om1\\n        sl = om1.MSelectionList(); sl.add(n)\\n        o = om1.MObject(); sl.getDependNode(0, o); return o\\n\\n    def _dag1(n):\\n        import maya.OpenMaya as om1\\n        sl = om1.MSelectionList(); sl.add(n)\\n        dp = om1.MDagPath(); sl.getDagPath(0, dp); return dp\\n\\n    def _extract(sc, mesh_shape):\\n        import maya.OpenMaya as om1\\n        import maya.OpenMayaAnim as oma1\\n        mfn = oma1.MFnSkinCluster(_mobj1(sc))\\n        infl = om1.MDagPathArray(); mfn.influenceObjects(infl)\\n        names = [infl[i].fullPathName() for i in range(infl.length())]\\n        comp_fn = om1.MFnSingleIndexedComponent()\\n        comp = comp_fn.create(om1.MFn.kMeshVertComponent)\\n        nv = mc.polyEvaluate(mesh_shape, vertex=True)\\n        comp_fn.setCompleteData(nv)\\n        wts = om1.MDoubleArray()\\n        su = om1.MScriptUtil(); su.createFromInt(0); p = su.asUintPtr()\\n        mfn.getWeights(_dag1(mesh_shape), comp, wts, p)\\n        ninf = om1.MScriptUtil.getUint(p)\\n        W = [[wts[v * ninf + c] for c in range(ninf)] for v in range(nv)]\\n        bind = {}\\n        for cc in (mc.getAttr(sc + \\".bindPreMatrix\\", multiIndices=True) or []):\\n            bind[cc] = mc.getAttr(sc + \\".bindPreMatrix[%d]\\" % cc)\\n        return names, W, nv, ninf, bind\\n\\n    # --- locate + import the bundled two-bone arm --------------------------\\n    arm = None\\n    try:\\n        from mpynode._common.util.template_gallery import _bundled_templates_root\\n        root = _bundled_templates_root()\\n        cand = os.path.join(root or \\"\\", \\"MPyNode\\", \\"Ouch\\", \\"arm.ma\\")\\n        if os.path.isfile(cand):\\n            arm = cand\\n    except Exception:\\n        arm = None\\n\\n    if arm:\\n        new = mc.file(arm, i=True, ignoreVersion=True, returnNewNodes=True) or []\\n        skins = mc.ls(new, type=\\"skinCluster\\") or []\\n        joints = mc.ls(new, type=\\"joint\\", long=True) or []\\n        meshes = [m for m in (mc.ls(new, type=\\"mesh\\", long=True) or [])\\n                  if not mc.getAttr(m + \\".intermediateObject\\")]\\n        if skins and meshes:\\n            sc = skins[0]\\n            mesh_shape = meshes[0]\\n            mesh_xform = mc.listRelatives(mesh_shape, parent=True, fullPath=True)[0]\\n            elbow = (next((j for j in joints\\n                           if j.rsplit(\\"|\\", 1)[-1] == \\"loarm_r_JNT\\"), None)\\n                     or next((j for j in joints if \\"loarm\\" in j), None))\\n            influences, W, nv, ninf, bind = _extract(sc, mesh_shape)\\n            # Detach the stock skin -> the mesh reverts to its exact rest.\\n            mc.skinCluster(sc, e=True, unbind=True)\\n            # Attach THIS node to the mesh + wire the joints (worldMatrix ->\\n            # matrix[i], byte-exact bindPreMatrix from the stock).\\n            if name not in (mc.listHistory(mesh_xform) or []):\\n                mc.deformer(name, e=True, g=mesh_xform)\\n            for i, jnt in enumerate(influences):\\n                mc.connectAttr(jnt + \\".worldMatrix[0]\\",\\n                               \\"%s.matrix[%d]\\" % (name, i), force=True)\\n                if i in bind:\\n                    mc.setAttr(\\"%s.bindPreMatrix[%d]\\" % (name, i), bind[i], type=\\"matrix\\")\\n            # Apply the extracted weights BEFORE the first eval (a kSkinCluster\\n            # locks a 0.5/0.5 default on first eval, then resists setAttr).\\n            for v in range(nv):\\n                for c in range(ninf):\\n                    mc.setAttr(\\"%s.weightList[%d].weights[%d]\\" % (name, v, c), float(W[v][c]))\\n            # Keyframe the elbow through a bend arc so PLAYING the timeline\\n            # swings the arm. The arm hinges on rotateY (rotateX is twist);\\n            # it rests at the bent frame so the deform shows the moment it opens.\\n            if elbow:\\n                for ax in (\\"rotateX\\", \\"rotateY\\", \\"rotateZ\\"):\\n                    for s in (mc.listConnections(elbow + \\".\\" + ax, s=True,\\n                                                 d=False, plugs=True) or []):\\n                        mc.disconnectAttr(s, elbow + \\".\\" + ax)\\n                    mc.setAttr(elbow + \\".\\" + ax, lock=False)\\n                for f, ry in ((1, 0.0), (60, 60.0), (120, 0.0)):\\n                    mc.setKeyframe(elbow + \\".rotateY\\", time=f, value=ry)\\n                mc.playbackOptions(min=1, max=120)\\n                mc.currentTime(60)\\n            try:\\n                mc.select(mesh_xform, replace=True)\\n                # This branch IMPORTED arm.ma -- frame the WHOLE scene so the\\n                # imported rig can never land off screen.\\n                for _panel in mc.getPanel(type=\\"modelPanel\\") or []:\\n                    _cam = mc.modelEditor(_panel, query=True, camera=True)\\n                    if _cam:\\n                        mc.viewFit(_cam, allObjects=True)\\n            except Exception:\\n                pass\\n            return name\\n\\n    # --- fallback: a subdivided cylinder + 2-joint chain ------------------\\n    cyl = mc.polyCylinder(name=\\"lbsArm#\\", radius=1.0, height=6.0,\\n                          subdivisionsX=12, subdivisionsY=10)[0]\\n    mc.select(clear=True)\\n    j0 = mc.joint(name=\\"lbsBase#\\", position=(0.0, -3.0, 0.0))\\n    j1 = mc.joint(name=\\"lbsMid#\\", position=(0.0, 0.0, 0.0))\\n    mc.select(clear=True)\\n    # Read rest heights BEFORE attaching the deformer (querying an attached,\\n    # unpainted skin would trigger the 0.5/0.5 lock-in on first eval).\\n    nvc = mc.polyEvaluate(cyl, vertex=True)\\n    ys = [mc.xform(\\"%s.vtx[%d]\\" % (cyl, v), q=True, os=True, t=True)[1] for v in range(nvc)]\\n    lo, hi = min(ys), max(ys)\\n    span = (hi - lo) or 1.0\\n    if name not in (mc.listHistory(cyl) or []):\\n        mc.deformer(name, e=True, g=cyl)\\n    for i, jnt in enumerate((j0, j1)):\\n        mc.connectAttr(jnt + \\".worldMatrix[0]\\", \\"%s.matrix[%d]\\" % (name, i), force=True)\\n        inv = mc.getAttr(jnt + \\".worldInverseMatrix[0]\\")\\n        mc.setAttr(\\"%s.bindPreMatrix[%d]\\" % (name, i), inv, type=\\"matrix\\")\\n    for v in range(nvc):\\n        t = (ys[v] - lo) / span\\n        mc.setAttr(\\"%s.weightList[%d].weights[0]\\" % (name, v), 1.0 - t)\\n        mc.setAttr(\\"%s.weightList[%d].weights[1]\\" % (name, v), t)\\n    # Keyframe a bend arc (the fallback cylinder runs up Y, so it hinges on\\n    # rotateZ; the real arm branch above hinges on rotateY).\\n    for f, rz in ((1, 0.0), (60, 60.0), (120, 0.0)):\\n        mc.setKeyframe(j1 + \\".rotateZ\\", time=f, value=rz)\\n    mc.playbackOptions(min=1, max=120)\\n    mc.currentTime(60)\\n    try:\\n        mc.select(cyl, replace=True)\\n        for _panel in mc.getPanel(type=\\"modelPanel\\") or []:\\n            _cam = mc.modelEditor(_panel, query=True, camera=True)\\n            if _cam:\\n                mc.viewFit(_cam, allObjects=True)\\n    except Exception:\\n        pass\\n    return name\\n\\n\\n\\"\\"\\"Setup source for mPySkinCluster nodes (self-first instance method).\\"\\"\\"\\n\\n# Also this node\'s CREATE command -- cmds.<compiledType>(joints..., mesh), the\\n# skinCluster shape. Un-named because this file is shared by every node of the\\n# type -- see maya_command.resolve_create_command_names.\\n#\\n# Do NOT \\"modernise\\" the signature to (self, selection=None, ...): the body reads\\n# kwargs.get(\\"selection\\"), and a named parameter would swallow it, leaving\\n# _selection() to fall back to the live selection -- which createNode has already\\n# replaced with the new node.\\n#\\n# VANILLA: this body ships as EMBEDDED PYTHON inside a compiled .mll and must run\\n# on a machine with Maya but WITHOUT mpynode. The setup_helpers it used to import\\n# (_selection, _joints, _meshes, SetupError) are inlined below, and so is\\n# MPySkinCluster._wire_joints -- create_command_blockers deliberately ALLOWS that\\n# pure-cmds @staticmethod (it binds a compiled skinCluster correctly), so the\\n# command was NOT dropped: the wrappers import shipped with it and blew up at\\n# command-run time. The helpers are FUNCTION-LOCAL rather than module-level\\n# because node_setups.merge_type_default APPENDS this file to the host node\'s own\\n# methods source -- a module-level def would clobber a same-named helper the host\\n# already defines.\\n@maya_command(creates=True)\\ndef setup(self, *args, **kwargs):\\n    from maya import cmds as mc\\n\\n    class SetupError(Exception):\\n        \\"\\"\\"The current selection / scene state can\'t support setup for this node.\\n        Message is user-facing (it names what to select).\\"\\"\\"\\n\\n    def _selection(override=None, exclude=None):\\n        \\"\\"\\"Inputs for setup: `override` (the snapshot \\"Run setup\\" passes) wins\\n        over the live selection; `exclude` drops this node so it is never its\\n        own input.\\"\\"\\"\\n        sel = list(override) if override is not None else (\\n            mc.ls(selection=True, long=False) or [])\\n        return [n for n in sel if n != exclude] if exclude else sel\\n\\n    def _joints(sel):\\n        return [n for n in sel if mc.nodeType(n) == \\"joint\\"]\\n\\n    def _meshes(sel):\\n        out = []\\n        for n in sel:\\n            if mc.nodeType(n) == \\"mesh\\" or mc.listRelatives(\\n                    n, shapes=True, type=\\"mesh\\", noIntermediate=True):\\n                out.append(n)\\n        return out\\n\\n    def _wire_joints(sc_name, joints):\\n        \\"\\"\\"Connect each joint\'s worldMatrix into matrix[i] and seed\\n        bindPreMatrix[i] from worldInverseMatrix at the current pose.\\n        Equivalent to the standard skinCluster bind setup. Vendored verbatim\\n        from wrappers.mpy_skin_cluster.MPySkinCluster._wire_joints, which is a\\n        pure maya.cmds @staticmethod -- importing it would drag mpynode into a\\n        compiled bundle.\\"\\"\\"\\n        for i, jnt in enumerate(joints):\\n            mc.connectAttr(\\n                jnt + \\".worldMatrix[0]\\",\\n                f\\"{sc_name}.matrix[{i}]\\",\\n                force=True,\\n            )\\n            # Seed bindPreMatrix from the joint\'s inverse world matrix\\n            # at bind time.\\n            inv = mc.getAttr(jnt + \\".worldInverseMatrix[0]\\")\\n            mc.setAttr(f\\"{sc_name}.bindPreMatrix[{i}]\\", inv, type=\\"matrix\\")\\n\\n    name = self.get_name()\\n    sel = _selection(override=kwargs.get(\\"selection\\"), exclude=name)\\n    joints = _joints(sel); meshes = _meshes(sel)\\n    if not joints or not meshes:\\n        raise SetupError(\\"select one or more influence joints AND a mesh to bind \\"\\n                         \\"%s\\" % self.NATIVE_TYPE)\\n    mesh = meshes[-1]\\n    # S4 idempotency: \\"Run setup\\" is re-runnable -- only adopt the mesh if this\\n    # skinCluster is not already in its history.\\n    if name not in (mc.listHistory(mesh) or []):\\n        mc.deformer(name, e=True, g=mesh)   # adopt the pre-built bare self\\n    # The canonical joint wiring (connectAttr force=True + bindPreMatrix).\\n    _wire_joints(name, joints)\\n    return name\\n", "commands": [{"name": "linearBlendSkin", "name_explicit": false, "func_name": "setup", "undoable": true, "creates": true, "is_factory": false, "is_static": false, "params": [], "body_src": "@maya_command(creates=True)\\ndef setup(self, *args, **kwargs):\\n    from maya import cmds as mc\\n\\n    class SetupError(Exception):\\n        \\"\\"\\"The current selection / scene state can\'t support setup for this node.\\n        Message is user-facing (it names what to select).\\"\\"\\"\\n\\n    def _selection(override=None, exclude=None):\\n        \\"\\"\\"Inputs for setup: `override` (the snapshot \\"Run setup\\" passes) wins\\n        over the live selection; `exclude` drops this node so it is never its\\n        own input.\\"\\"\\"\\n        sel = list(override) if override is not None else (\\n            mc.ls(selection=True, long=False) or [])\\n        return [n for n in sel if n != exclude] if exclude else sel\\n\\n    def _joints(sel):\\n        return [n for n in sel if mc.nodeType(n) == \\"joint\\"]\\n\\n    def _meshes(sel):\\n        out = []\\n        for n in sel:\\n            if mc.nodeType(n) == \\"mesh\\" or mc.listRelatives(\\n                    n, shapes=True, type=\\"mesh\\", noIntermediate=True):\\n                out.append(n)\\n        return out\\n\\n    def _wire_joints(sc_name, joints):\\n        \\"\\"\\"Connect each joint\'s worldMatrix into matrix[i] and seed\\n        bindPreMatrix[i] from worldInverseMatrix at the current pose.\\n        Equivalent to the standard skinCluster bind setup. Vendored verbatim\\n        from wrappers.mpy_skin_cluster.MPySkinCluster._wire_joints, which is a\\n        pure maya.cmds @staticmethod -- importing it would drag mpynode into a\\n        compiled bundle.\\"\\"\\"\\n        for i, jnt in enumerate(joints):\\n            mc.connectAttr(\\n                jnt + \\".worldMatrix[0]\\",\\n                f\\"{sc_name}.matrix[{i}]\\",\\n                force=True,\\n            )\\n            # Seed bindPreMatrix from the joint\'s inverse world matrix\\n            # at bind time.\\n            inv = mc.getAttr(jnt + \\".worldInverseMatrix[0]\\")\\n            mc.setAttr(f\\"{sc_name}.bindPreMatrix[{i}]\\", inv, type=\\"matrix\\")\\n\\n    name = self.get_name()\\n    sel = _selection(override=kwargs.get(\\"selection\\"), exclude=name)\\n    joints = _joints(sel); meshes = _meshes(sel)\\n    if not joints or not meshes:\\n        raise SetupError(\\"select one or more influence joints AND a mesh to bind \\"\\n                         \\"%s\\" % self.NATIVE_TYPE)\\n    mesh = meshes[-1]\\n    # S4 idempotency: \\"Run setup\\" is re-runnable -- only adopt the mesh if this\\n    # skinCluster is not already in its history.\\n    if name not in (mc.listHistory(mesh) or []):\\n        mc.deformer(name, e=True, g=mesh)   # adopt the pre-built bare self\\n    # The canonical joint wiring (connectAttr force=True + bindPreMatrix).\\n    _wire_joints(name, joints)\\n    return name", "lineno": 269}], "portability": {"portable": true, "blockers": [], "warnings": ["uses numpy -- vectorized math is reverse-engineered to C++ loops (verify numerically; np.random maps to C++ <random>; file I/O lowers only where the dtype is explicit -- np.fromfile/np.save/.tofile and ndio.read/ndio.write -- while np.load/np.loadtxt are blockers)"], "unported": [], "reads_image_file": false, "reads_embedded_image": false, "uses_mesh_intersector": false}}')
 
 
-# Every pick lands inside its attr's range: see _fit.
-_RANGED           = ("double", "float", "long", "short", "doubleAngle", "doubleLinear")
-_RANGED_COMPOUNDS = ("double3", "euler", "position", "color", "float2")
-_BOUNDS = (("minExists", "minimum", max),
-           ("maxExists", "maximum", min),
-           ("softMinExists", "softMin", max),
-           ("softMaxExists", "softMax", min))
-
-
-def _range(nodes, attr):
-    # The tightest hard bound any node declares, narrowed by a soft range
-    # unless the soft range contradicts it. Either end may be None.
-    b = [None, None, None, None]
-    for nd in nodes:
-        for i, (has, get, pick) in enumerate(_BOUNDS):
-            try:
-                if not cmds.attributeQuery(attr, node=nd, **{has: True}):
-                    continue
-                v = float(cmds.attributeQuery(attr, node=nd, **{get: True})[0])
-            except Exception:
-                continue
-            b[i] = v if b[i] is None else pick(b[i], v)
-    lo = b[0] if b[2] is None else (b[2] if b[0] is None else max(b[0], b[2]))
-    hi = b[1] if b[3] is None else (b[3] if b[1] is None else min(b[1], b[3]))
-    if lo is not None and hi is not None and lo > hi:
-        return b[0], b[1]
-    return lo, hi
-
-
-def _fold(v, lo, hi):
-    # A value inside comes back untouched; one outside is reflected off the
-    # bound it crossed, so out-of-range picks spread over the range.
-    if (lo is None or v >= lo) and (hi is None or v <= hi):
-        return v
-    if lo is not None and hi is not None:
-        if hi <= lo:
-            return lo
-        span = hi - lo
-        r    = (v - lo) % (2 * span)
-        return lo + (r if r <= span else 2 * span - r)
-    if lo is not None:
-        return 2 * lo - v
-    return 2 * hi - v
-
-
-def _fit(nodes, attr, t, v):
-    # v inside attr's range on every node that has attr; a numeric compound
-    # is fitted one child at a time.
-    nodes = [n for n in nodes if n and cmds.objExists(n + "." + attr)]
-    if t in _RANGED_COMPOUNDS and isinstance(v, (list, tuple)):
-        kids = []
-        for nd in nodes:
-            kids = cmds.attributeQuery(attr, node=nd, listChildren=True) or []
-            if kids:
-                break
-        if len(kids) != len(v):
-            return v
-        return [_fold(x, *_range(nodes, k)) for x, k in zip(v, kids)]
-    if t not in _RANGED or isinstance(v, bool):
-        return v
-    if not isinstance(v, (int, float)):
-        return v
-    lo, hi = _range(nodes, attr)
-    if t in ("long", "short"):
-        lo = None if lo is None else math.ceil(lo)
-        hi = None if hi is None else math.floor(hi)
-        return int(round(_fold(v, lo, hi)))
-    return _fold(v, lo, hi)
-
-
-def _sample(t):
-    if t == "bool": return random.choice([0, 1])
-    if t == "long": return random.randint(-3, 3)
-    if t == "enum": return random.randint(0, 1)
-    if t in ("double3", "euler", "position"):
-        return [random.uniform(-2, 2) for _ in range(3)]
-    return random.uniform(-2, 2)
-
-
-def _set(node, attr, t, v):
-    if t in ("double3", "euler", "position"):
-        cmds.setAttr(node + "." + attr, v[0], v[1], v[2], type="double3")
-    else:
-        cmds.setAttr(node + "." + attr, v)
-
-
-def _pts(mesh):
-    return cmds.xform(mesh + ".vtx[*]", q=True, os=True, t=True)
-
-
-def _apply(deformer_type, configure):
-    tr = cmds.polySphere(r=1, sx=12, sy=12, ch=False)[0]
-    d  = cmds.deformer(tr, type=deformer_type)[0]
-    if configure:
-        configure(d)
-    return tr, d
-
-
-def run(samples=12):
+def run():
+    from mpynode.native.toolchain import verify as _cc
+    _cc._load_python_plugins(cmds)
     if not cmds.pluginInfo(os.path.basename(BUNDLE), q=True, loaded=True):
         cmds.loadPlugin(BUNDLE)
-    if IS_SKIN:
-        print("NOTE: skinCluster parity needs a bound influence set "
-              "(matrix[]/bindPreMatrix[]/weights). Without joints both nodes "
-              "are identity; wire a rig for a meaningful comparison.")
-
-    import mpynode
-
-    def cfg(node):
-        w = mpynode.wrap_node(node)
-        for nm, t in USER_INPUTS.items():
-            try:
-                w.add_input_attr(nm, t)
-            except Exception:
-                pass
-        if INIT.strip():
-            w.set_init_expression(INIT)
-        w.set_compute_expression(COMPUTE)
-
-    src_tr, src_d = _apply(SRC_TYPE, cfg)
-    cmp_tr, cmp_d = _apply(NODE_TYPE, None)
-
-    fails = 0
-    for _ in range(samples):
-        env = random.uniform(0.0, 1.0)
-        cmds.setAttr(src_d + ".envelope", env)
-        cmds.setAttr(cmp_d + ".envelope", env)
-        for a, t in USER_INPUTS.items():
-            v = _fit((src_d, cmp_d), a, t, _sample(t))
-            if cmds.objExists(src_d + "." + a):
-                _set(src_d, a, t, v)
-            if cmds.objExists(cmp_d + "." + a):
-                _set(cmp_d, a, t, v)
-        a_pts = _pts(src_tr)
-        b_pts = _pts(cmp_tr)
-        if len(a_pts) != len(b_pts):
-            print("VERTEX COUNT MISMATCH", len(a_pts), len(b_pts))
-            fails += 1
-            continue
-        for i in range(len(a_pts)):
-            if abs(a_pts[i] - b_pts[i]) > TOL:
-                print("MISMATCH coord", i, a_pts[i], "!=", b_pts[i])
-                fails += 1
-                break
-    print("VERIFY", "PASS" if not fails else ("FAIL " + str(fails)))
-    return fails == 0
+    row = _cc._verify_one(cmds, BUNDLE, SPEC)
+    print("VERIFY ROW", row)
+    if not row.get("ran"):
+        print("VERIFY SKIP (" + str(row.get("reason")) + ")")
+        return True
+    if row.get("pass"):
+        print("VERIFY PASS maxerr", row.get("maxerr"))
+        return True
+    print("VERIFY FAIL", row.get("reason"), row.get("maxerr"))
+    return False
 
 
 if __name__ == "__main__":

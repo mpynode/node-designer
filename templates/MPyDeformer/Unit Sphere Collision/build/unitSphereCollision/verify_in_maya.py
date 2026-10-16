@@ -1,168 +1,34 @@
 """Equivalence check: compiled native DEFORMER vs the original mPy deformer.
-Run in Maya. Builds two identical spheres, applies the original mPy
-deformer (expression copied from the source) to one and the compiled
-deformer to the other, then compares object-space points over random
-envelope/input samples.
+Run in Maya. Runs the compile pipeline's own parity check,
+mpynode.native.toolchain.verify._verify_one, on the spec embedded
+below: it rebuilds the Python original, builds the compiled node,
+drives identical inputs on both, and compares
+the deformed points.
+It opens a new scene (file new, force) before it drives the nodes:
+save your work first.
 """
-import os, math, random
+import os, json
 import maya.cmds as cmds
 
-BUNDLE      = os.path.join(os.path.dirname(__file__), 'unitSphereCollision.mll')
-NODE_TYPE   = 'unitSphereCollision'
-SRC_TYPE    = 'mPyDeformer'
-COMPUTE     = '# Unit-sphere collision deformer (accumulating "pusher" port). Every vertex\n# INSIDE the collider sphere is pushed onto its surface, and the pushed result\n# is kept in a persistent buffer (self.positions) so the deformation BAKES --\n# once the collider passes, the dent stays put (it does not spring back). The\n# collider is the UNIT sphere in the local space of the `pusher` matrix, so\n# wiring a sphere transform\'s worldMatrix into `pusher` makes its translate /\n# rotate / scale set the collider\'s centre, orientation and effective radius.\n#\n# self.positions is registered + seeded by the node\'s setup from the mesh\'s\n# initial points; if it is missing or stale (topology change) it is re-seeded\n# here from the current input. A deformer is not evaluated until a mesh is\n# connected, so nothing computes before then.\n#\n# WARNING: getPoints()/setPoints() are OBJECT space while `pusher` is a WORLD\n# matrix, so this is only correct when the deformed mesh has an identity\n# transform at the world origin (freeze its transform).\nmesh = self.outputGeometry[0]\npts = mesh.getPoints()                         # (N, 3) current input, object space\nif len(pts):\n    seed = np.hstack([np.asarray(pts, dtype=float), np.ones((len(pts), 1))])\n    try:\n        buf = np.asarray(self.positions, dtype=float)\n    except Exception:\n        buf = None\n    if buf is None or buf.ndim != 2 or buf.shape != (len(pts), 4):\n        buf = seed                             # first eval / topology change -> seed\n\n    P = buf.copy()\n    M = self.pusher                            # collider world matrix (MatrixView)\n    inv = M.inverse().asNumpy()                # api2 analytic inverse (EM-safe)\n    fwd = np.asarray(M, dtype=float)\n\n    local = P @ inv                            # accumulated buffer -> collider local\n    dist = np.linalg.norm(local[:, :3], axis=1)\n    inside = (dist > 0.0) & (dist < 1.0)       # guard dist==0 (no push direction)\n    local[inside, :3] = local[inside, :3] / dist[inside, None]   # onto surface\n    P = local @ fwd                            # back to object space (buffer accumulates)\n\n    self.positions = P                         # persist the baked buffer\n    env = self.envelope                 # blend the baked buffer against rest\n    mesh.setPoints(pts + env * (P[:, :3] - pts))\n'
-INIT        = 'import numpy as np\n'
-USER_INPUTS = {"pusher": "matrix"}
-IS_SKIN     = False
-TOL         = 1e-3
+BUNDLE = os.path.join(os.path.dirname(__file__), 'unitSphereCollision.mll')
+SPEC   = json.loads('{"schema_version": 1, "source_node": "unitSphereCollision", "mpy_type": "mPyDeformer", "suggested": {"node_type_name": "unitSphereCollision", "class_name": "UnitSphereCollision", "type_id": "0x00071c55", "mpx_base": "MPxDeformerNode", "note": "per-point mesh deform", "heaviness": "medium"}, "inputs": {"pusher": {"type": "matrix", "is_array": false, "portable": true, "cpp": {"cat": "matrix", "fn": "MFnMatrixAttribute", "data": "kDouble", "cpp": "MMatrix", "read": "asMatrix", "portable": true}}}, "outputs": {}, "variables": {}, "compute": "# Unit-sphere collision deformer (accumulating \\"pusher\\" port). Every vertex\\n# INSIDE the collider sphere is pushed onto its surface, and the pushed result\\n# is kept in a persistent buffer (self.positions) so the deformation BAKES --\\n# once the collider passes, the dent stays put (it does not spring back). The\\n# collider is the UNIT sphere in the local space of the `pusher` matrix, so\\n# wiring a sphere transform\'s worldMatrix into `pusher` makes its translate /\\n# rotate / scale set the collider\'s centre, orientation and effective radius.\\n#\\n# self.positions is registered + seeded by the node\'s setup from the mesh\'s\\n# initial points; if it is missing or stale (topology change) it is re-seeded\\n# here from the current input. A deformer is not evaluated until a mesh is\\n# connected, so nothing computes before then.\\n#\\n# WARNING: getPoints()/setPoints() are OBJECT space while `pusher` is a WORLD\\n# matrix, so this is only correct when the deformed mesh has an identity\\n# transform at the world origin (freeze its transform).\\nmesh = self.outputGeometry[0]\\npts = mesh.getPoints()                         # (N, 3) current input, object space\\nif len(pts):\\n    seed = np.hstack([np.asarray(pts, dtype=float), np.ones((len(pts), 1))])\\n    try:\\n        buf = np.asarray(self.positions, dtype=float)\\n    except Exception:\\n        buf = None\\n    if buf is None or buf.ndim != 2 or buf.shape != (len(pts), 4):\\n        buf = seed                             # first eval / topology change -> seed\\n\\n    P = buf.copy()\\n    M = self.pusher                            # collider world matrix (MatrixView)\\n    inv = M.inverse().asNumpy()                # api2 analytic inverse (EM-safe)\\n    fwd = np.asarray(M, dtype=float)\\n\\n    local = P @ inv                            # accumulated buffer -> collider local\\n    dist = np.linalg.norm(local[:, :3], axis=1)\\n    inside = (dist > 0.0) & (dist < 1.0)       # guard dist==0 (no push direction)\\n    local[inside, :3] = local[inside, :3] / dist[inside, None]   # onto surface\\n    P = local @ fwd                            # back to object space (buffer accumulates)\\n\\n    self.positions = P                         # persist the baked buffer\\n    env = self.envelope                 # blend the baked buffer against rest\\n    mesh.setPoints(pts + env * (P[:, :3] - pts))\\n", "init": "import numpy as np\\n", "affects": "all", "methods": "# Setup: select the collider TRANSFORM first, then the MESH to deform. Wires the\\n# collider\'s worldMatrix into `pusher` FIRST, attaches the deformer to the mesh\\n# SECOND, and registers a persistent buffer seeded from the mesh\'s initial points\\n# so baked collisions survive save/reopen.\\ndef setup(self, *args, **kwargs):\\n    from maya import cmds as mc\\n    import maya.api.OpenMaya as om\\n    from mpynode._common.methods.setup_helpers import _meshes, SetupError\\n    name = self.get_name()\\n    # Read the command\'s pre-create selection snapshot (in pick order), NOT the\\n    # live selection -- creating the deformer node clobbers the active selection.\\n    order = [o for o in (kwargs.get(\\"selection\\") or mc.ls(selection=True) or []) if o != name]\\n    if len(order) < 2:\\n        raise SetupError(\\"Select a collider TRANSFORM first, then a MESH to deform.\\")\\n    collider = order[0]\\n    meshes = _meshes(order[1:])\\n    if not meshes:\\n        raise SetupError(\\"Select a collider TRANSFORM first, then a MESH to deform.\\")\\n    mesh = meshes[0]\\n    # Capture the mesh\'s REST object-space points BEFORE attaching (homogeneous\\n    # [x, y, z, 1]), so the persistent accumulation buffer starts undented even if\\n    # the collider already overlaps the mesh.\\n    seed = None\\n    try:\\n        shp = mc.listRelatives(mesh, shapes=True, noIntermediate=True, fullPath=True)[0]\\n        sl = om.MSelectionList()\\n        sl.add(shp)\\n        fn = om.MFnMesh(sl.getDagPath(0))\\n        seed = [[p.x, p.y, p.z, 1.0] for p in fn.getPoints(om.MSpace.kObject)]\\n    except Exception:\\n        seed = None\\n    # matrix FIRST\\n    mc.connectAttr(collider + \\".worldMatrix[0]\\", name + \\".pusher\\", force=True)\\n    # mesh SECOND -- adopt the bare deformer into the mesh\'s chain (idempotent)\\n    if name not in (mc.listHistory(mesh) or []):\\n        mc.deformer(name, e=True, g=mesh)\\n    # register the persistent buffer so baking survives save/reopen.\\n    if seed is not None:\\n        self.set_variable(\\"positions\\", seed, persistent=True)\\n    return name\\n\\n\\n@maya_demo(label=\\"Collide a Sphere Through a Plane\\")\\ndef demo(self):\\n    \\"\\"\\"Freeze a subdivided plane at the origin, wire a collider sphere\'s\\n    worldMatrix into `pusher`, attach this deformer, seed the persistent rest\\n    buffer, then animate the sphere sinking through the plane. Press play: the\\n    collider dents the plane and the dent BAKES -- it stays after the sphere\\n    passes.\\"\\"\\"\\n    from maya import cmds as mc\\n    import maya.api.OpenMaya as om\\n    name = self.get_name()\\n\\n    # Plane frozen at the world origin (the compute works in OBJECT space, so an\\n    # identity transform at the origin is required for a correct collision).\\n    plane = mc.polyPlane(w=16, h=12, sx=32, sy=24, name=\\"collisionTarget#\\")[0]\\n    mc.makeIdentity(plane, apply=True, t=True, r=True, s=True)\\n\\n    # Collider: a UNIT sphere scaled up -- its transform scale IS the effective\\n    # collision radius (the compute uses the unit sphere in `pusher` local space).\\n    collider = mc.polySphere(radius=1.0, name=\\"collider#\\")[0]\\n    mc.setAttr(collider + \\".scale\\", 4.0, 4.0, 4.0, type=\\"double3\\")\\n\\n    # Capture the plane\'s REST object-space points for the persistent seed BEFORE\\n    # attaching, so the accumulation buffer starts undented.\\n    seed = None\\n    try:\\n        shp = mc.listRelatives(plane, shapes=True, noIntermediate=True, fullPath=True)[0]\\n        sl = om.MSelectionList()\\n        sl.add(shp)\\n        fn = om.MFnMesh(sl.getDagPath(0))\\n        seed = [[p.x, p.y, p.z, 1.0] for p in fn.getPoints(om.MSpace.kObject)]\\n    except Exception:\\n        seed = None\\n\\n    mc.connectAttr(collider + \\".worldMatrix[0]\\", name + \\".pusher\\", force=True)\\n    if name not in (mc.listHistory(plane) or []):\\n        mc.deformer(name, e=True, g=plane)\\n    if seed is not None:\\n        self.set_variable(\\"positions\\", seed, persistent=True)\\n\\n    # Animate the collider sinking straight through the plane.\\n    for f, y in ((1, 6.0), (30, 1.5), (60, -6.0)):\\n        mc.setKeyframe(collider + \\".translateY\\", t=f, v=y)\\n    mc.playbackOptions(min=1, max=60)\\n    mc.currentTime(1)\\n    mc.select(collider, replace=True)\\n    try:\\n        mc.viewFit(plane, collider)\\n    except Exception:\\n        pass\\n    return name\\n\\n\\n@maya_test(label=\\"Collision pushes verts onto the sphere and bakes\\", digits=3)\\ndef test_collision(self):\\n    \\"\\"\\"Validate the node\'s INTENT (the SAME test passes on the interpreted node\\n    and its C++ compile -> parity): a collider sphere pushes every mesh vertex\\n    inside it onto the sphere\'s surface, the dent BAKES (it stays after the\\n    collider moves away), and `envelope` 0 shows the undeformed rest mesh.\\"\\"\\"\\n    from maya import cmds as mc\\n    import maya.api.OpenMaya as om2\\n    import numpy as np\\n    from mpynode._common.methods.test_helpers import assert_close, assert_true\\n    from mpynode._common.storedvars.stored_vars_api import set_variable\\n\\n    name = self.get_name()\\n\\n    def _set(plug, *vals, **kw):\\n        # The demo/setup CONNECTS `pusher` (collider.worldMatrix); break any\\n        # incoming connection so the test can drive the plug directly. Forward\\n        # kwargs (e.g. type=\\"matrix\\") through to setAttr.\\n        for src in (mc.listConnections(plug, s=True, d=False, plugs=True) or []):\\n            mc.disconnectAttr(src, plug)\\n        mc.setAttr(plug, *vals, **kw)\\n\\n    # Validate whatever mesh this deformer already drives (e.g. the demo\'s plane);\\n    # build one only if it drives nothing yet. Keeps the test on self (parity) and\\n    # robust to a live, demo-populated scene and repeated runs. The compute is\\n    # OBJECT-space, so the deformed mesh must be frozen at the world origin.\\n    geo = mc.deformer(name, q=True, geometry=True) or []\\n    if geo:\\n        sh = (mc.ls(geo[0], long=True) or [geo[0]])[0]\\n    else:\\n        pl = mc.polyPlane(w=16, h=12, sx=16, sy=12, name=\\"collisionTestTarget#\\")[0]\\n        mc.makeIdentity(pl, apply=True, t=True, r=True, s=True)\\n        mc.deformer(name, e=True, g=pl)\\n        sh = mc.listRelatives(pl, shapes=True, noIntermediate=True, f=True)[0]\\n\\n    def pts():\\n        mc.dgdirty(name + \\".outputGeometry\\")\\n        mc.getAttr(sh + \\".outMesh\\")\\n        sel = om2.MSelectionList(); sel.add(sh)\\n        fn = om2.MFnMesh(sel.getDagPath(0))\\n        return np.array([[p.x, p.y, p.z]\\n                         for p in fn.getPoints(om2.MSpace.kObject)])\\n\\n    # Envelope 0 shows the undeformed input; capture it as the flat rest AND\\n    # RE-SEED the persistent bake buffer from it, so accumulation starts clean\\n    # regardless of a prior demo run or a previous run of this test (the buffer\\n    # persists otherwise, and a pre-dented buffer would break the surface check).\\n    # Seed through the NAME-based stored-var API (not self.set_variable(), a\\n    # wrapper method absent on the compiled node\'s _NodeNameProxy) so the SAME\\n    # test runs on both. A compiled node const-folds its stored vars and has no\\n    # _storedVarNames plug, so the seed raises there -- harmless, because verify\\n    # builds the compiled node fresh in a new scene: the buffer is unset and the\\n    # compute seeds it from this same flat rest.\\n    _set(name + \\".envelope\\", 0.0)\\n    rest = pts()\\n    try:\\n        set_variable(name,\\n            \\"positions\\",\\n            [[float(x), float(y), float(z), 1.0] for x, y, z in rest], persistent=True)\\n    except Exception:\\n        pass\\n\\n    # Collider A: a UNIT sphere scaled x4, centred 2 units above the plane.\\n    # Collider B: the same sphere moved far away (to prove the dent BAKES).\\n    s, ty = 4.0, 2.0\\n    A = [s, 0, 0, 0, 0, s, 0, 0, 0, 0, s, 0, 0.0, ty, 0, 1]\\n    B = [s, 0, 0, 0, 0, s, 0, 0, 0, 0, s, 0, 100.0, ty, 0, 1]\\n    centre = np.array([0.0, ty, 0.0])\\n\\n    # 1) Collider A, envelope 1 -> push inside verts onto the sphere surface.\\n    _set(name + \\".pusher\\", *A, type=\\"matrix\\")\\n    _set(name + \\".envelope\\", 1.0)\\n    full = pts()\\n\\n    # 2) Move the collider far away -> the dent must STAY (accumulation / bake).\\n    _set(name + \\".pusher\\", *B, type=\\"matrix\\")\\n    baked = pts()\\n\\n    # 3) Envelope 0 -> displayed rest (the flat plane; baked buffer retained).\\n    _set(name + \\".envelope\\", 0.0)\\n    rest_env0 = pts()\\n\\n    disp = np.linalg.norm(full - rest, axis=1)\\n    moved = disp > 1e-3\\n    n_moved = int(moved.sum())\\n    assert_true(n_moved > 0,\\n                \\"collider should push some verts (moved %d)\\" % n_moved)\\n\\n    # Pushed verts land on the collider sphere\'s surface: |(p - centre) / s| == 1.\\n    on = np.linalg.norm((full[moved] - centre) / s, axis=1)\\n    assert_close(on.tolist(), [1.0] * n_moved)\\n\\n    # The dent bakes: moving the collider away leaves the deformation intact.\\n    assert_close(baked.ravel().tolist(), full.ravel().tolist())\\n\\n    # Envelope 0 shows the undeformed rest -- a flat plane at y == 0.\\n    assert_close(rest_env0[:, 1].tolist(), [0.0] * len(rest_env0))\\n", "commands": [], "portability": {"portable": true, "blockers": [], "warnings": ["uses numpy -- vectorized math is reverse-engineered to C++ loops (verify numerically; np.random maps to C++ <random>; file I/O lowers only where the dtype is explicit -- np.fromfile/np.save/.tofile and ndio.read/ndio.write -- while np.load/np.loadtxt are blockers)"], "unported": [], "reads_image_file": false, "reads_embedded_image": false, "uses_mesh_intersector": false}}')
 
 
-# Every pick lands inside its attr's range: see _fit.
-_RANGED           = ("double", "float", "long", "short", "doubleAngle", "doubleLinear")
-_RANGED_COMPOUNDS = ("double3", "euler", "position", "color", "float2")
-_BOUNDS = (("minExists", "minimum", max),
-           ("maxExists", "maximum", min),
-           ("softMinExists", "softMin", max),
-           ("softMaxExists", "softMax", min))
-
-
-def _range(nodes, attr):
-    # The tightest hard bound any node declares, narrowed by a soft range
-    # unless the soft range contradicts it. Either end may be None.
-    b = [None, None, None, None]
-    for nd in nodes:
-        for i, (has, get, pick) in enumerate(_BOUNDS):
-            try:
-                if not cmds.attributeQuery(attr, node=nd, **{has: True}):
-                    continue
-                v = float(cmds.attributeQuery(attr, node=nd, **{get: True})[0])
-            except Exception:
-                continue
-            b[i] = v if b[i] is None else pick(b[i], v)
-    lo = b[0] if b[2] is None else (b[2] if b[0] is None else max(b[0], b[2]))
-    hi = b[1] if b[3] is None else (b[3] if b[1] is None else min(b[1], b[3]))
-    if lo is not None and hi is not None and lo > hi:
-        return b[0], b[1]
-    return lo, hi
-
-
-def _fold(v, lo, hi):
-    # A value inside comes back untouched; one outside is reflected off the
-    # bound it crossed, so out-of-range picks spread over the range.
-    if (lo is None or v >= lo) and (hi is None or v <= hi):
-        return v
-    if lo is not None and hi is not None:
-        if hi <= lo:
-            return lo
-        span = hi - lo
-        r    = (v - lo) % (2 * span)
-        return lo + (r if r <= span else 2 * span - r)
-    if lo is not None:
-        return 2 * lo - v
-    return 2 * hi - v
-
-
-def _fit(nodes, attr, t, v):
-    # v inside attr's range on every node that has attr; a numeric compound
-    # is fitted one child at a time.
-    nodes = [n for n in nodes if n and cmds.objExists(n + "." + attr)]
-    if t in _RANGED_COMPOUNDS and isinstance(v, (list, tuple)):
-        kids = []
-        for nd in nodes:
-            kids = cmds.attributeQuery(attr, node=nd, listChildren=True) or []
-            if kids:
-                break
-        if len(kids) != len(v):
-            return v
-        return [_fold(x, *_range(nodes, k)) for x, k in zip(v, kids)]
-    if t not in _RANGED or isinstance(v, bool):
-        return v
-    if not isinstance(v, (int, float)):
-        return v
-    lo, hi = _range(nodes, attr)
-    if t in ("long", "short"):
-        lo = None if lo is None else math.ceil(lo)
-        hi = None if hi is None else math.floor(hi)
-        return int(round(_fold(v, lo, hi)))
-    return _fold(v, lo, hi)
-
-
-def _sample(t):
-    if t == "bool": return random.choice([0, 1])
-    if t == "long": return random.randint(-3, 3)
-    if t == "enum": return random.randint(0, 1)
-    if t in ("double3", "euler", "position"):
-        return [random.uniform(-2, 2) for _ in range(3)]
-    return random.uniform(-2, 2)
-
-
-def _set(node, attr, t, v):
-    if t in ("double3", "euler", "position"):
-        cmds.setAttr(node + "." + attr, v[0], v[1], v[2], type="double3")
-    else:
-        cmds.setAttr(node + "." + attr, v)
-
-
-def _pts(mesh):
-    return cmds.xform(mesh + ".vtx[*]", q=True, os=True, t=True)
-
-
-def _apply(deformer_type, configure):
-    tr = cmds.polySphere(r=1, sx=12, sy=12, ch=False)[0]
-    d  = cmds.deformer(tr, type=deformer_type)[0]
-    if configure:
-        configure(d)
-    return tr, d
-
-
-def run(samples=12):
+def run():
+    from mpynode.native.toolchain import verify as _cc
+    _cc._load_python_plugins(cmds)
     if not cmds.pluginInfo(os.path.basename(BUNDLE), q=True, loaded=True):
         cmds.loadPlugin(BUNDLE)
-    if IS_SKIN:
-        print("NOTE: skinCluster parity needs a bound influence set "
-              "(matrix[]/bindPreMatrix[]/weights). Without joints both nodes "
-              "are identity; wire a rig for a meaningful comparison.")
-
-    import mpynode
-
-    def cfg(node):
-        w = mpynode.wrap_node(node)
-        for nm, t in USER_INPUTS.items():
-            try:
-                w.add_input_attr(nm, t)
-            except Exception:
-                pass
-        if INIT.strip():
-            w.set_init_expression(INIT)
-        w.set_compute_expression(COMPUTE)
-
-    src_tr, src_d = _apply(SRC_TYPE, cfg)
-    cmp_tr, cmp_d = _apply(NODE_TYPE, None)
-
-    fails = 0
-    for _ in range(samples):
-        env = random.uniform(0.0, 1.0)
-        cmds.setAttr(src_d + ".envelope", env)
-        cmds.setAttr(cmp_d + ".envelope", env)
-        for a, t in USER_INPUTS.items():
-            v = _fit((src_d, cmp_d), a, t, _sample(t))
-            if cmds.objExists(src_d + "." + a):
-                _set(src_d, a, t, v)
-            if cmds.objExists(cmp_d + "." + a):
-                _set(cmp_d, a, t, v)
-        a_pts = _pts(src_tr)
-        b_pts = _pts(cmp_tr)
-        if len(a_pts) != len(b_pts):
-            print("VERTEX COUNT MISMATCH", len(a_pts), len(b_pts))
-            fails += 1
-            continue
-        for i in range(len(a_pts)):
-            if abs(a_pts[i] - b_pts[i]) > TOL:
-                print("MISMATCH coord", i, a_pts[i], "!=", b_pts[i])
-                fails += 1
-                break
-    print("VERIFY", "PASS" if not fails else ("FAIL " + str(fails)))
-    return fails == 0
+    row = _cc._verify_one(cmds, BUNDLE, SPEC)
+    print("VERIFY ROW", row)
+    if not row.get("ran"):
+        print("VERIFY SKIP (" + str(row.get("reason")) + ")")
+        return True
+    if row.get("pass"):
+        print("VERIFY PASS maxerr", row.get("maxerr"))
+        return True
+    print("VERIFY FAIL", row.get("reason"), row.get("maxerr"))
+    return False
 
 
 if __name__ == "__main__":

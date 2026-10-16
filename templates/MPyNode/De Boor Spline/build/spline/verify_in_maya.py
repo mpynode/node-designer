@@ -1,160 +1,34 @@
 """Equivalence check: compiled native node vs the original mPyNode.
-Run in Maya. Loads the .bundle, samples inputs, compares outputs.
+Run in Maya. Runs the compile pipeline's own parity check,
+mpynode.native.toolchain.verify._verify_one, on the spec embedded
+below: it rebuilds the Python original, builds the compiled node,
+drives identical inputs on both, and compares
+every component of every output.
+It opens a new scene (file new, force) before it drives the nodes:
+save your work first.
 """
-import os, math, random
+import os, json
 import maya.cmds as cmds
 
-BUNDLE    = os.path.join(os.path.dirname(__file__), 'spline.mll')
-NODE_TYPE = 'spline'
-SOURCE    = 'spline'
-INPUTS    = {"cv": "double3", "degree": "long"}
-OUTPUTS   = {"samples": "double3"}
-TOL       = 1e-4
+BUNDLE = os.path.join(os.path.dirname(__file__), 'spline.mll')
+SPEC   = json.loads('{"schema_version": 1, "source_node": "spline", "mpy_type": "mPyNode", "suggested": {"node_type_name": "spline", "class_name": "Spline", "type_id": "0x00071cdd", "mpx_base": "MPxNode", "note": "plain dependency node", "heaviness": "easy"}, "inputs": {"cv": {"type": "double3", "is_array": true, "portable": true, "cpp": {"cat": "vector", "fn": "MFnNumericAttribute", "data": "k3Double", "cpp": "double[3]", "read": "asDouble3", "portable": true}}, "degree": {"type": "long", "is_array": false, "portable": true, "cpp": {"cat": "scalar", "fn": "MFnNumericAttribute", "data": "kInt", "cpp": "int", "read": "asInt", "portable": true}, "default_value": 3}}, "outputs": {"samples": {"type": "double3", "is_array": true, "portable": true, "cpp": {"cat": "vector", "fn": "MFnNumericAttribute", "data": "k3Double", "cpp": "double[3]", "read": "asDouble3", "portable": true}}}, "variables": {}, "compute": "# Name: Spline Node  (numpy-first port)\\n# Author: Eric Vignola - eric.vignola@gmail.com\\n# A De Boor b-spline evaluator (arbitrary degree). cv = input vector array,\\n# samples = output vector array. Node-aware of #inputs / #outputs.\\n#\\n# (Imports + helper functions live in the Init tab.)\\n\\n# -------------------------- Main --------------------------#\\nc = len(self.cv)\\ndegree = min(self.degree, c - 1)\\n\\n# Open knot vector (float array via numpy so the same source lowers to\\n# deterministic C++; values match the original [0]*d + range + [c-d]*d list).\\nn = len(self.samples)\\nkv = np.concatenate([np.zeros(degree, dtype=np.float64),\\n                     np.arange(c - degree + 1, dtype=np.float64),\\n                     np.full(degree, float(c - degree), dtype=np.float64)])\\n\\nfor i in range(n):\\n    # A single sample sits at the end of the curve (no spacing to divide\\n    # by); the write after the loop gives it the last CV.\\n    u = float(kv[-1])\\n    if n > 1:\\n        u = float(i) / (n - 1) * float(kv[-1])\\n    acc = np.zeros(3)\\n    for k in range(c):\\n        w = DeBoor(u, k, degree, kv)\\n        acc = acc + self.cv[k] * w\\n    self.samples[i] = acc\\n\\nif len(self.cv) > 0 and len(self.samples) > 0:\\n    self.samples[-1] = self.cv[-1]\\n", "init": "# Init tab \\u2014 runs once per file open (not per compute()).\\n# Imports + helper functions shared by the Compute expression.\\n\\nimport numpy as np\\n\\n\\ndef DeBoor(u, k, d, kv):\\n    # b-spline basis (Cox-de Boor recursion). kv reads are float()-wrapped and\\n    # the basis test uses `and` (not bitwise &) so the same source both runs in\\n    # numpy AND lowers 1:1 to deterministic C++ (nd_lower / py_to_cpp).\\n    if d == 0:\\n        left = float(kv[k])\\n        right = float(kv[k + 1])\\n        if u - left >= 0.0 and u - right < 0.0:\\n            return 1.0\\n        return 0.0\\n\\n    denom1 = float(kv[k + d]) - float(kv[k])\\n    term1 = 0.0\\n    if denom1 > 0.0:\\n        term1 = ((u - float(kv[k])) / denom1) * DeBoor(u, k, d - 1, kv)\\n\\n    denom2 = float(kv[k + d + 1]) - float(kv[k + 1])\\n    term2 = 0.0\\n    if denom2 > 0.0:\\n        term2 = ((-(u - float(kv[k + d + 1])) / denom2) * DeBoor(u, k + 1, d - 1, kv))\\n\\n    return term1 + term2\\n", "affects": "all", "methods": "# Build a complete, self-contained spline demo: a row of control locators\\n# (cv -- grouped under \\"<node>_controls\\", zig-zagged so the curve is visibly\\n# curved) AND a chain of small sample spheres placed evenly along the resulting\\n# De Boor b-spline (driven by the samples output array). Drag the control\\n# locators to reshape the curve; the samples follow live.\\ndef demo(self):\\n    from maya import cmds as mc\\n    name = self.get_name()\\n    mc.setAttr(name + \\".degree\\", 3)\\n    n_ctrl, n_samp = 5, 24\\n    cgrp = mc.group(empty=True, name=name + \\"_controls\\")\\n    for j in range(n_ctrl):\\n        loc = mc.spaceLocator(name=\\"%s_cv%d\\" % (name, j + 1))[0]\\n        loc = mc.parent(loc, cgrp)[0]\\n        mc.setAttr(loc + \\".translateX\\", float(j) * 3.0)\\n        mc.setAttr(loc + \\".translateY\\", 4.0 if j % 2 else 0.0)   # zig-zag\\n        shp = mc.listRelatives(loc, shapes=True, fullPath=True)[0]\\n        mc.connectAttr(shp + \\".worldPosition[0]\\", name + \\".cv[%d]\\" % j, force=True)\\n    sgrp = mc.group(empty=True, name=\\"spline_samples#\\")\\n    for i in range(n_samp):\\n        s = mc.polySphere(name=\\"splineSample#\\", radius=0.3)[0]\\n        s = mc.parent(s, sgrp)[0]\\n        mc.connectAttr(name + \\".samples[%d]\\" % i, s + \\".translate\\", force=True)\\n    try:\\n        for _panel in mc.getPanel(type=\\"modelPanel\\") or []:\\n            _cam = mc.modelEditor(_panel, query=True, camera=True)\\n            if _cam:\\n                mc.viewFit(_cam, allObjects=True)\\n    except Exception:\\n        pass\\n    return name\\n\\n\\n@maya_test(label=\\"Spline: b-spline endpoints match the first/last control point\\", digits=3)\\ndef test_spline(self):\\n    \\"\\"\\"Same test passes interpreted and compiled (parity): a De Boor b-spline\\n    interpolates its endpoints, so sample[0] sits on the first CV and sample[-1]\\n    on the last. Drives `self` through public plugs.\\"\\"\\"\\n    from maya import cmds as mc\\n    from mpynode._common.methods.test_helpers import assert_close\\n    name = self.get_name()\\n\\n    def _set(plug, *vals, **kw):\\n        for s in (mc.listConnections(plug, s=True, d=False, plugs=True) or []):\\n            mc.disconnectAttr(s, plug)\\n        mc.setAttr(plug, *vals, **kw)\\n\\n    cvs = [(0.0, 0.0, 0.0), (3.0, 4.0, 0.0), (6.0, 0.0, 0.0),\\n           (9.0, 4.0, 0.0), (12.0, 0.0, 0.0)]\\n    for k, p in enumerate(cvs):\\n        _set(\\"%s.cv[%d]\\" % (name, k), p[0], p[1], p[2], type=\\"double3\\")\\n    _set(name + \\".degree\\", 3)\\n\\n    # Ensure sample outputs exist (reuse the demo\'s spheres if present).\\n    n = mc.getAttr(name + \\".samples\\", size=True) or 0\\n    if n < 6:\\n        for i in range(12):\\n            loc = mc.spaceLocator(name=\\"splineTest#\\")[0]\\n            mc.connectAttr(\\"%s.samples[%d]\\" % (name, i), loc + \\".translate\\", force=True)\\n        n = 12\\n        mc.dgdirty(name + \\".samples\\")\\n\\n    first = mc.getAttr(\\"%s.samples[0]\\" % name)[0]\\n    last = mc.getAttr(\\"%s.samples[%d]\\" % (name, n - 1))[0]\\n    assert_close(list(first), list(cvs[0]),\\n                 msg=\\"first sample should equal the first control point\\")\\n    assert_close(list(last), list(cvs[-1]),\\n                 msg=\\"last sample should equal the last control point\\")\\n", "commands": [], "metadata": {"authors": ["Eric Vignola"], "version": "1.0.0", "license": "Copyright 2026 Eric Vignola\\n\\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \\"Software\\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\\n\\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\\n\\nTHE SOFTWARE IS PROVIDED \\"AS IS\\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.", "description": "Evaluates a B-spline through control points and returns evenly spaced samples.", "type_id": ""}, "portability": {"portable": true, "blockers": [], "warnings": ["uses numpy -- vectorized math is reverse-engineered to C++ loops (verify numerically; np.random maps to C++ <random>; file I/O lowers only where the dtype is explicit -- np.fromfile/np.save/.tofile and ndio.read/ndio.write -- while np.load/np.loadtxt are blockers)"], "unported": [], "reads_image_file": false, "reads_embedded_image": false, "uses_mesh_intersector": false}}')
 
 
-# Every pick lands inside its attr's range: see _fit.
-_RANGED           = ("double", "float", "long", "short", "doubleAngle", "doubleLinear")
-_RANGED_COMPOUNDS = ("double3", "euler", "position", "color", "float2")
-_BOUNDS = (("minExists", "minimum", max),
-           ("maxExists", "maximum", min),
-           ("softMinExists", "softMin", max),
-           ("softMaxExists", "softMax", min))
-
-
-def _range(nodes, attr):
-    # The tightest hard bound any node declares, narrowed by a soft range
-    # unless the soft range contradicts it. Either end may be None.
-    b = [None, None, None, None]
-    for nd in nodes:
-        for i, (has, get, pick) in enumerate(_BOUNDS):
-            try:
-                if not cmds.attributeQuery(attr, node=nd, **{has: True}):
-                    continue
-                v = float(cmds.attributeQuery(attr, node=nd, **{get: True})[0])
-            except Exception:
-                continue
-            b[i] = v if b[i] is None else pick(b[i], v)
-    lo = b[0] if b[2] is None else (b[2] if b[0] is None else max(b[0], b[2]))
-    hi = b[1] if b[3] is None else (b[3] if b[1] is None else min(b[1], b[3]))
-    if lo is not None and hi is not None and lo > hi:
-        return b[0], b[1]
-    return lo, hi
-
-
-def _fold(v, lo, hi):
-    # A value inside comes back untouched; one outside is reflected off the
-    # bound it crossed, so out-of-range picks spread over the range.
-    if (lo is None or v >= lo) and (hi is None or v <= hi):
-        return v
-    if lo is not None and hi is not None:
-        if hi <= lo:
-            return lo
-        span = hi - lo
-        r    = (v - lo) % (2 * span)
-        return lo + (r if r <= span else 2 * span - r)
-    if lo is not None:
-        return 2 * lo - v
-    return 2 * hi - v
-
-
-def _fit(nodes, attr, t, v):
-    # v inside attr's range on every node that has attr; a numeric compound
-    # is fitted one child at a time.
-    nodes = [n for n in nodes if n and cmds.objExists(n + "." + attr)]
-    if t in _RANGED_COMPOUNDS and isinstance(v, (list, tuple)):
-        kids = []
-        for nd in nodes:
-            kids = cmds.attributeQuery(attr, node=nd, listChildren=True) or []
-            if kids:
-                break
-        if len(kids) != len(v):
-            return v
-        return [_fold(x, *_range(nodes, k)) for x, k in zip(v, kids)]
-    if t not in _RANGED or isinstance(v, bool):
-        return v
-    if not isinstance(v, (int, float)):
-        return v
-    lo, hi = _range(nodes, attr)
-    if t in ("long", "short"):
-        lo = None if lo is None else math.ceil(lo)
-        hi = None if hi is None else math.floor(hi)
-        return int(round(_fold(v, lo, hi)))
-    return _fold(v, lo, hi)
-
-
-def _sample(t):
-    if t == "bool": return random.choice([0, 1])
-    if t == "long": return random.randint(-10, 10)
-    if t == "enum": return random.randint(0, 1)
-    if t in ("double3", "euler", "position"):
-        return [random.uniform(-5, 5) for _ in range(3)]
-    return random.uniform(-5, 5)
-
-
-def _set(node, attr, t, v):
-    if t in ("double3", "euler", "position"):
-        cmds.setAttr(node + "." + attr, v[0], v[1], v[2], type="double3")
-    else:
-        cmds.setAttr(node + "." + attr, v)
-
-
-def _flat(v):
-    # getAttr returns a scalar, [(x, y, z)] for a double3, or nested lists for a
-    # matrix. Comparing only [0] silently passed a vector wrong on Y/Z or a
-    # transposed matrix -- flatten to EVERY leaf component and compare them all.
-    out   = []
-    stack = [v]
-    while stack:
-        x = stack.pop()
-        if isinstance(x, (list, tuple)):
-            stack.extend(reversed(list(x)))
-        else:
-            out.append(x)
-    return out
-
-
-def run(samples=20):
-    if not OUTPUTS:
-        # Nothing to compare -> the sample loop would be vacuous; report SKIP,
-        # never a (false) PASS.
-        print("VERIFY SKIP (no outputs to compare)")
-        return True
+def run():
+    from mpynode.native.toolchain import verify as _cc
+    _cc._load_python_plugins(cmds)
     if not cmds.pluginInfo(os.path.basename(BUNDLE), q=True, loaded=True):
         cmds.loadPlugin(BUNDLE)
-    comp     = cmds.createNode(NODE_TYPE)
-    fails    = 0
-    compared = 0
-    for _ in range(samples):
-        for a, t in INPUTS.items():
-            v = _fit((comp, SOURCE), a, t, _sample(t))
-            _set(comp, a, t, v)
-            if cmds.objExists(SOURCE + "." + a):
-                _set(SOURCE, a, t, v)
-        for o, t in OUTPUTS.items():
-            if not cmds.objExists(SOURCE + "." + o):
-                continue
-            cf = _flat(cmds.getAttr(comp + "." + o))
-            sf = _flat(cmds.getAttr(SOURCE + "." + o))
-            compared += 1
-            if len(cf) != len(sf):
-                print("MISMATCH", o, "component count", len(cf), "!=", len(sf))
-                fails += 1
-                continue
-            for cv, sv in zip(cf, sf):
-                try:
-                    ok = abs(float(cv) - float(sv)) <= TOL
-                except Exception:
-                    ok = (cv == sv)
-                if not ok:
-                    print("MISMATCH", o, cv, "!=", sv)
-                    fails += 1
-    if compared == 0:
-        # SOURCE node absent (or no comparable outputs): nothing was actually
-        # checked -> SKIP, never a vacuous PASS.
-        print("VERIFY SKIP (no comparable outputs -- SOURCE missing?)")
+    row = _cc._verify_one(cmds, BUNDLE, SPEC)
+    print("VERIFY ROW", row)
+    if not row.get("ran"):
+        print("VERIFY SKIP (" + str(row.get("reason")) + ")")
         return True
-    print("VERIFY", "PASS" if not fails else ("FAIL " + str(fails)))
-    return fails == 0
+    if row.get("pass"):
+        print("VERIFY PASS maxerr", row.get("maxerr"))
+        return True
+    print("VERIFY FAIL", row.get("reason"), row.get("maxerr"))
+    return False
 
 
 if __name__ == "__main__":

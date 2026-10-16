@@ -1,168 +1,34 @@
 """Equivalence check: compiled native DEFORMER vs the original mPy deformer.
-Run in Maya. Builds two identical spheres, applies the original mPy
-deformer (expression copied from the source) to one and the compiled
-deformer to the other, then compares object-space points over random
-envelope/input samples.
+Run in Maya. Runs the compile pipeline's own parity check,
+mpynode.native.toolchain.verify._verify_one, on the spec embedded
+below: it rebuilds the Python original, builds the compiled node,
+drives identical inputs on both, and compares
+the deformed points.
+It opens a new scene (file new, force) before it drives the nodes:
+save your work first.
 """
-import os, math, random
+import os, json
 import maya.cmds as cmds
 
-BUNDLE      = os.path.join(os.path.dirname(__file__), 'sineRipple.mll')
-NODE_TYPE   = 'sineRipple'
-SRC_TYPE    = 'mPyDeformer'
-COMPUTE     = "# Sine-ripple deformer: each vertex rides a travelling sine wave along its\n# surface normal. The wave's phase advances with distance from the mesh\n# centre and with time, so it animates as the timeline plays.\nmesh = self.outputGeometry[0]            # writable handle for this output mesh\npts = mesh.getPoints()                   # (N, 3) object-space points (numpy)\n\n# True per-vertex normals (object space). The output handle wraps an API-1\n# MFnMesh, so use the in-out MFloatVectorArray form.\nnrm = om.MFloatVectorArray()\nmesh.getVertexNormals(False, nrm, om.MSpace.kObject)\nnormals = np.array([[nrm[i].x, nrm[i].y, nrm[i].z]\n                    for i in range(nrm.length())], dtype=float)\n\namp = self.amplitude\nfreq = self.frequency\nspeed = self.speed\nenv = self.envelope               # built-in deformer envelope (0..1)\n\ncentre = pts.mean(axis=0)\ndist = np.linalg.norm(pts - centre, axis=1)\nphase = 2.0 * np.pi * freq * dist - speed * self.time\noffset = (amp * np.sin(phase))[:, None] * normals\n\nmesh.setPoints(pts + env * offset)\n"
-INIT        = 'import numpy as np\nimport maya.OpenMaya as om\n'
-USER_INPUTS = {"amplitude": "float", "frequency": "float", "speed": "float", "time": "time"}
-IS_SKIN     = False
-TOL         = 1e-3
+BUNDLE = os.path.join(os.path.dirname(__file__), 'sineRipple.mll')
+SPEC   = json.loads('{"schema_version": 1, "source_node": "sineRipple", "mpy_type": "mPyDeformer", "suggested": {"node_type_name": "sineRipple", "class_name": "SineRipple", "type_id": "0x00070151", "mpx_base": "MPxDeformerNode", "note": "per-point mesh deform", "heaviness": "medium"}, "inputs": {"amplitude": {"type": "float", "is_array": false, "portable": true, "cpp": {"cat": "scalar", "fn": "MFnNumericAttribute", "data": "kFloat", "cpp": "float", "read": "asFloat", "portable": true}, "default_value": 0.4}, "frequency": {"type": "float", "is_array": false, "portable": true, "cpp": {"cat": "scalar", "fn": "MFnNumericAttribute", "data": "kFloat", "cpp": "float", "read": "asFloat", "portable": true}, "default_value": 0.6}, "speed": {"type": "float", "is_array": false, "portable": true, "cpp": {"cat": "scalar", "fn": "MFnNumericAttribute", "data": "kFloat", "cpp": "float", "read": "asFloat", "portable": true}, "default_value": 0.1}, "time": {"type": "time", "is_array": false, "portable": true, "cpp": {"cat": "unit", "fn": "MFnUnitAttribute", "data": "kTime", "cpp": "double", "read": "asMTime", "portable": true}}}, "outputs": {}, "variables": {}, "compute": "# Sine-ripple deformer: each vertex rides a travelling sine wave along its\\n# surface normal. The wave\'s phase advances with distance from the mesh\\n# centre and with time, so it animates as the timeline plays.\\nmesh = self.outputGeometry[0]            # writable handle for this output mesh\\npts = mesh.getPoints()                   # (N, 3) object-space points (numpy)\\n\\n# True per-vertex normals (object space). The output handle wraps an API-1\\n# MFnMesh, so use the in-out MFloatVectorArray form.\\nnrm = om.MFloatVectorArray()\\nmesh.getVertexNormals(False, nrm, om.MSpace.kObject)\\nnormals = np.array([[nrm[i].x, nrm[i].y, nrm[i].z]\\n                    for i in range(nrm.length())], dtype=float)\\n\\namp = self.amplitude\\nfreq = self.frequency\\nspeed = self.speed\\nenv = self.envelope               # built-in deformer envelope (0..1)\\n\\ncentre = pts.mean(axis=0)\\ndist = np.linalg.norm(pts - centre, axis=1)\\nphase = 2.0 * np.pi * freq * dist - speed * self.time\\noffset = (amp * np.sin(phase))[:, None] * normals\\n\\nmesh.setPoints(pts + env * offset)\\n", "init": "import numpy as np\\nimport maya.OpenMaya as om\\n", "affects": "all", "methods": "@maya_test(label=\\"Ripple deforms the mesh (rest at envelope 0)\\", digits=4)\\ndef test_ripple(self):\\n    \\"\\"\\"Validate the node\'s INTENT (same test passes on the interpreted node and\\n    its C++ compile -> parity): with the wave OFF (envelope 0, or amplitude 0)\\n    the mesh sits exactly at rest; with the wave ON it actually moves.\\"\\"\\"\\n    from maya import cmds as mc\\n    import maya.api.OpenMaya as om2\\n    import numpy as np\\n    from mpynode._common.methods.test_helpers import assert_close, assert_true\\n\\n    name = self.get_name()\\n\\n    def _set(plug, *vals):\\n        # A demo may have CONNECTED this input; break it so the test can drive it.\\n        for s in (mc.listConnections(plug, s=True, d=False, plugs=True) or []):\\n            mc.disconnectAttr(s, plug)\\n        mc.setAttr(plug, *vals)\\n\\n    # Validate whatever mesh this deformer already drives (e.g. the demo\'s\\n    # plane); build one only if it drives nothing yet. Keeps the test on `self`\\n    # (interpreted==compiled parity) and robust to a live, demo-populated scene\\n    # and repeated runs.\\n    geo = mc.deformer(name, q=True, geometry=True) or []\\n    if geo:\\n        sh = (mc.ls(geo[0], long=True) or [geo[0]])[0]\\n    else:\\n        pl = mc.polyPlane(w=10, h=10, sx=12, sy=12, name=\\"rippleTest#\\")[0]\\n        mc.deformer(name, e=True, g=pl)\\n        sh = mc.listRelatives(pl, shapes=True, noIntermediate=True, f=True)[0]\\n    xf = mc.listRelatives(sh, parent=True, f=True)[0]\\n\\n    def pts(amp, env, frame=1):\\n        _set(name + \\".amplitude\\", amp)\\n        _set(name + \\".envelope\\", env)\\n        mc.currentTime(frame)\\n        mc.dgdirty(name + \\".outputGeometry\\")\\n        mc.getAttr(sh + \\".outMesh\\")\\n        sel = om2.MSelectionList(); sel.add(xf)\\n        fn = om2.MFnMesh(sel.getDagPath(0))\\n        return np.array([[p.x, p.y, p.z]\\n                         for p in fn.getPoints(om2.MSpace.kObject)])\\n\\n    rest = pts(0.0, 1.0)          # amplitude 0 -> zero offset\\n    env_off = pts(0.6, 0.0)       # envelope 0 -> zero offset\\n    deformed = pts(0.6, 1.0)      # wave ON -> real displacement\\n\\n    # Both \\"off\\" states must equal the rest mesh (component-wise).\\n    assert_close(env_off.ravel().tolist(), rest.ravel().tolist())\\n    # ...and turning the wave on must actually move points.\\n    moved = float(np.abs(deformed - rest).max())\\n    assert_true(moved > 0.05,\\n                \\"ripple should displace the mesh (max move %.4f)\\" % moved)\\n\\n\\n@maya_demo(label=\\"Ripple a Plane\\")\\ndef demo(self):\\n    \\"\\"\\"Create a subdivided plane, attach this ripple deformer to it, dial in a\\n    visible wave, and set a one-loop playback range. Press play to watch the\\n    wave travel across the surface (the wave advances with `time` and with\\n    distance from the mesh centre).\\"\\"\\"\\n    from maya import cmds as mc\\n    name = self.get_name()\\n\\n    plane = mc.polyPlane(w=10, h=10, sx=24, sy=24, name=\\"rippleTarget#\\")[0]\\n    mc.setAttr(plane + \\".translate\\", 0.0, 0.0, 0.0, type=\\"double3\\")\\n    # Attach THIS deformer to the plane (idempotent -- adopt the bare node).\\n    if name not in (mc.listHistory(plane) or []):\\n        mc.deformer(name, e=True, g=plane)\\n\\n    mc.setAttr(name + \\".amplitude\\", 0.6)\\n    mc.setAttr(name + \\".frequency\\", 0.8)\\n    mc.setAttr(name + \\".speed\\", 0.15)\\n    # Auto-wire the animation clock if the template-apply path did not already.\\n    if not (mc.listConnections(name + \\".time\\", s=True, d=False) or []):\\n        try:\\n            mc.connectAttr(\\"time1.outTime\\", name + \\".time\\", force=True)\\n        except Exception:\\n            pass\\n\\n    mc.playbackOptions(min=1, max=120)\\n    mc.currentTime(1)\\n    mc.select(plane, replace=True)\\n    try:\\n        for _panel in mc.getPanel(type=\\"modelPanel\\") or []:\\n            _cam = mc.modelEditor(_panel, query=True, camera=True)\\n            if _cam:\\n                mc.viewFit(_cam, allObjects=True)\\n    except Exception:\\n        pass\\n    return name\\n\\n\\n\\"\\"\\"Setup source for mPyDeformer nodes (self-first instance method).\\"\\"\\"\\n\\n# Also this node\'s CREATE command, the way cmds.blendShape both makes the node\\n# and wires it. Un-named because this file is shared by every node of the type\\n# -- see maya_command.resolve_create_command_names.\\n#\\n# VANILLA: this body ships as EMBEDDED PYTHON inside a compiled .mll and must run\\n# on a machine with Maya but WITHOUT mpynode, so the setup_helpers it used to\\n# import (_selection, _deformables, SetupError) are inlined below. They are\\n# FUNCTION-LOCAL rather than module-level because node_setups.merge_type_default\\n# APPENDS this file to the host node\'s own methods source -- a module-level def\\n# would clobber a same-named helper the host already defines.\\n@maya_command(creates=True)\\ndef setup(self, *args, **kwargs):\\n    from maya import cmds as mc\\n\\n    class SetupError(Exception):\\n        \\"\\"\\"The current selection / scene state can\'t support setup for this node.\\n        Message is user-facing (it names what to select).\\"\\"\\"\\n\\n    def _selection(override=None, exclude=None):\\n        \\"\\"\\"Inputs for setup: `override` (the snapshot \\"Run setup\\" passes) wins\\n        over the live selection; `exclude` drops this node so it is never its\\n        own input.\\"\\"\\"\\n        sel = list(override) if override is not None else (\\n            mc.ls(selection=True, long=False) or [])\\n        return [n for n in sel if n != exclude] if exclude else sel\\n\\n    def _deformables(sel):\\n        \\"\\"\\"The entries carrying deformable geometry (directly or as a shape).\\"\\"\\"\\n        kinds = (\\"mesh\\", \\"nurbsSurface\\", \\"nurbsCurve\\", \\"lattice\\")\\n        out = []\\n        for n in sel:\\n            if mc.nodeType(n) in kinds:\\n                out.append(n)\\n                continue\\n            for st in kinds:\\n                if mc.listRelatives(n, shapes=True, type=st, noIntermediate=True):\\n                    out.append(n)\\n                    break\\n        return out\\n\\n    name = self.get_name()\\n    geo = _deformables(_selection(override=kwargs.get(\\"selection\\"),\\n                                  exclude=name))\\n    if not geo:\\n        raise SetupError(\\"select a mesh (or other deformable geometry) to apply \\"\\n                         \\"%s\\" % self.NATIVE_TYPE)\\n    # S4 idempotency: \\"Run setup\\" is re-runnable -- only adopt geometry that does\\n    # not already have this deformer in its history.\\n    todo = [g for g in geo if name not in (mc.listHistory(g) or [])]\\n    if todo:\\n        mc.deformer(name, e=True, g=todo)   # adopt the pre-built bare self\\n    return name\\n", "commands": [{"name": "sineRipple", "name_explicit": false, "func_name": "setup", "undoable": true, "creates": true, "is_factory": false, "is_static": false, "params": [], "body_src": "@maya_command(creates=True)\\ndef setup(self, *args, **kwargs):\\n    from maya import cmds as mc\\n\\n    class SetupError(Exception):\\n        \\"\\"\\"The current selection / scene state can\'t support setup for this node.\\n        Message is user-facing (it names what to select).\\"\\"\\"\\n\\n    def _selection(override=None, exclude=None):\\n        \\"\\"\\"Inputs for setup: `override` (the snapshot \\"Run setup\\" passes) wins\\n        over the live selection; `exclude` drops this node so it is never its\\n        own input.\\"\\"\\"\\n        sel = list(override) if override is not None else (\\n            mc.ls(selection=True, long=False) or [])\\n        return [n for n in sel if n != exclude] if exclude else sel\\n\\n    def _deformables(sel):\\n        \\"\\"\\"The entries carrying deformable geometry (directly or as a shape).\\"\\"\\"\\n        kinds = (\\"mesh\\", \\"nurbsSurface\\", \\"nurbsCurve\\", \\"lattice\\")\\n        out = []\\n        for n in sel:\\n            if mc.nodeType(n) in kinds:\\n                out.append(n)\\n                continue\\n            for st in kinds:\\n                if mc.listRelatives(n, shapes=True, type=st, noIntermediate=True):\\n                    out.append(n)\\n                    break\\n        return out\\n\\n    name = self.get_name()\\n    geo = _deformables(_selection(override=kwargs.get(\\"selection\\"),\\n                                  exclude=name))\\n    if not geo:\\n        raise SetupError(\\"select a mesh (or other deformable geometry) to apply \\"\\n                         \\"%s\\" % self.NATIVE_TYPE)\\n    # S4 idempotency: \\"Run setup\\" is re-runnable -- only adopt geometry that does\\n    # not already have this deformer in its history.\\n    todo = [g for g in geo if name not in (mc.listHistory(g) or [])]\\n    if todo:\\n        mc.deformer(name, e=True, g=todo)   # adopt the pre-built bare self\\n    return name", "lineno": 106}], "portability": {"portable": true, "blockers": [], "warnings": ["uses numpy -- vectorized math is reverse-engineered to C++ loops (verify numerically; np.random maps to C++ <random>; file I/O lowers only where the dtype is explicit -- np.fromfile/np.save/.tofile and ndio.read/ndio.write -- while np.load/np.loadtxt are blockers)"], "unported": [], "reads_image_file": false, "reads_embedded_image": false, "uses_mesh_intersector": false}}')
 
 
-# Every pick lands inside its attr's range: see _fit.
-_RANGED           = ("double", "float", "long", "short", "doubleAngle", "doubleLinear")
-_RANGED_COMPOUNDS = ("double3", "euler", "position", "color", "float2")
-_BOUNDS = (("minExists", "minimum", max),
-           ("maxExists", "maximum", min),
-           ("softMinExists", "softMin", max),
-           ("softMaxExists", "softMax", min))
-
-
-def _range(nodes, attr):
-    # The tightest hard bound any node declares, narrowed by a soft range
-    # unless the soft range contradicts it. Either end may be None.
-    b = [None, None, None, None]
-    for nd in nodes:
-        for i, (has, get, pick) in enumerate(_BOUNDS):
-            try:
-                if not cmds.attributeQuery(attr, node=nd, **{has: True}):
-                    continue
-                v = float(cmds.attributeQuery(attr, node=nd, **{get: True})[0])
-            except Exception:
-                continue
-            b[i] = v if b[i] is None else pick(b[i], v)
-    lo = b[0] if b[2] is None else (b[2] if b[0] is None else max(b[0], b[2]))
-    hi = b[1] if b[3] is None else (b[3] if b[1] is None else min(b[1], b[3]))
-    if lo is not None and hi is not None and lo > hi:
-        return b[0], b[1]
-    return lo, hi
-
-
-def _fold(v, lo, hi):
-    # A value inside comes back untouched; one outside is reflected off the
-    # bound it crossed, so out-of-range picks spread over the range.
-    if (lo is None or v >= lo) and (hi is None or v <= hi):
-        return v
-    if lo is not None and hi is not None:
-        if hi <= lo:
-            return lo
-        span = hi - lo
-        r    = (v - lo) % (2 * span)
-        return lo + (r if r <= span else 2 * span - r)
-    if lo is not None:
-        return 2 * lo - v
-    return 2 * hi - v
-
-
-def _fit(nodes, attr, t, v):
-    # v inside attr's range on every node that has attr; a numeric compound
-    # is fitted one child at a time.
-    nodes = [n for n in nodes if n and cmds.objExists(n + "." + attr)]
-    if t in _RANGED_COMPOUNDS and isinstance(v, (list, tuple)):
-        kids = []
-        for nd in nodes:
-            kids = cmds.attributeQuery(attr, node=nd, listChildren=True) or []
-            if kids:
-                break
-        if len(kids) != len(v):
-            return v
-        return [_fold(x, *_range(nodes, k)) for x, k in zip(v, kids)]
-    if t not in _RANGED or isinstance(v, bool):
-        return v
-    if not isinstance(v, (int, float)):
-        return v
-    lo, hi = _range(nodes, attr)
-    if t in ("long", "short"):
-        lo = None if lo is None else math.ceil(lo)
-        hi = None if hi is None else math.floor(hi)
-        return int(round(_fold(v, lo, hi)))
-    return _fold(v, lo, hi)
-
-
-def _sample(t):
-    if t == "bool": return random.choice([0, 1])
-    if t == "long": return random.randint(-3, 3)
-    if t == "enum": return random.randint(0, 1)
-    if t in ("double3", "euler", "position"):
-        return [random.uniform(-2, 2) for _ in range(3)]
-    return random.uniform(-2, 2)
-
-
-def _set(node, attr, t, v):
-    if t in ("double3", "euler", "position"):
-        cmds.setAttr(node + "." + attr, v[0], v[1], v[2], type="double3")
-    else:
-        cmds.setAttr(node + "." + attr, v)
-
-
-def _pts(mesh):
-    return cmds.xform(mesh + ".vtx[*]", q=True, os=True, t=True)
-
-
-def _apply(deformer_type, configure):
-    tr = cmds.polySphere(r=1, sx=12, sy=12, ch=False)[0]
-    d  = cmds.deformer(tr, type=deformer_type)[0]
-    if configure:
-        configure(d)
-    return tr, d
-
-
-def run(samples=12):
+def run():
+    from mpynode.native.toolchain import verify as _cc
+    _cc._load_python_plugins(cmds)
     if not cmds.pluginInfo(os.path.basename(BUNDLE), q=True, loaded=True):
         cmds.loadPlugin(BUNDLE)
-    if IS_SKIN:
-        print("NOTE: skinCluster parity needs a bound influence set "
-              "(matrix[]/bindPreMatrix[]/weights). Without joints both nodes "
-              "are identity; wire a rig for a meaningful comparison.")
-
-    import mpynode
-
-    def cfg(node):
-        w = mpynode.wrap_node(node)
-        for nm, t in USER_INPUTS.items():
-            try:
-                w.add_input_attr(nm, t)
-            except Exception:
-                pass
-        if INIT.strip():
-            w.set_init_expression(INIT)
-        w.set_compute_expression(COMPUTE)
-
-    src_tr, src_d = _apply(SRC_TYPE, cfg)
-    cmp_tr, cmp_d = _apply(NODE_TYPE, None)
-
-    fails = 0
-    for _ in range(samples):
-        env = random.uniform(0.0, 1.0)
-        cmds.setAttr(src_d + ".envelope", env)
-        cmds.setAttr(cmp_d + ".envelope", env)
-        for a, t in USER_INPUTS.items():
-            v = _fit((src_d, cmp_d), a, t, _sample(t))
-            if cmds.objExists(src_d + "." + a):
-                _set(src_d, a, t, v)
-            if cmds.objExists(cmp_d + "." + a):
-                _set(cmp_d, a, t, v)
-        a_pts = _pts(src_tr)
-        b_pts = _pts(cmp_tr)
-        if len(a_pts) != len(b_pts):
-            print("VERTEX COUNT MISMATCH", len(a_pts), len(b_pts))
-            fails += 1
-            continue
-        for i in range(len(a_pts)):
-            if abs(a_pts[i] - b_pts[i]) > TOL:
-                print("MISMATCH coord", i, a_pts[i], "!=", b_pts[i])
-                fails += 1
-                break
-    print("VERIFY", "PASS" if not fails else ("FAIL " + str(fails)))
-    return fails == 0
+    row = _cc._verify_one(cmds, BUNDLE, SPEC)
+    print("VERIFY ROW", row)
+    if not row.get("ran"):
+        print("VERIFY SKIP (" + str(row.get("reason")) + ")")
+        return True
+    if row.get("pass"):
+        print("VERIFY PASS maxerr", row.get("maxerr"))
+        return True
+    print("VERIFY FAIL", row.get("reason"), row.get("maxerr"))
+    return False
 
 
 if __name__ == "__main__":

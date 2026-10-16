@@ -4,10 +4,10 @@ The porter writes each one from
 ``native.ai.verify_scripts._verify_script(spec)`` when it builds a template,
 and nothing else rewrote them: a change to that generator, or to a row's
 spec, left the shipped scripts behind (on 2026-10-15, 28 of 38 no longer
-matched). The geometry scripts embed the whole spec and the deformer and IK
-scripts its compute and init, so a spec edit moves them too. This tool writes
-each one again from its row in the build tree's ``manifest.json``, a
-codegen-only refresh like ``tools/regen_build_scripts.py``;
+matched). Every script embeds its node's whole spec, so a spec edit moves it
+too. This tool writes each one again from its row in the build tree's
+``manifest.json``, a codegen-only refresh like
+``tools/regen_build_scripts.py``;
 ``tests/compile/freshness/test_shipped_verify_scripts`` is the gate over its
 result.
 

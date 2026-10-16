@@ -1,8 +1,11 @@
 """Equivalence check: compiled native GEOMETRY node vs the original mPyNode.
-Run in Maya. Rebuilds the Python original from the embedded spec, builds
-the compiled node, drives identical inputs, and compares the built
-geometry (topology + every point) via the authoritative geo parity
-branch in verify._verify_one.
+Run in Maya. Runs the compile pipeline's own parity check,
+mpynode.native.toolchain.verify._verify_one, on the spec embedded
+below: it rebuilds the Python original, builds the compiled node,
+drives identical inputs on both, and compares
+the built geometry (topology + every point).
+It opens a new scene (file new, force) before it drives the nodes:
+save your work first.
 """
 import os, json
 import maya.cmds as cmds
@@ -13,10 +16,11 @@ SPEC   = json.loads('{"schema_version": 1, "source_node": "meshMaze", "mpy_type"
 
 def run():
     from mpynode.native.toolchain import verify as _cc
+    _cc._load_python_plugins(cmds)
     if not cmds.pluginInfo(os.path.basename(BUNDLE), q=True, loaded=True):
         cmds.loadPlugin(BUNDLE)
     row = _cc._verify_one(cmds, BUNDLE, SPEC)
-    print("GEO VERIFY", row)
+    print("VERIFY ROW", row)
     if not row.get("ran"):
         print("VERIFY SKIP (" + str(row.get("reason")) + ")")
         return True

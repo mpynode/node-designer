@@ -1,160 +1,34 @@
 """Equivalence check: compiled native node vs the original mPyNode.
-Run in Maya. Loads the .bundle, samples inputs, compares outputs.
+Run in Maya. Runs the compile pipeline's own parity check,
+mpynode.native.toolchain.verify._verify_one, on the spec embedded
+below: it rebuilds the Python original, builds the compiled node,
+drives identical inputs on both, and compares
+every component of every output.
+It opens a new scene (file new, force) before it drives the nodes:
+save your work first.
 """
-import os, math, random
+import os, json
 import maya.cmds as cmds
 
-BUNDLE    = os.path.join(os.path.dirname(__file__), 'hexAttribute.mll')
-NODE_TYPE = 'hexAttribute'
-SOURCE    = 'hexAttribute'
-INPUTS    = {"decimals": "long", "inPosition": "double3"}
-OUTPUTS   = {"output": "hex"}
-TOL       = 1e-4
+BUNDLE = os.path.join(os.path.dirname(__file__), 'hexAttribute.mll')
+SPEC   = json.loads('{"schema_version": 1, "source_node": "hexAttribute", "mpy_type": "mPyNode", "suggested": {"node_type_name": "hexAttribute", "class_name": "HexAttribute", "type_id": "0x000731e1", "mpx_base": "MPxNode", "note": "plain dependency node", "heaviness": "easy"}, "inputs": {"decimals": {"type": "long", "is_array": false, "portable": true, "cpp": {"cat": "scalar", "fn": "MFnNumericAttribute", "data": "kInt", "cpp": "int", "read": "asInt", "portable": true}, "default_value": 2}, "inPosition": {"type": "double3", "is_array": false, "portable": true, "cpp": {"cat": "vector", "fn": "MFnNumericAttribute", "data": "k3Double", "cpp": "double[3]", "read": "asDouble3", "portable": true}}}, "outputs": {"output": {"type": "hex", "is_array": false, "portable": true, "cpp": {"cat": "string", "fn": "MFnTypedAttribute", "data": "kString", "cpp": "MString", "read": "asString", "portable": true}}}, "variables": {}, "compute": "# Name: Text Mesh Generator  (numpy-first port)\\n# Author: Eric Vignola - eric.vignola@gmail.com\\n# The `output` attribute is typed `hex`: assign plain text and the attr\\n# auto-encodes it to the space-separated UTF-8 hex a Maya `type` node\\n# consumes as mesh text -- no manual unicode -> hex step needed.\\n\\n# Convert XYZ input (a numpy 3-vector) to rounded strings.\\nself.output = \'DRAG ME AROUND!\\\\n\'\\nself.output += \'X: %s\\\\n\' % round(float(self.inPosition[0]), self.decimals)\\nself.output += \'Y: %s\\\\n\' % round(float(self.inPosition[1]), self.decimals)\\nself.output += \'Z: %s\\\\n\' % round(float(self.inPosition[2]), self.decimals)\\n", "init": "", "affects": "all", "methods": "# Build a complete, self-contained hex_attribute demo: a Maya Type text mesh\\n# whose PARENT transform is the draggable control -- that transform\'s translate\\n# feeds inPosition, and the node\'s hex `output` feeds the Type node, so dragging\\n# the visible text updates the rendered X/Y/Z it shows. The text is extruded\\n# (typeExtrude) so it has real thickness. The Type plugin is optional: if it is\\n# missing a locator shape stands in under the same transform (the hex `output`\\n# is still live in the Watch tab).\\ndef demo(self):\\n    from maya import cmds as mc\\n    name = self.get_name()\\n    mc.setAttr(name + \\".decimals\\", 2)\\n    # The draggable PARENT transform -- its translate drives inPosition, and the\\n    # text mesh lives under it so it moves (and re-labels) as you drag.\\n    xf = mc.createNode(\\"transform\\", name=\\"hexDragMe#\\")\\n    mc.setAttr(xf + \\".translate\\", 1.0, 2.0, 3.0, type=\\"double3\\")\\n    mc.connectAttr(xf + \\".translate\\", name + \\".inPosition\\", force=True)\\n    try:\\n        if not mc.pluginInfo(\\"Type\\", query=True, loaded=True):\\n            mc.loadPlugin(\\"Type\\", quiet=True)\\n        type_node = mc.createNode(\\"type\\", name=\\"hexType#\\")\\n        mc.connectAttr(name + \\".output\\", type_node + \\".textInput\\", force=True)\\n        # Extrude the text so it reads as a solid, thick object.\\n        extrude = mc.createNode(\\"typeExtrude\\", name=\\"hexExtrude#\\")\\n        mc.connectAttr(type_node + \\".outputMesh\\", extrude + \\".inputMesh\\", force=True)\\n        mc.connectAttr(type_node + \\".vertsPerChar\\", extrude + \\".vertsPerChar\\", force=True)\\n        mc.setAttr(extrude + \\".enableExtrusion\\", True)\\n        mc.setAttr(extrude + \\".extrudeDistance\\", 0.75)\\n        mesh_shp = mc.createNode(\\"mesh\\", parent=xf, name=xf + \\"Shape\\")\\n        mc.connectAttr(extrude + \\".outputMesh\\", mesh_shp + \\".inMesh\\", force=True)\\n        mc.sets(mesh_shp, edit=True, forceElement=\\"initialShadingGroup\\")\\n    except Exception:\\n        # No Type plugin -- drop a visible locator shape under the transform so\\n        # there is still something obvious to drag.\\n        try:\\n            mc.createNode(\\"locator\\", parent=xf, name=xf + \\"Shape\\")\\n        except Exception:\\n            pass\\n    return name\\n\\n\\n@maya_test(label=\\"Hex attr: output encodes the live X/Y/Z label text\\", digits=4)\\ndef test_hex_attribute(self):\\n    \\"\\"\\"Same test passes interpreted and compiled (parity): setting inPosition +\\n    decimals makes the `hex` output carry the rounded X/Y/Z label. Drives `self`\\n    through public plugs; decodes the space-separated UTF-8 hex back to text.\\"\\"\\"\\n    from maya import cmds as mc\\n    from mpynode._common.methods.test_helpers import assert_true\\n    name = self.get_name()\\n\\n    def _set(plug, *vals, **kw):\\n        for s in (mc.listConnections(plug, s=True, d=False, plugs=True) or []):\\n            mc.disconnectAttr(s, plug)\\n        mc.setAttr(plug, *vals, **kw)\\n\\n    _set(name + \\".decimals\\", 2)\\n    _set(name + \\".inPosition\\", 1.5, 2.0, 3.25, type=\\"double3\\")\\n\\n    raw = mc.getAttr(name + \\".output\\") or \\"\\"\\n    # The `hex` attr stores space-separated UTF-8 hex a Maya `type` node consumes;\\n    # decode it back to the label text (fall back if a build returns it decoded).\\n    if \\"DRAG ME\\" in raw:\\n        text = raw\\n    else:\\n        text = bytes.fromhex(raw.replace(\\" \\", \\"\\")).decode(\\"utf-8\\")\\n\\n    assert_true(\\"X: 1.5\\" in text, \\"expected \'X: 1.5\' in decoded output %r\\" % text)\\n    assert_true(\\"Y: 2.0\\" in text, \\"expected \'Y: 2.0\' in decoded output %r\\" % text)\\n    assert_true(\\"Z: 3.25\\" in text, \\"expected \'Z: 3.25\' in decoded output %r\\" % text)\\n", "commands": [], "portability": {"portable": true, "blockers": [], "warnings": [], "unported": [], "reads_image_file": false, "reads_embedded_image": false, "uses_mesh_intersector": false}}')
 
 
-# Every pick lands inside its attr's range: see _fit.
-_RANGED           = ("double", "float", "long", "short", "doubleAngle", "doubleLinear")
-_RANGED_COMPOUNDS = ("double3", "euler", "position", "color", "float2")
-_BOUNDS = (("minExists", "minimum", max),
-           ("maxExists", "maximum", min),
-           ("softMinExists", "softMin", max),
-           ("softMaxExists", "softMax", min))
-
-
-def _range(nodes, attr):
-    # The tightest hard bound any node declares, narrowed by a soft range
-    # unless the soft range contradicts it. Either end may be None.
-    b = [None, None, None, None]
-    for nd in nodes:
-        for i, (has, get, pick) in enumerate(_BOUNDS):
-            try:
-                if not cmds.attributeQuery(attr, node=nd, **{has: True}):
-                    continue
-                v = float(cmds.attributeQuery(attr, node=nd, **{get: True})[0])
-            except Exception:
-                continue
-            b[i] = v if b[i] is None else pick(b[i], v)
-    lo = b[0] if b[2] is None else (b[2] if b[0] is None else max(b[0], b[2]))
-    hi = b[1] if b[3] is None else (b[3] if b[1] is None else min(b[1], b[3]))
-    if lo is not None and hi is not None and lo > hi:
-        return b[0], b[1]
-    return lo, hi
-
-
-def _fold(v, lo, hi):
-    # A value inside comes back untouched; one outside is reflected off the
-    # bound it crossed, so out-of-range picks spread over the range.
-    if (lo is None or v >= lo) and (hi is None or v <= hi):
-        return v
-    if lo is not None and hi is not None:
-        if hi <= lo:
-            return lo
-        span = hi - lo
-        r    = (v - lo) % (2 * span)
-        return lo + (r if r <= span else 2 * span - r)
-    if lo is not None:
-        return 2 * lo - v
-    return 2 * hi - v
-
-
-def _fit(nodes, attr, t, v):
-    # v inside attr's range on every node that has attr; a numeric compound
-    # is fitted one child at a time.
-    nodes = [n for n in nodes if n and cmds.objExists(n + "." + attr)]
-    if t in _RANGED_COMPOUNDS and isinstance(v, (list, tuple)):
-        kids = []
-        for nd in nodes:
-            kids = cmds.attributeQuery(attr, node=nd, listChildren=True) or []
-            if kids:
-                break
-        if len(kids) != len(v):
-            return v
-        return [_fold(x, *_range(nodes, k)) for x, k in zip(v, kids)]
-    if t not in _RANGED or isinstance(v, bool):
-        return v
-    if not isinstance(v, (int, float)):
-        return v
-    lo, hi = _range(nodes, attr)
-    if t in ("long", "short"):
-        lo = None if lo is None else math.ceil(lo)
-        hi = None if hi is None else math.floor(hi)
-        return int(round(_fold(v, lo, hi)))
-    return _fold(v, lo, hi)
-
-
-def _sample(t):
-    if t == "bool": return random.choice([0, 1])
-    if t == "long": return random.randint(-10, 10)
-    if t == "enum": return random.randint(0, 1)
-    if t in ("double3", "euler", "position"):
-        return [random.uniform(-5, 5) for _ in range(3)]
-    return random.uniform(-5, 5)
-
-
-def _set(node, attr, t, v):
-    if t in ("double3", "euler", "position"):
-        cmds.setAttr(node + "." + attr, v[0], v[1], v[2], type="double3")
-    else:
-        cmds.setAttr(node + "." + attr, v)
-
-
-def _flat(v):
-    # getAttr returns a scalar, [(x, y, z)] for a double3, or nested lists for a
-    # matrix. Comparing only [0] silently passed a vector wrong on Y/Z or a
-    # transposed matrix -- flatten to EVERY leaf component and compare them all.
-    out   = []
-    stack = [v]
-    while stack:
-        x = stack.pop()
-        if isinstance(x, (list, tuple)):
-            stack.extend(reversed(list(x)))
-        else:
-            out.append(x)
-    return out
-
-
-def run(samples=20):
-    if not OUTPUTS:
-        # Nothing to compare -> the sample loop would be vacuous; report SKIP,
-        # never a (false) PASS.
-        print("VERIFY SKIP (no outputs to compare)")
-        return True
+def run():
+    from mpynode.native.toolchain import verify as _cc
+    _cc._load_python_plugins(cmds)
     if not cmds.pluginInfo(os.path.basename(BUNDLE), q=True, loaded=True):
         cmds.loadPlugin(BUNDLE)
-    comp     = cmds.createNode(NODE_TYPE)
-    fails    = 0
-    compared = 0
-    for _ in range(samples):
-        for a, t in INPUTS.items():
-            v = _fit((comp, SOURCE), a, t, _sample(t))
-            _set(comp, a, t, v)
-            if cmds.objExists(SOURCE + "." + a):
-                _set(SOURCE, a, t, v)
-        for o, t in OUTPUTS.items():
-            if not cmds.objExists(SOURCE + "." + o):
-                continue
-            cf = _flat(cmds.getAttr(comp + "." + o))
-            sf = _flat(cmds.getAttr(SOURCE + "." + o))
-            compared += 1
-            if len(cf) != len(sf):
-                print("MISMATCH", o, "component count", len(cf), "!=", len(sf))
-                fails += 1
-                continue
-            for cv, sv in zip(cf, sf):
-                try:
-                    ok = abs(float(cv) - float(sv)) <= TOL
-                except Exception:
-                    ok = (cv == sv)
-                if not ok:
-                    print("MISMATCH", o, cv, "!=", sv)
-                    fails += 1
-    if compared == 0:
-        # SOURCE node absent (or no comparable outputs): nothing was actually
-        # checked -> SKIP, never a vacuous PASS.
-        print("VERIFY SKIP (no comparable outputs -- SOURCE missing?)")
+    row = _cc._verify_one(cmds, BUNDLE, SPEC)
+    print("VERIFY ROW", row)
+    if not row.get("ran"):
+        print("VERIFY SKIP (" + str(row.get("reason")) + ")")
         return True
-    print("VERIFY", "PASS" if not fails else ("FAIL " + str(fails)))
-    return fails == 0
+    if row.get("pass"):
+        print("VERIFY PASS maxerr", row.get("maxerr"))
+        return True
+    print("VERIFY FAIL", row.get("reason"), row.get("maxerr"))
+    return False
 
 
 if __name__ == "__main__":

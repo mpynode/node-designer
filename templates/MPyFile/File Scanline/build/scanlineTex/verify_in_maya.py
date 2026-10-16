@@ -1,160 +1,34 @@
 """Equivalence check: compiled native node vs the original mPyNode.
-Run in Maya. Loads the .bundle, samples inputs, compares outputs.
+Run in Maya. Runs the compile pipeline's own parity check,
+mpynode.native.toolchain.verify._verify_one, on the spec embedded
+below: it rebuilds the Python original, builds the compiled node,
+drives identical inputs on both, and compares
+every component of every output.
+It opens a new scene (file new, force) before it drives the nodes:
+save your work first.
 """
-import os, math, random
+import os, json
 import maya.cmds as cmds
 
-BUNDLE    = os.path.join(os.path.dirname(__file__), 'scanlineTex.mll')
-NODE_TYPE = 'scanlineTex'
-SOURCE    = 'scanlineTex'
-INPUTS    = {"bands": "long", "speed": "float", "intensity": "float", "frame": "time", "borderColor": "color", "colorSpace": "enum", "fileName": "string", "preFilter": "bool", "preFilterKernel": "enum", "preFilterRadius": "float", "uvCoord": "float2", "wrapModeU": "enum", "wrapModeV": "enum"}
-OUTPUTS   = {"outAlpha": "float", "outColor": "color"}
-TOL       = 1e-4
+BUNDLE = os.path.join(os.path.dirname(__file__), 'scanlineTex.mll')
+SPEC   = json.loads('{"schema_version": 1, "source_node": "scanlineTex", "mpy_type": "mPyFile", "suggested": {"node_type_name": "scanlineTex", "class_name": "ScanlineTex", "type_id": "0x000764b6", "mpx_base": "MPxNode", "note": "texture/file evaluation node", "heaviness": "medium", "reads_image_file": true}, "inputs": {"bands": {"type": "long", "is_array": false, "portable": true, "cpp": {"cat": "scalar", "fn": "MFnNumericAttribute", "data": "kInt", "cpp": "int", "read": "asInt", "portable": true}, "min_value": 1, "default_value": 12}, "speed": {"type": "float", "is_array": false, "portable": true, "cpp": {"cat": "scalar", "fn": "MFnNumericAttribute", "data": "kFloat", "cpp": "float", "read": "asFloat", "portable": true}, "default_value": 0.1}, "intensity": {"type": "float", "is_array": false, "portable": true, "cpp": {"cat": "scalar", "fn": "MFnNumericAttribute", "data": "kFloat", "cpp": "float", "read": "asFloat", "portable": true}, "min_value": 0.0, "max_value": 1.0, "default_value": 0.6}, "frame": {"type": "time", "is_array": false, "portable": true, "cpp": {"cat": "unit", "fn": "MFnUnitAttribute", "data": "kTime", "cpp": "double", "read": "asMTime", "portable": true}}, "borderColor": {"type": "color", "is_array": false, "portable": true, "cpp": {"cat": "color", "fn": "MFnNumericAttribute", "data": "color", "cpp": "float[3]", "read": "asFloat3", "portable": true}}, "colorSpace": {"type": "enum", "is_array": false, "portable": true, "cpp": {"cat": "enum", "fn": "MFnEnumAttribute", "data": "enum", "cpp": "short", "read": "asShort", "portable": true}, "default_value": 0, "enum_names": ["[Texture] sRGB Encoded Rec.709 (sRGB)", "[Texture] Gamma 1.8 Encoded Rec.709", "[Texture] Gamma 2.2 Encoded Rec.709", "[Texture] Gamma 2.4 Encoded Rec.709", "[Texture] sRGB Encoded AP1", "[Texture] Gamma 2.2 Encoded AP1", "[Texture] sRGB Encoded P3-D65", "[Texture] Gamma 2.2 Encoded AdobeRGB", "[Scene-linear] scene-linear Rec.709-sRGB", "[Scene-linear] ACEScg", "[Scene-linear] ACES2065-1", "[Scene-linear] scene-linear DCI-P3 D65", "[Scene-linear] scene-linear AdobeRGB", "[Scene-linear] scene-linear Rec.2020", "[Display] sRGB", "[Display] Gamma 2.2 / Rec.709", "[Display] Rec.1886 / Rec.709 video", "[Display] AdobeRGB", "[Display] DCI-P3 D65", "[Utility] Raw", "[Log] ACEScct", "[Log] ARRI LogC v3 EI800 / AlexaWideGamut", "[Log] RED Log3G10 / REDWideGamutRGB", "[Log] Sony SLog3 / SGamut3", "[Log] Log film scan (ADX10)"]}, "fileName": {"type": "string", "is_array": false, "portable": true, "cpp": {"cat": "string", "fn": "MFnTypedAttribute", "data": "kString", "cpp": "MString", "read": "asString", "portable": true}}, "preFilter": {"type": "bool", "is_array": false, "portable": true, "cpp": {"cat": "scalar", "fn": "MFnNumericAttribute", "data": "kBoolean", "cpp": "bool", "read": "asBool", "portable": true}}, "preFilterKernel": {"type": "enum", "is_array": false, "portable": true, "cpp": {"cat": "enum", "fn": "MFnEnumAttribute", "data": "enum", "cpp": "short", "read": "asShort", "portable": true}, "default_value": 3, "enum_names": ["Box", "Quadratic", "Quartic", "Gaussian"]}, "preFilterRadius": {"type": "float", "is_array": false, "portable": true, "cpp": {"cat": "scalar", "fn": "MFnNumericAttribute", "data": "kFloat", "cpp": "float", "read": "asFloat", "portable": true}}, "uvCoord": {"type": "float2", "is_array": false, "portable": true, "cpp": {"cat": "vector2", "fn": "MFnNumericAttribute", "data": "k2Float", "cpp": "float[2]", "read": "asFloat2", "portable": true}, "children": ["uCoord", "vCoord"]}, "wrapModeU": {"type": "enum", "is_array": false, "portable": true, "cpp": {"cat": "enum", "fn": "MFnEnumAttribute", "data": "enum", "cpp": "short", "read": "asShort", "portable": true}, "default_value": 0, "enum_names": ["Wrap", "Clamp", "Mirror", "Border"]}, "wrapModeV": {"type": "enum", "is_array": false, "portable": true, "cpp": {"cat": "enum", "fn": "MFnEnumAttribute", "data": "enum", "cpp": "short", "read": "asShort", "portable": true}, "default_value": 0, "enum_names": ["Wrap", "Clamp", "Mirror", "Border"]}}, "outputs": {"outAlpha": {"type": "float", "is_array": false, "portable": true, "cpp": {"cat": "scalar", "fn": "MFnNumericAttribute", "data": "kFloat", "cpp": "float", "read": "asFloat", "portable": true}}, "outColor": {"type": "color", "is_array": false, "portable": true, "cpp": {"cat": "color", "fn": "MFnNumericAttribute", "data": "color", "cpp": "float[3]", "read": "asFloat3", "portable": true}}}, "variables": {}, "compute": "# Scanline file texture: sample the image through the FRAMEWORK, then\\n# multiply by an animated horizontal scan band that scrolls with `frame`.\\n#\\n# The load is not this template\'s job -- self.read_texture() /\\n# self.sample_texture() give it `fileName` decoded out of `colorSpace`, the\\n# optional pre-filter and the wrap modes, the same as every other mPyFile.\\n# What this template is ABOUT is the band below.\\n#\\n# `bands` = number of bands across V, `speed` = scroll rate, `intensity` = how\\n# dark the troughs get (0 = flat, 1 = full black between).\\nbuf = self.read_texture()\\nv = self.uvCoord[1]\\nr, g, b, a = self.sample_texture(buf, self.uvCoord[0], v)\\n\\nvv = v - np.floor(v)\\ns = 0.5 + 0.5 * np.sin((vv * self.bands - self.frame * self.speed) * 2.0 * np.pi)\\nscan = (1.0 - self.intensity) + self.intensity * s\\n\\nself.outColor = (r * scan, g * scan, b * scan)\\nself.outAlpha = a\\n", "init": "# ----------------------------------------------------------------------\\n# File Simple -- Init tier.\\n#\\n# There is deliberately NO image-loading code here.\\n#\\n# Loading, colour-space decoding and pre-filtering are FRAMEWORK services.\\n# Compute and Viewport reach them as self.read_texture() and\\n# self.sample_texture() -- the \\"M\\" (method) rows in the Variables tab. They\\n# honour every preset input an mPyFile already carries:\\n#\\n#   self.colorSpace       25 colour spaces (sRGB, ACEScct, LogC, S-Log3, ...)\\n#   self.preFilter        smoothing on/off\\n#   self.preFilterKernel  box / quadratic / quartic / gaussian\\n#   self.preFilterRadius  smoothing radius\\n#   self.wrapModeU/V      repeat / clamp / mirror / border\\n#   self.borderColor      what a border-wrapped lookup returns off-image\\n#   self.embeddedImage    baked image bytes read_texture() falls back to when\\n#                         `fileName` is blank / missing, so a node ships\\n#                         renderable with no file on disk\\n#\\n# So this template gets a stock Maya file node\'s full colour management for\\n# free, and compiles to the same deterministic nd_tex_load_linear /\\n# nd_tex_sample C++ kernels as the built-in default -- no AI port.\\n#\\n# numpy is imported because the Viewport tier uses it for the whole-image\\n# brightness/contrast pass. The Init namespace is merged into the Compute and\\n# Viewport namespaces before either runs, so anything defined here is in scope\\n# for both.\\n# ----------------------------------------------------------------------\\nimport numpy as np\\n", "affects": "all", "methods": "# Full setup for the scanline texture: create a plane + an UNLIT surfaceShader,\\n# assign it, drive its colour from outColor, point fileName at the shipped\\n# grid, set a playback range so the bands scroll on play, then (best effort)\\n# build the Arnold OSL render path with tIn driven by time.\\ndef demo(self):\\n    from maya import cmds as mc\\n    import os\\n    name = self.get_name()\\n\\n    # surfaceShader, not lambert: the scanline modulation is a few percent at\\n    # the bright end, and a lambert\'s diffuse + lighting term swamps exactly\\n    # that signal. Unlit shows the buffer as computed.\\n    plane = mc.polyPlane(width=10, height=10, subdivisionsX=1,\\n                         subdivisionsY=1, name=name + \\"_plane\\")[0]\\n    shader = mc.shadingNode(\\"surfaceShader\\", asShader=True,\\n                            name=name + \\"_surface\\")\\n    sg = mc.sets(renderable=True, noSurfaceShader=True, empty=True, name=shader + \\"SG\\")\\n    mc.connectAttr(shader + \\".outColor\\", sg + \\".surfaceShader\\", force=True)\\n    mc.sets(plane, edit=True, forceElement=sg)\\n    mc.connectAttr(name + \\".outColor\\", shader + \\".outColor\\", force=True)\\n\\n    grid = None\\n    try:\\n        from mpynode._common.util.template_gallery import _bundled_templates_root\\n        root = _bundled_templates_root()\\n        if root:\\n            cand = os.path.join(root, \\"MPyFile\\", \\"File Scanline\\", \\"test_grid.png\\")\\n            if os.path.isfile(cand):\\n                grid = cand\\n    except Exception:\\n        grid = None\\n    if grid:\\n        mc.setAttr(name + \\".fileName\\", grid, type=\\"string\\")\\n\\n    # Playback range so the scanline visibly scrolls on play.\\n    try:\\n        mc.playbackOptions(minTime=1, maxTime=120,\\n                           animationStartTime=1, animationEndTime=120)\\n        mc.currentTime(1)\\n    except Exception:\\n        pass\\n\\n    # Arnold OSL render path (best effort): drive tIn from time so it scrolls.\\n    try:\\n        from mpynode._common.osl.osl_targets import apply_osl_to_arnold\\n        osl = apply_osl_to_arnold(name)\\n        if osl:\\n            if grid and mc.attributeQuery(\\"fileName\\", node=osl, exists=True):\\n                mc.setAttr(osl + \\".fileName\\", grid, type=\\"string\\")\\n            for p in (\\"bands\\", \\"speed\\", \\"intensity\\"):\\n                if mc.attributeQuery(p, node=osl, exists=True):\\n                    try:\\n                        mc.setAttr(osl + \\".\\" + p, mc.getAttr(name + \\".\\" + p))\\n                    except Exception:\\n                        pass\\n            if mc.attributeQuery(\\"tIn\\", node=osl, exists=True):\\n                try:\\n                    mc.connectAttr(\\"time1.outTime\\", osl + \\".tIn\\", force=True)\\n                except Exception:\\n                    pass\\n            if mc.attributeQuery(\\"aiSurfaceShader\\", node=sg, exists=True):\\n                amtl = mc.shadingNode(\\"aiStandardSurface\\", asShader=True,\\n                                      name=name + \\"_arnoldMtl\\")\\n                try:\\n                    mc.setAttr(amtl + \\".specular\\", 0.0)\\n                except Exception:\\n                    pass\\n                mc.connectAttr(osl + \\".outColor\\", amtl + \\".baseColor\\", force=True)\\n                mc.connectAttr(amtl + \\".outColor\\", sg + \\".aiSurfaceShader\\", force=True)\\n    except Exception:\\n        pass\\n\\n    try:\\n        mc.dgdirty(name + \\".outColor\\")\\n        mc.getAttr(name + \\".outColor\\")\\n    except Exception:\\n        pass\\n    try:\\n        for _panel in mc.getPanel(type=\\"modelPanel\\") or []:\\n            _cam = mc.modelEditor(_panel, query=True, camera=True)\\n            if _cam:\\n                mc.viewFit(_cam, allObjects=True)\\n    except Exception:\\n        pass\\n    return name\\n\\n\\n@maya_test(label=\\"Scanline: image sampled, scan band scrolls, magenta fallback\\", digits=3)\\ndef test_scanline(self):\\n    \\"\\"\\"Validate the node\'s INTENT (the SAME test passes on the interpreted node\\n    and its C++ compile -> parity), mirroring the builder\'s own live checks:\\n\\n      1. A blank `fileName` yields the magenta \\"no image\\" hue.\\n      2. With a real image wired in, the animated scan band scrolls: at a fixed\\n         uv the `outColor` changes as `frame` (the timeline) advances.\\n\\n    Robust to a LIVE, demo-populated scene and to being run twice: the demo may\\n    have wired `fileName`/`uvCoord`/scan params, so we break incoming\\n    connections before driving each input.\\n    \\"\\"\\"\\n    import os\\n    import tempfile\\n    from maya import cmds as mc\\n    import maya.api.OpenMaya as om2\\n    from mpynode._common.methods.test_helpers import assert_close, assert_true\\n\\n    name = self.get_name()\\n\\n    def _set(plug, *vals, **kw):\\n        # A demo/user may have CONNECTED this input; break it so the test drives it.\\n        for s in (mc.listConnections(plug, s=True, d=False, plugs=True) or []):\\n            mc.disconnectAttr(s, plug)\\n        mc.setAttr(plug, *vals, **kw)\\n\\n    def out_color(u, v, t):\\n        _set(name + \\".uCoord\\", u)\\n        _set(name + \\".vCoord\\", v)\\n        mc.currentTime(t)\\n        mc.dgdirty(name + \\".outColor\\")\\n        return mc.getAttr(name + \\".outColor\\")[0]\\n\\n    # 1) Blank fileName -> the magenta \\"no image\\" sentinel. read_texture()\\n    #    returns None and sample_texture() yields (1, 0, 1); the scan factor\\n    #    then SCALES it (at intensity 0.6 the trough never reaches the rails),\\n    #    so assert the HUE -- green off, red == blue, not black -- rather than\\n    #    an exact (1, 0, 1).\\n    _set(name + \\".fileName\\", \\"\\", type=\\"string\\")\\n    miss = out_color(0.5, 0.3, 0.0)\\n    assert_close(miss[1], 0.0)\\n    assert_close(miss[0], miss[2])\\n    assert_true(miss[0] > 0.01,\\n                \\"a missing image must read as magenta, not black\\")\\n\\n    # Write a per-row gradient RGBA image (row r = grey r*30) so the V-sampling\\n    # is actually exercised -- no external asset required.\\n    w = h = 8\\n    buf = bytearray()\\n    for r in range(h):\\n        val = r * 30\\n        buf += bytes([val, val, val, 255]) * w\\n    testimg = os.path.join(tempfile.gettempdir(), \\"mpy_scanline_test.png\\")\\n    im = om2.MImage()\\n    im.create(w, h, 4, om2.MImage.kByte)\\n    im.setPixels(bytes(buf), w, h)\\n    im.writeToFile(testimg, \\"png\\")\\n\\n    _set(name + \\".fileName\\", testimg, type=\\"string\\")\\n    _set(name + \\".bands\\", 12)\\n    _set(name + \\".speed\\", 0.1)\\n    _set(name + \\".intensity\\", 0.6)\\n\\n    # The wrapper auto-wires `frame` to time1 on create, but a freshly built /\\n    # deserialized node may not carry it -- ensure the timeline drives `frame`\\n    # so currentTime actually scrolls the scan band.\\n    if not (mc.listConnections(name + \\".frame\\", s=True, d=False) or []):\\n        if not mc.objExists(\\"time1\\"):\\n            mc.createNode(\\"time\\", name=\\"time1\\", skipSelect=True)\\n        try:\\n            mc.connectAttr(\\"time1.outTime\\", name + \\".frame\\", force=True)\\n        except Exception:\\n            pass\\n\\n    # 2) The scan band scrolls: at a fixed uv, some frame differs from the base\\n    #    frame (avoid a single pair -- a phase shift of t*speed == integer lands\\n    #    on the same scan value).\\n    base = out_color(0.5, 0.3, 0.0)[0]\\n    scrolled = any(\\n        abs(out_color(0.5, 0.3, float(t))[0] - base) > 1e-3 for t in (5, 7, 13))\\n    assert_true(scrolled,\\n                \\"scanline should scroll: outColor must change as frame advances\\")\\n\\n\\n\\"\\"\\"Setup source for mPyFile nodes (self-first instance method).\\"\\"\\"\\n\\n# VANILLA: this body ships as EMBEDDED PYTHON inside a compiled .mll and must run\\n# on a machine with Maya but WITHOUT mpynode, so the setup_helpers ``_selection``\\n# and the pure-cmds ``_api2.mpy_file.ensure_in_texture_list`` it used to import are\\n# inlined below. They are FUNCTION-LOCAL rather than module-level because\\n# node_setups.merge_type_default APPENDS this file to the host node\'s own methods\\n# source -- a module-level def would clobber a same-named helper the host already\\n# defines. ``warm_init_namespace`` is the one name that stays an import; see the\\n# call site for why that is safe.\\ndef setup(self, *args, **kwargs):\\n    from maya import cmds as mc\\n\\n    def _selection(override=None, exclude=None):\\n        \\"\\"\\"Inputs for setup: `override` (the snapshot \\"Run setup\\" passes) wins\\n        over the live selection; `exclude` drops this node so it is never its\\n        own input.\\"\\"\\"\\n        sel = list(override) if override is not None else (\\n            mc.ls(selection=True, long=False) or [])\\n        return [n for n in sel if n != exclude] if exclude else sel\\n\\n    def _ensure_in_texture_list(n):\\n        \\"\\"\\"Wire ``n.message -> defaultTextureList1.textures`` so the Hypershade\\n        can graph the node (parity with ``shadingNode -asTexture``).\\n\\n        Idempotent AND self-healing: it inspects the texture-list\'s source plugs\\n        so it is robust to the create-time race where ``shadingNode -asTexture``\\n        ALSO wires this connection -- duplicates are disconnected so exactly one\\n        remains. Vendored from _api2.mpy_file.ensure_in_texture_list, which is\\n        pure maya.cmds and works against a compiled node too -- importing it\\n        would drag mpynode into a compiled bundle.\\"\\"\\"\\n        try:\\n            if not mc.objExists(n):\\n                return False\\n            msg = n + \\".message\\"\\n            if not mc.objExists(\\"defaultTextureList1\\"):\\n                # Default node is created on demand by shadingNode; make it so\\n                # the connection has a destination even in a minimal scene.\\n                try:\\n                    mc.createNode(\\"defaultTextureList\\",\\n                                  name=\\"defaultTextureList1\\", shared=True)\\n                except Exception:\\n                    pass\\n            pairs = mc.listConnections(\\n                \\"defaultTextureList1.textures\\", connections=True, plugs=True,\\n                source=True, destination=False) or []\\n            mine = [pairs[i] for i in range(0, len(pairs) - 1, 2)\\n                    if pairs[i + 1] == msg]\\n            if mine:\\n                for extra in mine[1:]:\\n                    try:\\n                        mc.disconnectAttr(msg, extra)\\n                    except Exception:\\n                        pass\\n                return True\\n            mc.connectAttr(msg, \\"defaultTextureList1.textures\\",\\n                           nextAvailable=True)\\n            return True\\n        except Exception:\\n            return False\\n\\n    name = self.get_name()\\n    # ``self`` is the already-created mPyFile (create() ran shadingNode -asTexture,\\n    # wired time1, seeded Init/Compute/Viewport + a place2dTexture). Wire outColor\\n    # on top of that plumbing -- do NOT re-create place2dTexture or re-seed.\\n    _ensure_in_texture_list(name)\\n    # INTERPRETED-ONLY, and deliberately left as an import rather than vendored:\\n    # it registers the node\'s Init source into mpynode\'s init registry, and it\\n    # gates on the ``_initSource`` plug -- which a compiled node does not have\\n    # (command_dispatch.COMPILED_UNSUPPORTED), so a vendored copy could only ever\\n    # return False in a bundle. Guarded so a missing mpynode skips it instead of\\n    # killing the whole setup; the function itself never raises.\\n    try:\\n        from mpynode._api2.mpy_file import warm_init_namespace\\n        warm_init_namespace(name)\\n    except Exception:\\n        pass\\n\\n    # Selection snapshot (build()/Run setup pass it via kwargs[\\"selection\\"]);\\n    # exclude self so it is never treated as its own shader input.\\n    def _is_surface_shader(n):\\n        cls_tags = mc.getClassification(mc.nodeType(n)) or []\\n        return any(\\"shader/surface\\" in t for t in cls_tags)\\n    sel = [s for s in _selection(override=kwargs.get(\\"selection\\"),\\n                                 exclude=name) if _is_surface_shader(s)]\\n\\n    if sel:\\n        shader = sel[-1]\\n        dest = next((a for a in (\\"color\\", \\"baseColor\\")\\n                     if mc.attributeQuery(a, node=shader, exists=True)), None)\\n        if dest:\\n            mc.connectAttr(name + \\".outColor\\", \\"%s.%s\\" % (shader, dest), force=True)\\n    return name\\n", "commands": [], "portability": {"portable": true, "blockers": [], "warnings": ["reads an image file (self.read_texture) -> ported to MImage::readFromFile; output depends on external file state, so pointwise parity is loose/skipped (not bit-identical to PIL/cv2)", "uses numpy -- vectorized math is reverse-engineered to C++ loops (verify numerically; np.random maps to C++ <random>; file I/O lowers only where the dtype is explicit -- np.fromfile/np.save/.tofile and ndio.read/ndio.write -- while np.load/np.loadtxt are blockers)"], "unported": [], "reads_image_file": true, "reads_embedded_image": true, "uses_mesh_intersector": false}}')
 
 
-# Every pick lands inside its attr's range: see _fit.
-_RANGED           = ("double", "float", "long", "short", "doubleAngle", "doubleLinear")
-_RANGED_COMPOUNDS = ("double3", "euler", "position", "color", "float2")
-_BOUNDS = (("minExists", "minimum", max),
-           ("maxExists", "maximum", min),
-           ("softMinExists", "softMin", max),
-           ("softMaxExists", "softMax", min))
-
-
-def _range(nodes, attr):
-    # The tightest hard bound any node declares, narrowed by a soft range
-    # unless the soft range contradicts it. Either end may be None.
-    b = [None, None, None, None]
-    for nd in nodes:
-        for i, (has, get, pick) in enumerate(_BOUNDS):
-            try:
-                if not cmds.attributeQuery(attr, node=nd, **{has: True}):
-                    continue
-                v = float(cmds.attributeQuery(attr, node=nd, **{get: True})[0])
-            except Exception:
-                continue
-            b[i] = v if b[i] is None else pick(b[i], v)
-    lo = b[0] if b[2] is None else (b[2] if b[0] is None else max(b[0], b[2]))
-    hi = b[1] if b[3] is None else (b[3] if b[1] is None else min(b[1], b[3]))
-    if lo is not None and hi is not None and lo > hi:
-        return b[0], b[1]
-    return lo, hi
-
-
-def _fold(v, lo, hi):
-    # A value inside comes back untouched; one outside is reflected off the
-    # bound it crossed, so out-of-range picks spread over the range.
-    if (lo is None or v >= lo) and (hi is None or v <= hi):
-        return v
-    if lo is not None and hi is not None:
-        if hi <= lo:
-            return lo
-        span = hi - lo
-        r    = (v - lo) % (2 * span)
-        return lo + (r if r <= span else 2 * span - r)
-    if lo is not None:
-        return 2 * lo - v
-    return 2 * hi - v
-
-
-def _fit(nodes, attr, t, v):
-    # v inside attr's range on every node that has attr; a numeric compound
-    # is fitted one child at a time.
-    nodes = [n for n in nodes if n and cmds.objExists(n + "." + attr)]
-    if t in _RANGED_COMPOUNDS and isinstance(v, (list, tuple)):
-        kids = []
-        for nd in nodes:
-            kids = cmds.attributeQuery(attr, node=nd, listChildren=True) or []
-            if kids:
-                break
-        if len(kids) != len(v):
-            return v
-        return [_fold(x, *_range(nodes, k)) for x, k in zip(v, kids)]
-    if t not in _RANGED or isinstance(v, bool):
-        return v
-    if not isinstance(v, (int, float)):
-        return v
-    lo, hi = _range(nodes, attr)
-    if t in ("long", "short"):
-        lo = None if lo is None else math.ceil(lo)
-        hi = None if hi is None else math.floor(hi)
-        return int(round(_fold(v, lo, hi)))
-    return _fold(v, lo, hi)
-
-
-def _sample(t):
-    if t == "bool": return random.choice([0, 1])
-    if t == "long": return random.randint(-10, 10)
-    if t == "enum": return random.randint(0, 1)
-    if t in ("double3", "euler", "position"):
-        return [random.uniform(-5, 5) for _ in range(3)]
-    return random.uniform(-5, 5)
-
-
-def _set(node, attr, t, v):
-    if t in ("double3", "euler", "position"):
-        cmds.setAttr(node + "." + attr, v[0], v[1], v[2], type="double3")
-    else:
-        cmds.setAttr(node + "." + attr, v)
-
-
-def _flat(v):
-    # getAttr returns a scalar, [(x, y, z)] for a double3, or nested lists for a
-    # matrix. Comparing only [0] silently passed a vector wrong on Y/Z or a
-    # transposed matrix -- flatten to EVERY leaf component and compare them all.
-    out   = []
-    stack = [v]
-    while stack:
-        x = stack.pop()
-        if isinstance(x, (list, tuple)):
-            stack.extend(reversed(list(x)))
-        else:
-            out.append(x)
-    return out
-
-
-def run(samples=20):
-    if not OUTPUTS:
-        # Nothing to compare -> the sample loop would be vacuous; report SKIP,
-        # never a (false) PASS.
-        print("VERIFY SKIP (no outputs to compare)")
-        return True
+def run():
+    from mpynode.native.toolchain import verify as _cc
+    _cc._load_python_plugins(cmds)
     if not cmds.pluginInfo(os.path.basename(BUNDLE), q=True, loaded=True):
         cmds.loadPlugin(BUNDLE)
-    comp     = cmds.createNode(NODE_TYPE)
-    fails    = 0
-    compared = 0
-    for _ in range(samples):
-        for a, t in INPUTS.items():
-            v = _fit((comp, SOURCE), a, t, _sample(t))
-            _set(comp, a, t, v)
-            if cmds.objExists(SOURCE + "." + a):
-                _set(SOURCE, a, t, v)
-        for o, t in OUTPUTS.items():
-            if not cmds.objExists(SOURCE + "." + o):
-                continue
-            cf = _flat(cmds.getAttr(comp + "." + o))
-            sf = _flat(cmds.getAttr(SOURCE + "." + o))
-            compared += 1
-            if len(cf) != len(sf):
-                print("MISMATCH", o, "component count", len(cf), "!=", len(sf))
-                fails += 1
-                continue
-            for cv, sv in zip(cf, sf):
-                try:
-                    ok = abs(float(cv) - float(sv)) <= TOL
-                except Exception:
-                    ok = (cv == sv)
-                if not ok:
-                    print("MISMATCH", o, cv, "!=", sv)
-                    fails += 1
-    if compared == 0:
-        # SOURCE node absent (or no comparable outputs): nothing was actually
-        # checked -> SKIP, never a vacuous PASS.
-        print("VERIFY SKIP (no comparable outputs -- SOURCE missing?)")
+    row = _cc._verify_one(cmds, BUNDLE, SPEC)
+    print("VERIFY ROW", row)
+    if not row.get("ran"):
+        print("VERIFY SKIP (" + str(row.get("reason")) + ")")
         return True
-    print("VERIFY", "PASS" if not fails else ("FAIL " + str(fails)))
-    return fails == 0
+    if row.get("pass"):
+        print("VERIFY PASS maxerr", row.get("maxerr"))
+        return True
+    print("VERIFY FAIL", row.get("reason"), row.get("maxerr"))
+    return False
 
 
 if __name__ == "__main__":

@@ -1,160 +1,34 @@
 """Equivalence check: compiled native node vs the original mPyNode.
-Run in Maya. Loads the .bundle, samples inputs, compares outputs.
+Run in Maya. Runs the compile pipeline's own parity check,
+mpynode.native.toolchain.verify._verify_one, on the spec embedded
+below: it rebuilds the Python original, builds the compiled node,
+drives identical inputs on both, and compares
+every component of every output.
+It opens a new scene (file new, force) before it drives the nodes:
+save your work first.
 """
-import os, math, random
+import os, json
 import maya.cmds as cmds
 
-BUNDLE    = os.path.join(os.path.dirname(__file__), 'springChain.mll')
-NODE_TYPE = 'springChain'
-SOURCE    = 'springChain'
-INPUTS    = {"damping": "float", "driver": "double3", "gravity": "double3", "mass": "float", "maxDistance": "float", "minDistance": "float", "resetBuffer": "enum", "tension": "float", "time": "time"}
-OUTPUTS   = {"driven": "double3"}
-TOL       = 1e-4
+BUNDLE = os.path.join(os.path.dirname(__file__), 'springChain.mll')
+SPEC   = json.loads('{"schema_version": 1, "source_node": "springChain", "mpy_type": "mPyNode", "suggested": {"node_type_name": "springChain", "class_name": "SpringChain", "type_id": "0x000749b0", "mpx_base": "MPxNode", "note": "plain dependency node", "heaviness": "easy"}, "inputs": {"damping": {"type": "float", "is_array": false, "portable": true, "cpp": {"cat": "scalar", "fn": "MFnNumericAttribute", "data": "kFloat", "cpp": "float", "read": "asFloat", "portable": true}, "default_value": 0.6}, "driver": {"type": "double3", "is_array": false, "portable": true, "cpp": {"cat": "vector", "fn": "MFnNumericAttribute", "data": "k3Double", "cpp": "double[3]", "read": "asDouble3", "portable": true}}, "gravity": {"type": "double3", "is_array": false, "portable": true, "cpp": {"cat": "vector", "fn": "MFnNumericAttribute", "data": "k3Double", "cpp": "double[3]", "read": "asDouble3", "portable": true}}, "mass": {"type": "float", "is_array": false, "portable": true, "cpp": {"cat": "scalar", "fn": "MFnNumericAttribute", "data": "kFloat", "cpp": "float", "read": "asFloat", "portable": true}, "default_value": 1.0}, "maxDistance": {"type": "float", "is_array": false, "portable": true, "cpp": {"cat": "scalar", "fn": "MFnNumericAttribute", "data": "kFloat", "cpp": "float", "read": "asFloat", "portable": true}}, "minDistance": {"type": "float", "is_array": false, "portable": true, "cpp": {"cat": "scalar", "fn": "MFnNumericAttribute", "data": "kFloat", "cpp": "float", "read": "asFloat", "portable": true}}, "resetBuffer": {"type": "enum", "is_array": false, "portable": true, "cpp": {"cat": "enum", "fn": "MFnEnumAttribute", "data": "enum", "cpp": "short", "read": "asShort", "portable": true}, "enum_names": ["False", "True"]}, "tension": {"type": "float", "is_array": false, "portable": true, "cpp": {"cat": "scalar", "fn": "MFnNumericAttribute", "data": "kFloat", "cpp": "float", "read": "asFloat", "portable": true}, "default_value": 0.3}, "time": {"type": "time", "is_array": false, "portable": true, "cpp": {"cat": "unit", "fn": "MFnUnitAttribute", "data": "kTime", "cpp": "double", "read": "asMTime", "portable": true}}}, "outputs": {"driven": {"type": "double3", "is_array": true, "portable": true, "cpp": {"cat": "vector", "fn": "MFnNumericAttribute", "data": "k3Double", "cpp": "double[3]", "read": "asDouble3", "portable": true}}}, "variables": {}, "compute": "# Name: Simple spring solver  (numpy-first port)\\n# Author: Eric Vignola - eric.vignola@gmail.com\\n# self.initialized (session-only) avoids an integration on the first eval after\\n# load. self.position / self.velocity persist. driven = vector array output.\\n#\\n# (Imports + helper functions live in the Init tab.)\\n\\n# ---------------------------- Main ----------------------------#\\n\\n# Fresh (vanilla) node, or one whose buffers were never restored: seed the\\n# spring buffers so the first integration has state. The original relied on\\n# restored stored vars; gallery templates ship vanilla (no stored vars).\\nif not hasattr(self, \'velocity\'):\\n    self.velocity = [np.zeros(3) for _ in range(len(self.driven))]\\n    self.position = [np.zeros(3) for _ in range(len(self.driven))]\\n\\n# First eval after a load: just mark initialized + push the stored buffer out\\n# (self.initialized is session-only -> absent again on the next load).\\nif not hasattr(self, \'initialized\'):\\n    self.initialized = True\\n\\nelse:\\n    n = len(self.driven)\\n\\n    if self.resetBuffer:\\n        self.velocity = [np.zeros(3) for _ in range(n)]\\n        self.position = [np.zeros(3) for _ in range(n)]\\n\\n    elif len(self.velocity) < n:\\n        for _ in range(len(self.velocity), n):\\n            self.velocity.append(np.zeros(3))\\n            self.position.append(np.zeros(3))\\n\\n    elif len(self.velocity) > n:\\n        self.velocity = self.velocity[:n]\\n        self.position = self.position[:n]\\n\\n    else:\\n        # Initial drag\\n        self.position[0], self.velocity[0] = spring(\\n            self.driver, self.position[0], self.velocity[0],\\n            self.gravity, self.tension, self.mass, self.damping, self.minDistance, self.maxDistance)\\n\\n        # Spring forces down the chain\\n        for i in range(1, n):\\n            self.position[i], self.velocity[i] = spring(\\n                self.position[i - 1], self.position[i], self.velocity[i],\\n                self.gravity, self.tension, self.mass, self.damping, self.minDistance, self.maxDistance)\\n\\n\\n# Output positions from the stored buffer\\nself.driven[:] = np.asarray(self.position, dtype=float)\\n", "init": "# Init tab \\u2014 runs once per file open (not per compute()).\\n# Imports + helper functions shared by the Compute expression.\\n\\nimport numpy as np\\n\\n\\ndef spring(p0, p1, v, g, k, m, d, minDist=0., maxDist=0.):\\n    p0 = np.asarray(p0, dtype=float)\\n    p1 = np.asarray(p1, dtype=float)\\n    v = np.asarray(v, dtype=float)\\n    g = np.asarray(g, dtype=float)\\n\\n    # Acceleration -> velocity -> position\\n    s = p0 - p1\\n    a = k * s / m - d * v / m + g\\n    v = v + a\\n    p1 = p1 + v\\n\\n    # Simple distance limits\\n    if minDist or maxDist:\\n        s = p0 - p1\\n        length = float(np.linalg.norm(s))\\n        if length != 0:\\n            s = s / length\\n\\n        if minDist > 0. and length < minDist:\\n            p1 = p0 - s * minDist\\n            v = np.zeros(3)\\n        elif maxDist > 0. and length > maxDist:\\n            p1 = p0 - s * maxDist\\n            v = np.zeros(3)\\n\\n    return p1, v\\n", "affects": "all", "methods": "# Build a complete, self-contained spring_chain demo: a driver locator\\n# (keyframed so PLAYING the timeline swings it back and forth) plus a chain of\\n# 100 spheres that lag behind it under tension/damping (secondary motion).\\n# Gravity is zeroed. The driver carries USER attributes mirroring the node\'s\\n# tuning inputs (gravity, tension, damping, mass, max/minDistance) wired straight\\n# into the node, so users tweak the chain\'s feel right on the driver\'s channel\\n# box. The chain is wired to the driven output array and time is wired to time1.\\ndef demo(self):\\n    from maya import cmds as mc\\n    name = self.get_name()\\n    n_links = 100\\n    driver = mc.spaceLocator(name=\\"springDriver#\\")[0]\\n    mc.connectAttr(driver + \\".translate\\", name + \\".driver\\", force=True)\\n    for t, x in ((1, 0.0), (24, 10.0), (48, 0.0)):\\n        mc.setKeyframe(driver + \\".translateX\\", time=t, value=x)\\n    # Mirror the node\'s tuning inputs onto the driver and wire them straight in,\\n    # so the chain is tuned right on the driver (gravity zeroed).\\n    mc.addAttr(driver, longName=\\"gravity\\", attributeType=\\"double3\\", keyable=True)\\n    for ax in \\"XYZ\\":\\n        mc.addAttr(driver, longName=\\"gravity\\" + ax, attributeType=\\"double\\",\\n                   parent=\\"gravity\\", keyable=True)\\n    mc.setAttr(driver + \\".gravity\\", 0.0, 0.0, 0.0, type=\\"double3\\")\\n    mc.connectAttr(driver + \\".gravity\\", name + \\".gravity\\", force=True)\\n    for attr, val in ((\\"tension\\", 0.3), (\\"damping\\", 0.6), (\\"mass\\", 1.0),\\n                      (\\"maxDistance\\", 1.5), (\\"minDistance\\", 0.0)):\\n        mc.addAttr(driver, longName=attr, attributeType=\\"double\\",\\n                   defaultValue=val, keyable=True)\\n        mc.setAttr(driver + \\".\\" + attr, val)\\n        mc.connectAttr(driver + \\".\\" + attr, name + \\".\\" + attr, force=True)\\n    # add_input_attr already auto-connects time1.outTime -> .time on the\\n    # template-apply path; only wire it here as a fallback if that didn\'t\\n    # happen (re-issuing an identical connection just emits a noisy\\n    # \\"already connected\\" warning).\\n    if mc.objExists(\\"time1\\") and not mc.listConnections(\\n            name + \\".time\\", s=True, d=False):\\n        try:\\n            mc.connectAttr(\\"time1.outTime\\", name + \\".time\\", force=True)\\n        except Exception:\\n            pass\\n    grp = mc.group(empty=True, name=\\"springChain#\\")\\n    for i in range(n_links):\\n        link = mc.polySphere(name=\\"springLink#\\", radius=0.3)[0]\\n        link = mc.parent(link, grp)[0]\\n        mc.connectAttr(name + \\".driven[%d]\\" % i, link + \\".translate\\", force=True)\\n    try:\\n        for _panel in mc.getPanel(type=\\"modelPanel\\") or []:\\n            _cam = mc.modelEditor(_panel, query=True, camera=True)\\n            if _cam:\\n                mc.viewFit(_cam, allObjects=True)\\n    except Exception:\\n        pass\\n    return name\\n\\n\\n@maya_test(label=\\"Spring chain: the driven mass accelerates toward the driver\\", digits=3)\\ndef test_spring_chain(self):\\n    \\"\\"\\"Same test passes interpreted and compiled (parity): with the buffers reset\\n    to rest, integrating the spring pulls driven[0] toward the driver. Drives\\n    `self` through public plugs (time is the integration tick).\\"\\"\\"\\n    from maya import cmds as mc\\n    import math\\n    from mpynode._common.methods.test_helpers import assert_true\\n    name = self.get_name()\\n\\n    def _set(plug, *vals, **kw):\\n        for s in (mc.listConnections(plug, s=True, d=False, plugs=True) or []):\\n            mc.disconnectAttr(s, plug)\\n        mc.setAttr(plug, *vals, **kw)\\n\\n    # Ensure driven outputs exist (reuse the demo\'s chain if present).\\n    n = mc.getAttr(name + \\".driven\\", size=True) or 0\\n    if n < 2:\\n        for i in range(4):\\n            loc = mc.spaceLocator(name=\\"springTest#\\")[0]\\n            mc.connectAttr(\\"%s.driven[%d]\\" % (name, i), loc + \\".translate\\", force=True)\\n        n = 4\\n\\n    _set(name + \\".gravity\\", 0.0, 0.0, 0.0, type=\\"double3\\")\\n    _set(name + \\".tension\\", 0.3)\\n    _set(name + \\".damping\\", 0.6)\\n    _set(name + \\".mass\\", 1.0)\\n    _set(name + \\".minDistance\\", 0.0)\\n    _set(name + \\".maxDistance\\", 0.0)\\n    _set(name + \\".driver\\", 10.0, 0.0, 0.0, type=\\"double3\\")\\n\\n    def tick():\\n        _set(name + \\".time\\", mc.getAttr(name + \\".time\\") + 1)\\n\\n    # Hold the buffers at rest (resetBuffer=True) for two ticks so integration\\n    # starts from a known zero state regardless of prior evals, then release.\\n    _set(name + \\".resetBuffer\\", 1)\\n    tick(); tick()\\n    start = mc.getAttr(\\"%s.driven[0]\\" % name)[0]\\n    _set(name + \\".resetBuffer\\", 0)\\n    for _ in range(10):\\n        tick()\\n    end = mc.getAttr(\\"%s.driven[0]\\" % name)[0]\\n\\n    moved = math.sqrt(sum((end[i] - start[i]) ** 2 for i in range(3)))\\n    assert_true(moved > 0.5,\\n                \\"driven[0] should accelerate toward the driver; moved %.4f\\" % moved)\\n    assert_true(end[0] > start[0],\\n                \\"driven[0] should move toward the +X driver; start=%r end=%r\\" % (start, end))\\n", "commands": [], "metadata": {"authors": ["Eric Vignola"], "version": "1.0.0", "license": "Copyright 2026 Eric Vignola\\n\\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \\"Software\\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\\n\\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\\n\\nTHE SOFTWARE IS PROVIDED \\"AS IS\\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.", "description": "A spring-and-mass chain solver for tails, ropes and jiggle.", "type_id": ""}, "portability": {"portable": true, "blockers": [], "warnings": ["uses numpy -- vectorized math is reverse-engineered to C++ loops (verify numerically; np.random maps to C++ <random>; file I/O lowers only where the dtype is explicit -- np.fromfile/np.save/.tofile and ndio.read/ndio.write -- while np.load/np.loadtxt are blockers)"], "unported": [], "reads_image_file": false, "reads_embedded_image": false, "uses_mesh_intersector": false}}')
 
 
-# Every pick lands inside its attr's range: see _fit.
-_RANGED           = ("double", "float", "long", "short", "doubleAngle", "doubleLinear")
-_RANGED_COMPOUNDS = ("double3", "euler", "position", "color", "float2")
-_BOUNDS = (("minExists", "minimum", max),
-           ("maxExists", "maximum", min),
-           ("softMinExists", "softMin", max),
-           ("softMaxExists", "softMax", min))
-
-
-def _range(nodes, attr):
-    # The tightest hard bound any node declares, narrowed by a soft range
-    # unless the soft range contradicts it. Either end may be None.
-    b = [None, None, None, None]
-    for nd in nodes:
-        for i, (has, get, pick) in enumerate(_BOUNDS):
-            try:
-                if not cmds.attributeQuery(attr, node=nd, **{has: True}):
-                    continue
-                v = float(cmds.attributeQuery(attr, node=nd, **{get: True})[0])
-            except Exception:
-                continue
-            b[i] = v if b[i] is None else pick(b[i], v)
-    lo = b[0] if b[2] is None else (b[2] if b[0] is None else max(b[0], b[2]))
-    hi = b[1] if b[3] is None else (b[3] if b[1] is None else min(b[1], b[3]))
-    if lo is not None and hi is not None and lo > hi:
-        return b[0], b[1]
-    return lo, hi
-
-
-def _fold(v, lo, hi):
-    # A value inside comes back untouched; one outside is reflected off the
-    # bound it crossed, so out-of-range picks spread over the range.
-    if (lo is None or v >= lo) and (hi is None or v <= hi):
-        return v
-    if lo is not None and hi is not None:
-        if hi <= lo:
-            return lo
-        span = hi - lo
-        r    = (v - lo) % (2 * span)
-        return lo + (r if r <= span else 2 * span - r)
-    if lo is not None:
-        return 2 * lo - v
-    return 2 * hi - v
-
-
-def _fit(nodes, attr, t, v):
-    # v inside attr's range on every node that has attr; a numeric compound
-    # is fitted one child at a time.
-    nodes = [n for n in nodes if n and cmds.objExists(n + "." + attr)]
-    if t in _RANGED_COMPOUNDS and isinstance(v, (list, tuple)):
-        kids = []
-        for nd in nodes:
-            kids = cmds.attributeQuery(attr, node=nd, listChildren=True) or []
-            if kids:
-                break
-        if len(kids) != len(v):
-            return v
-        return [_fold(x, *_range(nodes, k)) for x, k in zip(v, kids)]
-    if t not in _RANGED or isinstance(v, bool):
-        return v
-    if not isinstance(v, (int, float)):
-        return v
-    lo, hi = _range(nodes, attr)
-    if t in ("long", "short"):
-        lo = None if lo is None else math.ceil(lo)
-        hi = None if hi is None else math.floor(hi)
-        return int(round(_fold(v, lo, hi)))
-    return _fold(v, lo, hi)
-
-
-def _sample(t):
-    if t == "bool": return random.choice([0, 1])
-    if t == "long": return random.randint(-10, 10)
-    if t == "enum": return random.randint(0, 1)
-    if t in ("double3", "euler", "position"):
-        return [random.uniform(-5, 5) for _ in range(3)]
-    return random.uniform(-5, 5)
-
-
-def _set(node, attr, t, v):
-    if t in ("double3", "euler", "position"):
-        cmds.setAttr(node + "." + attr, v[0], v[1], v[2], type="double3")
-    else:
-        cmds.setAttr(node + "." + attr, v)
-
-
-def _flat(v):
-    # getAttr returns a scalar, [(x, y, z)] for a double3, or nested lists for a
-    # matrix. Comparing only [0] silently passed a vector wrong on Y/Z or a
-    # transposed matrix -- flatten to EVERY leaf component and compare them all.
-    out   = []
-    stack = [v]
-    while stack:
-        x = stack.pop()
-        if isinstance(x, (list, tuple)):
-            stack.extend(reversed(list(x)))
-        else:
-            out.append(x)
-    return out
-
-
-def run(samples=20):
-    if not OUTPUTS:
-        # Nothing to compare -> the sample loop would be vacuous; report SKIP,
-        # never a (false) PASS.
-        print("VERIFY SKIP (no outputs to compare)")
-        return True
+def run():
+    from mpynode.native.toolchain import verify as _cc
+    _cc._load_python_plugins(cmds)
     if not cmds.pluginInfo(os.path.basename(BUNDLE), q=True, loaded=True):
         cmds.loadPlugin(BUNDLE)
-    comp     = cmds.createNode(NODE_TYPE)
-    fails    = 0
-    compared = 0
-    for _ in range(samples):
-        for a, t in INPUTS.items():
-            v = _fit((comp, SOURCE), a, t, _sample(t))
-            _set(comp, a, t, v)
-            if cmds.objExists(SOURCE + "." + a):
-                _set(SOURCE, a, t, v)
-        for o, t in OUTPUTS.items():
-            if not cmds.objExists(SOURCE + "." + o):
-                continue
-            cf = _flat(cmds.getAttr(comp + "." + o))
-            sf = _flat(cmds.getAttr(SOURCE + "." + o))
-            compared += 1
-            if len(cf) != len(sf):
-                print("MISMATCH", o, "component count", len(cf), "!=", len(sf))
-                fails += 1
-                continue
-            for cv, sv in zip(cf, sf):
-                try:
-                    ok = abs(float(cv) - float(sv)) <= TOL
-                except Exception:
-                    ok = (cv == sv)
-                if not ok:
-                    print("MISMATCH", o, cv, "!=", sv)
-                    fails += 1
-    if compared == 0:
-        # SOURCE node absent (or no comparable outputs): nothing was actually
-        # checked -> SKIP, never a vacuous PASS.
-        print("VERIFY SKIP (no comparable outputs -- SOURCE missing?)")
+    row = _cc._verify_one(cmds, BUNDLE, SPEC)
+    print("VERIFY ROW", row)
+    if not row.get("ran"):
+        print("VERIFY SKIP (" + str(row.get("reason")) + ")")
         return True
-    print("VERIFY", "PASS" if not fails else ("FAIL " + str(fails)))
-    return fails == 0
+    if row.get("pass"):
+        print("VERIFY PASS maxerr", row.get("maxerr"))
+        return True
+    print("VERIFY FAIL", row.get("reason"), row.get("maxerr"))
+    return False
 
 
 if __name__ == "__main__":

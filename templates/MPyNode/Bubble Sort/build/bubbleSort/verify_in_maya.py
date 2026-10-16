@@ -1,160 +1,34 @@
 """Equivalence check: compiled native node vs the original mPyNode.
-Run in Maya. Loads the .bundle, samples inputs, compares outputs.
+Run in Maya. Runs the compile pipeline's own parity check,
+mpynode.native.toolchain.verify._verify_one, on the spec embedded
+below: it rebuilds the Python original, builds the compiled node,
+drives identical inputs on both, and compares
+every component of every output.
+It opens a new scene (file new, force) before it drives the nodes:
+save your work first.
 """
-import os, math, random
+import os, json
 import maya.cmds as cmds
 
-BUNDLE    = os.path.join(os.path.dirname(__file__), 'bubbleSort.mll')
-NODE_TYPE = 'bubbleSort'
-SOURCE    = 'bubbleSort'
-INPUTS    = {"maxVal": "float", "minVal": "float", "reset": "enum", "time": "time"}
-OUTPUTS   = {"sort": "float", "text": "string"}
-TOL       = 1e-4
+BUNDLE = os.path.join(os.path.dirname(__file__), 'bubbleSort.mll')
+SPEC   = json.loads('{"schema_version": 1, "source_node": "bubbleSort", "mpy_type": "mPyNode", "suggested": {"node_type_name": "bubbleSort", "class_name": "BubbleSort", "type_id": "0x00077f2e", "mpx_base": "MPxNode", "note": "plain dependency node", "heaviness": "easy"}, "inputs": {"maxVal": {"type": "float", "is_array": false, "portable": true, "cpp": {"cat": "scalar", "fn": "MFnNumericAttribute", "data": "kFloat", "cpp": "float", "read": "asFloat", "portable": true}, "default_value": 100.0}, "minVal": {"type": "float", "is_array": false, "portable": true, "cpp": {"cat": "scalar", "fn": "MFnNumericAttribute", "data": "kFloat", "cpp": "float", "read": "asFloat", "portable": true}, "default_value": 1.0}, "reset": {"type": "enum", "is_array": false, "portable": true, "cpp": {"cat": "enum", "fn": "MFnEnumAttribute", "data": "enum", "cpp": "short", "read": "asShort", "portable": true}, "default_value": 2, "enum_names": ["False", "True", "Auto"]}, "time": {"type": "time", "is_array": false, "portable": true, "cpp": {"cat": "unit", "fn": "MFnUnitAttribute", "data": "kTime", "cpp": "double", "read": "asMTime", "portable": true}}}, "outputs": {"sort": {"type": "float", "is_array": true, "portable": true, "cpp": {"cat": "scalar", "fn": "MFnNumericAttribute", "data": "kFloat", "cpp": "float", "read": "asFloat", "portable": true}}, "text": {"type": "string", "is_array": false, "portable": true, "cpp": {"cat": "string", "fn": "MFnTypedAttribute", "data": "kString", "cpp": "MString", "read": "asString", "portable": true}}}, "variables": {}, "compute": "# Name: Bubble Sort!  (port)\\n# Author: Eric Vignola - eric.vignola@gmail.com\\n#\\n# One bubble-sort pass per evaluation over n normalized random floats, where\\n# n = len(self.sort) = the number of connected outputs. Each output is lerped\\n# LIVE between minVal and maxVal, so dragging min/max rescales every output\\n# instantly (no re-sort). self.data / self.sorted are session-only.\\n#\\n# reset enum:  0 = False (sort one pass per eval, then hold sorted)\\n#              1 = True  (held reshuffle: regenerate every eval, never sorts)\\n#              2 = Auto  (sort, then auto-regenerate on completion -> loops\\n#                         forever with fresh patterns)\\n#\\n# (Imports live in the Init tab.)\\n\\nn = len(self.sort)\\nreset = self.reset\\n\\n# (re)generate normalized [0, 1] data: first eval, output-count change,\\n# True (held reshuffle), or Auto once the previous pass finished sorting.\\nregen = (not hasattr(self, \'data\')) or len(self.data) != n\\nif reset == 1:\\n    regen = True\\nif reset == 2 and getattr(self, \'sorted\', False):\\n    regen = True\\n\\nif regen:\\n    self.data = [random.random() for _ in range(n)]\\n    self.sorted = False\\n\\n# one bubble pass (skipped while held in True so it keeps reshuffling)\\nif reset != 1 and not self.sorted:\\n    self.sorted = True\\n    for i in range(n - 1):\\n        if self.data[i] > self.data[i + 1]:\\n            self.sorted = False\\n            self.data[i], self.data[i + 1] = self.data[i + 1], self.data[i]\\n\\nself.text = \'SORTED!!!\' if self.sorted else \'UNSORTED!!!\'\\n\\n# lerp each (partially) sorted float between the LIVE min/max\\nlo, hi = self.minVal, self.maxVal\\nself.sort = [lo + t * (hi - lo) for t in self.data]\\n", "init": "# Init tab \\u2014 runs once per file open (not per compute()).\\n# Imports + helper functions shared by the Compute expression.\\n\\nimport random\\n", "affects": "all", "methods": "# Build a complete, self-contained bubble-sort demo: 100 unit cubes lined up one\\n# unit apart along X (grouped under one parent), each cube\'s scaleY driven by one\\n# element of the sorted output array, so they form animated bars that sort\\n# themselves as the timeline plays. The node is put into looping Auto mode\\n# (reset=2) over a 1..100 value range (maxVal=100) so the bars span the row.\\ndef demo(self):\\n    from maya import cmds as mc\\n    name = self.get_name()\\n    count = 100\\n    grp = mc.group(empty=True, name=\\"bubbleSort_cubes#\\")\\n    for i in range(count):\\n        cube = mc.polyCube(name=\\"bubbleSortCube#\\")[0]\\n        cube = mc.parent(cube, grp)[0]\\n        mc.setAttr(cube + \\".translateX\\", float(i))     # spaced 1 unit in X\\n        mc.connectAttr(name + \\".sort[%d]\\" % i, cube + \\".scaleY\\", force=True)\\n    # add_input_attr already auto-connects time1.outTime -> .time on the\\n    # template-apply path; only wire it here as a fallback if that didn\'t\\n    # happen (re-issuing an identical connection just emits a noisy\\n    # \\"already connected\\" warning).\\n    if mc.objExists(\\"time1\\") and not mc.listConnections(\\n            name + \\".time\\", s=True, d=False):\\n        try:\\n            mc.connectAttr(\\"time1.outTime\\", name + \\".time\\", force=True)\\n        except Exception:\\n            pass\\n    mc.setAttr(name + \\".reset\\", 2)         # Auto -- re-randomize + loop forever\\n    mc.setAttr(name + \\".maxVal\\", 100.0)    # bars span the 1..100 value range\\n    try:\\n        for _panel in mc.getPanel(type=\\"modelPanel\\") or []:\\n            _cam = mc.modelEditor(_panel, query=True, camera=True)\\n            if _cam:\\n                mc.viewFit(_cam, allObjects=True)\\n    except Exception:\\n        pass\\n    return name\\n\\n\\n@maya_test(label=\\"Bubble sort: outputs lerp within [min,max] and converge to SORTED\\", digits=4)\\ndef test_bubble_sort(self):\\n    \\"\\"\\"Validate the node\'s INTENT (same test passes interpreted and compiled ->\\n    parity): every output is a live lerp inside [minVal, maxVal], and with reset\\n    held at \'sort one pass per eval\' the array converges to a non-decreasing,\\n    SORTED state within n passes. Drives `self` directly through public plugs.\\"\\"\\"\\n    from maya import cmds as mc\\n    from mpynode._common.methods.test_helpers import assert_true, assert_equal\\n    name = self.get_name()\\n\\n    def _set(plug, *vals, **kw):\\n        # A demo may have CONNECTED this input; break it so the test can drive it.\\n        for s in (mc.listConnections(plug, s=True, d=False, plugs=True) or []):\\n            mc.disconnectAttr(s, plug)\\n        mc.setAttr(plug, *vals, **kw)\\n\\n    # n = number of connected outputs. Reuse the demo\'s cubes if present; else\\n    # wire our own so len(self.sort) is non-zero.\\n    n = mc.getAttr(name + \\".sort\\", size=True) or 0\\n    if n < 4:\\n        for i in range(8):\\n            loc = mc.spaceLocator(name=\\"bubbleTest#\\")[0]\\n            mc.connectAttr(\\"%s.sort[%d]\\" % (name, i), loc + \\".scaleY\\", force=True)\\n        n = 8\\n\\n    _set(name + \\".minVal\\", 1.0)\\n    _set(name + \\".maxVal\\", 100.0)\\n    _set(name + \\".reset\\", 0)          # sort one pass per eval, then hold sorted\\n\\n    def tick():\\n        # `time` is the (unused) dirty tick; bumping it forces one recompute.\\n        _set(name + \\".time\\", mc.getAttr(name + \\".time\\") + 1)\\n\\n    tick()\\n    vals0 = [mc.getAttr(\\"%s.sort[%d]\\" % (name, i)) for i in range(n)]\\n    assert_true(all(1.0 - 1e-6 <= v <= 100.0 + 1e-6 for v in vals0),\\n                \\"every output must lerp within [minVal, maxVal]; got %r\\" % vals0)\\n\\n    # Bubble sort needs at most n-1 passes; give it a small margin.\\n    for _ in range(n + 3):\\n        if mc.getAttr(name + \\".text\\") == \\"SORTED!!!\\":\\n            break\\n        tick()\\n    assert_equal(mc.getAttr(name + \\".text\\"), \\"SORTED!!!\\",\\n                 \\"output should converge to SORTED within n passes\\")\\n    vals = [mc.getAttr(\\"%s.sort[%d]\\" % (name, i)) for i in range(n)]\\n    assert_true(all(vals[i] <= vals[i + 1] + 1e-6 for i in range(n - 1)),\\n                \\"sorted output must be non-decreasing; got %r\\" % vals)\\n", "commands": [], "metadata": {"authors": ["Eric Vignola"], "version": "1.0.0", "license": "Copyright 2026 Eric Vignola\\n\\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \\"Software\\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\\n\\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\\n\\nTHE SOFTWARE IS PROVIDED \\"AS IS\\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.", "description": "A visual bubble sort that advances one pass per evaluation.", "type_id": ""}, "portability": {"portable": true, "blockers": [], "warnings": ["uses RNG (np.random/random) -- mapped to C++ <random>, seeded deterministically per compute() from inputs; NOT bit-identical to Python, so pointwise parity is skipped"], "unported": [], "reads_image_file": false, "reads_embedded_image": false, "uses_mesh_intersector": false}}')
 
 
-# Every pick lands inside its attr's range: see _fit.
-_RANGED           = ("double", "float", "long", "short", "doubleAngle", "doubleLinear")
-_RANGED_COMPOUNDS = ("double3", "euler", "position", "color", "float2")
-_BOUNDS = (("minExists", "minimum", max),
-           ("maxExists", "maximum", min),
-           ("softMinExists", "softMin", max),
-           ("softMaxExists", "softMax", min))
-
-
-def _range(nodes, attr):
-    # The tightest hard bound any node declares, narrowed by a soft range
-    # unless the soft range contradicts it. Either end may be None.
-    b = [None, None, None, None]
-    for nd in nodes:
-        for i, (has, get, pick) in enumerate(_BOUNDS):
-            try:
-                if not cmds.attributeQuery(attr, node=nd, **{has: True}):
-                    continue
-                v = float(cmds.attributeQuery(attr, node=nd, **{get: True})[0])
-            except Exception:
-                continue
-            b[i] = v if b[i] is None else pick(b[i], v)
-    lo = b[0] if b[2] is None else (b[2] if b[0] is None else max(b[0], b[2]))
-    hi = b[1] if b[3] is None else (b[3] if b[1] is None else min(b[1], b[3]))
-    if lo is not None and hi is not None and lo > hi:
-        return b[0], b[1]
-    return lo, hi
-
-
-def _fold(v, lo, hi):
-    # A value inside comes back untouched; one outside is reflected off the
-    # bound it crossed, so out-of-range picks spread over the range.
-    if (lo is None or v >= lo) and (hi is None or v <= hi):
-        return v
-    if lo is not None and hi is not None:
-        if hi <= lo:
-            return lo
-        span = hi - lo
-        r    = (v - lo) % (2 * span)
-        return lo + (r if r <= span else 2 * span - r)
-    if lo is not None:
-        return 2 * lo - v
-    return 2 * hi - v
-
-
-def _fit(nodes, attr, t, v):
-    # v inside attr's range on every node that has attr; a numeric compound
-    # is fitted one child at a time.
-    nodes = [n for n in nodes if n and cmds.objExists(n + "." + attr)]
-    if t in _RANGED_COMPOUNDS and isinstance(v, (list, tuple)):
-        kids = []
-        for nd in nodes:
-            kids = cmds.attributeQuery(attr, node=nd, listChildren=True) or []
-            if kids:
-                break
-        if len(kids) != len(v):
-            return v
-        return [_fold(x, *_range(nodes, k)) for x, k in zip(v, kids)]
-    if t not in _RANGED or isinstance(v, bool):
-        return v
-    if not isinstance(v, (int, float)):
-        return v
-    lo, hi = _range(nodes, attr)
-    if t in ("long", "short"):
-        lo = None if lo is None else math.ceil(lo)
-        hi = None if hi is None else math.floor(hi)
-        return int(round(_fold(v, lo, hi)))
-    return _fold(v, lo, hi)
-
-
-def _sample(t):
-    if t == "bool": return random.choice([0, 1])
-    if t == "long": return random.randint(-10, 10)
-    if t == "enum": return random.randint(0, 1)
-    if t in ("double3", "euler", "position"):
-        return [random.uniform(-5, 5) for _ in range(3)]
-    return random.uniform(-5, 5)
-
-
-def _set(node, attr, t, v):
-    if t in ("double3", "euler", "position"):
-        cmds.setAttr(node + "." + attr, v[0], v[1], v[2], type="double3")
-    else:
-        cmds.setAttr(node + "." + attr, v)
-
-
-def _flat(v):
-    # getAttr returns a scalar, [(x, y, z)] for a double3, or nested lists for a
-    # matrix. Comparing only [0] silently passed a vector wrong on Y/Z or a
-    # transposed matrix -- flatten to EVERY leaf component and compare them all.
-    out   = []
-    stack = [v]
-    while stack:
-        x = stack.pop()
-        if isinstance(x, (list, tuple)):
-            stack.extend(reversed(list(x)))
-        else:
-            out.append(x)
-    return out
-
-
-def run(samples=20):
-    if not OUTPUTS:
-        # Nothing to compare -> the sample loop would be vacuous; report SKIP,
-        # never a (false) PASS.
-        print("VERIFY SKIP (no outputs to compare)")
-        return True
+def run():
+    from mpynode.native.toolchain import verify as _cc
+    _cc._load_python_plugins(cmds)
     if not cmds.pluginInfo(os.path.basename(BUNDLE), q=True, loaded=True):
         cmds.loadPlugin(BUNDLE)
-    comp     = cmds.createNode(NODE_TYPE)
-    fails    = 0
-    compared = 0
-    for _ in range(samples):
-        for a, t in INPUTS.items():
-            v = _fit((comp, SOURCE), a, t, _sample(t))
-            _set(comp, a, t, v)
-            if cmds.objExists(SOURCE + "." + a):
-                _set(SOURCE, a, t, v)
-        for o, t in OUTPUTS.items():
-            if not cmds.objExists(SOURCE + "." + o):
-                continue
-            cf = _flat(cmds.getAttr(comp + "." + o))
-            sf = _flat(cmds.getAttr(SOURCE + "." + o))
-            compared += 1
-            if len(cf) != len(sf):
-                print("MISMATCH", o, "component count", len(cf), "!=", len(sf))
-                fails += 1
-                continue
-            for cv, sv in zip(cf, sf):
-                try:
-                    ok = abs(float(cv) - float(sv)) <= TOL
-                except Exception:
-                    ok = (cv == sv)
-                if not ok:
-                    print("MISMATCH", o, cv, "!=", sv)
-                    fails += 1
-    if compared == 0:
-        # SOURCE node absent (or no comparable outputs): nothing was actually
-        # checked -> SKIP, never a vacuous PASS.
-        print("VERIFY SKIP (no comparable outputs -- SOURCE missing?)")
+    row = _cc._verify_one(cmds, BUNDLE, SPEC)
+    print("VERIFY ROW", row)
+    if not row.get("ran"):
+        print("VERIFY SKIP (" + str(row.get("reason")) + ")")
         return True
-    print("VERIFY", "PASS" if not fails else ("FAIL " + str(fails)))
-    return fails == 0
+    if row.get("pass"):
+        print("VERIFY PASS maxerr", row.get("maxerr"))
+        return True
+    print("VERIFY FAIL", row.get("reason"), row.get("maxerr"))
+    return False
 
 
 if __name__ == "__main__":

@@ -1943,7 +1943,7 @@ def bench_ik_rig(cmds, solver_node, n_joints=4, spacing=3.0):
     An IK solver has no output plug: doSolve() runs when an ikHandle evaluates.
     Build a joint chain driven by a handle bound to this solver, then pulling
     the end joint's worldMatrix forces the solve. Mirrors the chain+handle drive
-    in native/ai/verify_scripts.py.
+    in _verify_one's iksolver branch.
 
     Returns ``(pull, goal_handle)`` or ``(None, None)`` if the rig cannot be
     built -- callers treat that as an honest skip, never a zero.
@@ -2020,8 +2020,8 @@ def _run_timing(cmds, spec, py_node, cpp_node, pull_py, pull_cpp, in_meta,
         import random as _random
 
         if deadline is None:
-            # A direct caller (verify_scripts, a test) owns no bundle-wide budget;
-            # give it a local one so this can never hang.
+            # A direct caller (a shipped verify_in_maya.py, a test) owns no
+            # bundle-wide budget; give it a local one so this can never hang.
             deadline = time.perf_counter() + _TIMING_BUDGET_S
         if time.perf_counter() > deadline:
             return {"measured": False, "reason": "timing budget exhausted"}
@@ -2654,8 +2654,8 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
         # Stand up two identical 3-joint chains, bind one handle to the
         # interpreted solver and one to the compiled solver, move both to the SAME
         # goals while driving the same input samples, and compare. Same drive as
-        # native/ai/verify_scripts._verify_script_iksolver and
-        # tools/parity_sweep/parity_mPyIkSolver.py, run in-process here.
+        # tools/parity_sweep/parity_mPyIkSolver.py, run in-process here; the
+        # shipped verify_in_maya.py scripts run this function itself.
         import mpynode
         src_type = spec.get("mpy_type") or "mPyIkSolver"
         IN_META  = spec.get("inputs") or {}

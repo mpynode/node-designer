@@ -12,8 +12,8 @@ Now every pick goes through one fitter (verify._drive_fitter): the spec's
 min / max (converted for a unit type), every live node's hard range, and a
 soft range where one is present. A value inside is left exactly as drawn; one
 outside is reflected back in, so the picks spread over the range instead of
-piling on its ends. The shipped verify_in_maya.py scripts carry a standalone
-twin of the same fitter (native/ai/verify_scripts._FIT_HELPERS).
+piling on its ends. The shipped verify_in_maya.py scripts run
+verify._verify_one, so their picks go through the same fitter.
 """
 
 from __future__ import annotations
@@ -247,8 +247,10 @@ class TestEveryParityLoopPicksInside(unittest.TestCase):
 
 
 class TestShippedScriptsPickInside(unittest.TestCase):
-    """The deformer / IK / scalar verify_in_maya.py scripts carry a twin of the
-    fitter; the geometry script runs verify._verify_one itself."""
+    """Every verify_in_maya.py script, geometry, deformer, IK or scalar, runs
+    verify._verify_one, so its picks go through the fitter above. None
+    carries a fitter of its own: the twin they had until 2026-10-15 is
+    gone."""
 
     def _spec(self, base="MPxNode", mpy_type="mPyNode"):
         return {"suggested": {"node_type_name": "probeNode",
@@ -258,44 +260,19 @@ class TestShippedScriptsPickInside(unittest.TestCase):
                 "outputs": {"out": {"type": "double"}},
                 "compute": "self.out = self.amount"}
 
-    def test_each_script_fits_its_picks(self):
+    def test_each_script_runs_the_harness(self):
         from mpynode.native import compiler as codegen
         from mpynode.native.ai import verify_scripts as vs
 
         deformer = sorted(codegen._DEFORMER_BASES)[0]
-        for spec, call in (
-                (self._spec(), "v = _fit((comp, SOURCE), a, t, _sample(t))"),
-                (self._spec(deformer, "mPyDeformer"),
-                 "v = _fit((src_d, cmp_d), a, t, _sample(t))"),
-                (self._spec(codegen._IKSOLVER_BASE, "mPyIkSolver"),
-                 "v = _fit((src_solver, cmp_solver), a, t,")):
+        for spec in (self._spec(), self._spec(deformer, "mPyDeformer"),
+                     self._spec(codegen._IKSOLVER_BASE, "mPyIkSolver")):
             script = vs._verify_script(spec)
             compile(script, "verify_in_maya.py", "exec")
-            self.assertIn(vs._FIT_HELPERS, script)
-            self.assertIn(call, script)
-            self.assertIn("import os, math, random", script)
-
-    def test_the_script_fitter_matches_the_harness(self):
-        from mpynode.native.ai import verify_scripts as vs
-
-        v  = _verify()
-        ns = {"cmds": mc, "math": math}
-        exec(vs._FIT_HELPERS, ns)
-        mc.file(new=True, force=True)
-        a = mc.createNode("transform", name="twinA")
-        b = mc.createNode("transform", name="twinB")
-        mc.addAttr(a, ln="amount", at="double", min=0.0)
-        mc.addAttr(b, ln="amount", at="double", min=0.0, max=1.0, smx=0.5)
-        mc.addAttr(b, ln="count", at="long", min=1, max=6)
-        mc.addAttr(b, ln="bend", at="doubleAngle", min=0.25, max=1.0)
-        rng = random.Random(9)
-        for attr, t, draw in (("amount", "double", lambda: rng.uniform(-4, 4)),
-                              ("count", "long", lambda: rng.randint(-10, 10)),
-                              ("bend", "doubleAngle", lambda: rng.uniform(-90, 90))):
-            for _ in range(50):
-                x = draw()
-                self.assertEqual(ns["_fit"]((a, b), attr, t, x),
-                                 v._fit_drive(mc, (a, b), attr, t, x))
+            self.assertIn("_cc._verify_one(cmds, BUNDLE, SPEC)", script)
+            self.assertNotIn("_fit", script)
+            self.assertNotIn("random", script)
+        self.assertFalse(hasattr(vs, "_FIT_HELPERS"))
 
 
 if __name__ == "__main__":

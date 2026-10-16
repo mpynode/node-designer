@@ -2609,41 +2609,98 @@ class TestVerifyScriptHonesty(unittest.TestCase):
     """The shipped verify_in_maya.py artifact must be HONEST: geo nodes get a
     geo-aware check, scalar outputs are compared component-by-component (not a
     cv[0]/sv[0] first-element peel that false-PASSes a vector wrong on Y/Z), and
-    a node with nothing comparable reports SKIP rather than a vacuous PASS."""
+    a node with nothing comparable reports SKIP rather than a vacuous PASS.
+
+    Every script, whatever the family, runs the pipeline's own check
+    (verify._verify_one), so the compare is the harness's (_attr_components,
+    TestAttrComponentsFlatten) and the script only reports the row."""
+
+    _SCALAR = {
+        "suggested": {"node_type_name": "n", "mpx_base": "MPxNode"},
+        "compute": "self.out = self.a", "init": "",
+        "inputs":  {"a": {"type": "double3"}},
+        "outputs": {"out": {"type": "double3"}},
+    }
+
+    def _run_script(self, spec, row):
+        """Run the generated script's run() with verify._verify_one returning
+        ``row``; (stdout, return value)."""
+        import contextlib
+        import io
+
+        from mpynode.native.ai import porter
+        from mpynode.native.toolchain import verify as cc
+
+        class _Cmds:
+            def pluginInfo(self, *a, **k):
+                return True
+
+        ns = {"__file__": "/x/verify_in_maya.py", "__name__": "verify_probe"}
+        exec(compile(porter._verify_script(spec), "verify_in_maya.py", "exec"),
+             ns)
+        ns["cmds"] = _Cmds()
+        seen = []
+        real = cc._verify_one, cc._load_python_plugins
+        cc._verify_one          = lambda *a, **k: seen.append(a) or dict(row)
+        cc._load_python_plugins = lambda *a, **k: None
+        buf = io.StringIO()
+        try:
+            with contextlib.redirect_stdout(buf):
+                ok = ns["run"]()
+        finally:
+            cc._verify_one, cc._load_python_plugins = real
+        self.assertEqual(len(seen), 1)
+        self.assertEqual(seen[0][1:], (ns["BUNDLE"], spec))
+        return buf.getvalue(), ok
 
     def test_geo_spec_dispatches_to_geo_verify_script(self):
         from mpynode.native.ai import porter
         s = porter._verify_script(_GEO_MESH_SPEC)
         # Runs the AUTHORITATIVE parity branch (no duplicated, drifting logic)
         # and embeds the spec so it is self-contained (no live SOURCE needed).
-        self.assertIn("_verify_one", s)
+        self.assertIn("_verify_one",       s)
         self.assertIn("SPEC = json.loads", s)
+        self.assertIn("GEOMETRY",          s)
         self.assertNotIn("cv[0]", s)
 
-    def test_scalar_verify_script_flattens_all_components(self):
+    def test_scalar_verify_script_runs_the_harness_compare(self):
         from mpynode.native.ai import porter
-        spec = {
-            "suggested": {"node_type_name": "n", "mpx_base": "MPxNode"},
-            "compute": "self.out = self.a", "init": "",
-            "inputs":  {"a": {"type": "double3"}},
-            "outputs": {"out": {"type": "double3"}},
-        }
-        s = porter._verify_script(spec)
-        self.assertIn("_flat(", s)           # full flatten, every component
-        self.assertNotIn("cv = cv[0]", s)    # the old first-element peel
-        self.assertNotIn("sv = sv[0]", s)
-        self.assertIn("component count", s)  # length-mismatch guard
+        s = porter._verify_script(self._SCALAR)
+        self.assertIn("_cc._verify_one(cmds, BUNDLE, SPEC)", s)
+        self.assertIn("SPEC = json.loads", s)
+        # No compare of its own: no getAttr, no first-element peel, no live
+        # SOURCE node.
+        self.assertNotIn("getAttr", s)
+        self.assertNotIn("cv[0]",   s)
+        self.assertNotIn("SOURCE",  s)
+
+    def test_script_reports_the_row_it_gets(self):
+        out, ok = self._run_script(self._SCALAR, {"ran": True, "pass": True,
+                                                  "maxerr": 0.0})
+        self.assertTrue(ok)
+        self.assertIn("VERIFY PASS maxerr 0.0", out)
+        out, ok = self._run_script(self._SCALAR, {"ran": True, "pass": False,
+                                                  "maxerr": 0.5,
+                                                  "reason": "off"})
+        self.assertFalse(ok)
+        self.assertIn("VERIFY FAIL off 0.5", out)
 
     def test_scalar_verify_script_guards_vacuous_pass(self):
-        from mpynode.native.ai import porter
+        from mpynode.native.toolchain import verify as cc
         spec = {
             "suggested": {"node_type_name": "n", "mpx_base": "MPxNode"},
             "compute": "pass", "init": "",
             "inputs": {"a": {"type": "float"}}, "outputs": {},
         }
-        s = porter._verify_script(spec)
-        self.assertIn("no outputs to compare", s)  # empty-OUTPUTS guard
-        self.assertIn("no comparable outputs", s)  # nothing-compared guard
+        # Nothing to compare: the harness skips before it touches a scene...
+        row = cc._verify_one(None, "/no/such.mll", spec)
+        self.assertFalse(row["ran"])
+        self.assertIn("vacuous", row["reason"])
+        # ...and the script says SKIP for a row that did not run, never PASS.
+        out, ok = self._run_script(spec, row)
+        self.assertTrue(ok)
+        self.assertIn("VERIFY SKIP", out)
+        self.assertNotIn("VERIFY PASS", out)
 
 
 class TestDefaultVerifyReclassifiesExceptions(unittest.TestCase):

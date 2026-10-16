@@ -1767,12 +1767,15 @@ class TestEulerTypeTables(unittest.TestCase):
 class TestEulerGeneratedVerifyScripts(unittest.TestCase):
     """The standalone ``verify_in_maya.py`` scripts that ship beside each ported
     node must SAMPLE + SET a euler input as a double3 triple, exactly like
-    double3. Pre-fix ``_sample``/``_set`` handled only ``vector`` (``if t ==
-    "vector"``, the old name of ``double3``), so a euler input fell through to
-    the scalar path -> a single random float fed to ``setAttr`` on a double3
-    compound (wrong/raises). Mirrors
-    the in-process fix in ``compile_controller._verify_one`` (setv/smp).
-    These generators are pure spec->str (no Maya needed)."""
+    double3. Pre-fix their own ``_sample``/``_set`` handled only ``vector``
+    (``if t == "vector"``, the old name of ``double3``), so a euler input fell
+    through to the scalar path -> a single random float fed to ``setAttr`` on a
+    double3 compound (wrong/raises).
+
+    Every script now runs ``verify._verify_one``, so the drive is the harness's
+    own: its pick (``_elem_value``) and its set (``_set_plug``) treat euler as
+    double3, and no script carries a sampler of its own. The generator is pure
+    spec->str and the set is recorded on a stub (no Maya needed)."""
 
     def _scalar_spec(self):
         return {
@@ -1794,24 +1797,30 @@ class TestEulerGeneratedVerifyScripts(unittest.TestCase):
             "outputs": {},
         }
 
-    def test_scalar_verify_script_samples_and_sets_euler_like_double3(self):
+    def test_scalar_and_deformer_scripts_drive_through_the_harness(self):
         from mpynode.native.ai import porter
-        script = porter._verify_script_scalar(self._scalar_spec())
-        # euler (and position) join double3 in BOTH _sample (triple) and _set
-        # (type=double3).
-        self.assertIn('if t in ("double3", "euler", "position")', script)
-        self.assertGreaterEqual(script.count('"double3", "euler"'), 2,
-                                "euler must be handled in both _sample and _set")
-        # The double3-only form must be gone (else euler still falls through).
-        self.assertNotIn('if t == "double3"', script)
+        for spec in (self._scalar_spec(), self._deformer_spec()):
+            script = porter._verify_script(spec)
+            self.assertIn("_cc._verify_one(cmds, BUNDLE, SPEC)", script)
+            # No sampler or setter of the script's own to fall behind.
+            self.assertNotIn("def _sample", script)
+            self.assertNotIn("def _set",    script)
+            self.assertNotIn("setAttr",     script)
 
-    def test_deformer_verify_script_samples_and_sets_euler_like_double3(self):
-        from mpynode.native.ai import porter
-        script = porter._verify_script_deformer(self._deformer_spec())
-        self.assertIn('if t in ("double3", "euler", "position")', script)
-        self.assertGreaterEqual(script.count('"double3", "euler"'), 2,
-                                "euler must be handled in both _sample and _set")
-        self.assertNotIn('if t == "double3"', script)
+    def test_harness_picks_and_sets_euler_like_double3(self):
+        import random
+
+        from mpynode.native.toolchain import verify as v
+        self.assertEqual(len(v._elem_value("euler", random.Random(0))), 3)
+        calls = []
+
+        class _Cmds:
+            def setAttr(self, plug, *a, **k):
+                calls.append((plug, a, k.get("type")))
+
+        for t in ("euler", "double3"):
+            v._set_plug(_Cmds(), "n.rin", t, [0.1, 0.2, 0.3])
+        self.assertEqual(calls, [("n.rin", (0.1, 0.2, 0.3), "double3")] * 2)
 
 
 class TestEulerCodegen(unittest.TestCase):
