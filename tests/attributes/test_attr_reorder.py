@@ -242,8 +242,17 @@ class TestReorderSuppressesTransientEval(unittest.TestCase):
     def setUp(self):
         mc.file(new=True, force=True)
         from mpynode._common.lifecycle import scene_state as scene_io
+        # An earlier test that opened a scene leaves the 10 s post-open
+        # grace running, and should_defer_transient() is then True outside
+        # surgery too. Close it here; tearDown puts it back.
+        self._last_open                  = scene_io._last_open_monotonic
+        scene_io._last_open_monotonic    = -1.0e9
         scene_io._last_surgery_monotonic = -1.0e9
         scene_io._attr_surgery_depth     = 0
+
+    def tearDown(self):
+        from mpynode._common.lifecycle import scene_state as scene_io
+        scene_io._last_open_monotonic = self._last_open
 
     def _build(self):
         from mpynode.wrappers._mpy_node import MPyNode
