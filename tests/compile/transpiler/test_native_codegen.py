@@ -1772,10 +1772,11 @@ class TestEulerGeneratedVerifyScripts(unittest.TestCase):
     through to the scalar path -> a single random float fed to ``setAttr`` on a
     double3 compound (wrong/raises).
 
-    Every script now runs ``verify._verify_one``, so the drive is the harness's
-    own: its pick (``_elem_value``) and its set (``_set_plug``) treat euler as
-    double3, and no script carries a sampler of its own. The generator is pure
-    spec->str and the set is recorded on a stub (no Maya needed)."""
+    Every script now runs ``verify._default_verify``, whose generic check is
+    ``verify._verify_one``, so the drive is the harness's own: its pick
+    (``_elem_value``) and its set (``_set_plug``) treat euler as double3, and
+    no script carries a sampler of its own. The generator is pure spec->str
+    and the set is recorded on a stub (no Maya needed)."""
 
     def _scalar_spec(self):
         return {
@@ -1801,7 +1802,8 @@ class TestEulerGeneratedVerifyScripts(unittest.TestCase):
         from mpynode.native.ai import porter
         for spec in (self._scalar_spec(), self._deformer_spec()):
             script = porter._verify_script(spec)
-            self.assertIn("_cc._verify_one(cmds, BUNDLE, SPEC)", script)
+            self.assertIn('_cc._default_verify(BUNDLE, [{"type_name": NAME, '
+                          '"spec": SPEC}])', script)
             # No sampler or setter of the script's own to fall behind.
             self.assertNotIn("def _sample", script)
             self.assertNotIn("def _set",    script)

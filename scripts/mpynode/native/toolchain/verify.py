@@ -2020,8 +2020,8 @@ def _run_timing(cmds, spec, py_node, cpp_node, pull_py, pull_cpp, in_meta,
         import random as _random
 
         if deadline is None:
-            # A direct caller (a shipped verify_in_maya.py, a test) owns no
-            # bundle-wide budget; give it a local one so this can never hang.
+            # A direct caller (a test) owns no bundle-wide budget; give it
+            # a local one so this can never hang.
             deadline = time.perf_counter() + _TIMING_BUDGET_S
         if time.perf_counter() > deadline:
             return {"measured": False, "reason": "timing budget exhausted"}
@@ -2655,7 +2655,7 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
         # interpreted solver and one to the compiled solver, move both to the SAME
         # goals while driving the same input samples, and compare. Same drive as
         # tools/parity_sweep/parity_mPyIkSolver.py, run in-process here; the
-        # shipped verify_in_maya.py scripts run this function itself.
+        # shipped verify_in_maya.py scripts reach it through _default_verify.
         import mpynode
         src_type = spec.get("mpy_type") or "mPyIkSolver"
         IN_META  = spec.get("inputs") or {}

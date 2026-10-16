@@ -248,9 +248,9 @@ class TestEveryParityLoopPicksInside(unittest.TestCase):
 
 class TestShippedScriptsPickInside(unittest.TestCase):
     """Every verify_in_maya.py script, geometry, deformer, IK or scalar, runs
-    verify._verify_one, so its picks go through the fitter above. None
-    carries a fitter of its own: the twin they had until 2026-10-15 is
-    gone."""
+    verify._default_verify, whose generic check is verify._verify_one, so
+    its picks go through the fitter above. None carries a fitter of its
+    own: the twin they had until 2026-10-15 is gone."""
 
     def _spec(self, base="MPxNode", mpy_type="mPyNode"):
         return {"suggested": {"node_type_name": "probeNode",
@@ -269,7 +269,8 @@ class TestShippedScriptsPickInside(unittest.TestCase):
                      self._spec(codegen._IKSOLVER_BASE, "mPyIkSolver")):
             script = vs._verify_script(spec)
             compile(script, "verify_in_maya.py", "exec")
-            self.assertIn("_cc._verify_one(cmds, BUNDLE, SPEC)", script)
+            self.assertIn('_cc._default_verify(BUNDLE, [{"type_name": NAME, '
+                          '"spec": SPEC}])', script)
             self.assertNotIn("_fit", script)
             self.assertNotIn("random", script)
         self.assertFalse(hasattr(vs, "_FIT_HELPERS"))

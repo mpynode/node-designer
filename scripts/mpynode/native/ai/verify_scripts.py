@@ -2,13 +2,33 @@
 
 Every script, whatever the node's family (geometry / deformer / IK solver /
 scalar), is the same short program: it embeds the node's spec and runs the
-compile pipeline's own parity check, ``native.toolchain.verify._verify_one``,
-on the compiled plug-in beside it. There is one parity implementation. The
-deformer, IK and scalar scripts used to carry their own sample / set / fit
-code, which drifted from the pipeline's: 17 of the 38 shipped scripts raised
-when run on their own (array, mesh, string, matrix, colour and connected time
-inputs), and the scalar one compared against a live SOURCE node rather than
-a rebuilt twin. Only the docstring says which family the node is.
+compile pipeline's own verify, ``native.toolchain.verify._default_verify``,
+on the compiled plug-in beside it. That is the generic parity check
+(``_verify_one``) plus the node's authored ``@maya_test``, merged as the
+pipeline merges them (``_merge_authored_test``), so the script's verdict is
+the pipeline's final one. There is one parity implementation. The deformer,
+IK and scalar scripts used to carry their own sample / set / fit code, which
+drifted from the pipeline's: 17 of the 38 shipped scripts raised when run on
+their own (array, mesh, string, matrix, colour and connected time inputs),
+and the scalar one compared against a live SOURCE node rather than a rebuilt
+twin. Later every script ran ``_verify_one`` alone, and 8 of them said SKIP
+where the pipeline passes the node on its authored test. Only the docstring
+says which family the node is.
+
+The verify opens new scenes (``file new, force``), so the script refuses to
+run while the open scene has unsaved changes: it raises before it touches
+the scene, and says to save first or to run it in a fresh mayapy. Run as
+``mayapy verify_in_maya.py`` it starts Maya itself, before it imports
+``mpynode``: ``maya.cmds`` was empty there, so the script failed at the
+guard, and a ``userSetup.py`` install could not import ``mpynode`` at all. It
+prints the folder of the ``mpynode`` package it imported first, so an
+outdated install on the path is obvious.
+
+The merged row passes a node on its authored test alone when the generic
+check did not run, and that includes a harness error ("verify could not
+run": an outdated ``mpynode`` that rejects an attr type, say). The PASS line
+then gives the row's reason and says whether the generic check was skipped
+or COULD NOT RUN; a bare ``VERIFY PASS maxerr None`` hid both.
 
 The script picks the plug-in's extension when it runs, from the OS Maya runs
 on (``toolchain.plugin_ext()``: ``.mll``, ``.bundle`` or ``.so``), so the
@@ -27,7 +47,7 @@ from mpynode.native import compiler as codegen
 
 
 # What each family's check builds and compares, for the script's docstring.
-# The check itself is verify._verify_one for every family.
+# The check itself is verify._default_verify for every family.
 _FAMILY_DOC = {
     "geo": ("GEOMETRY node", "the original mPyNode",
             "the built geometry (topology + every point)"),
@@ -40,16 +60,30 @@ _FAMILY_DOC = {
 }
 
 _BODY = r'''def run():
+    pkg = os.path.dirname(os.path.abspath(mpynode.__file__))
+    print("VERIFY MPYNODE " + pkg)
+    if cmds.file(q=True, modified=True):
+        raise RuntimeError(
+            "VERIFY REFUSED: the open scene has unsaved changes, and this "
+            "check opens new scenes (file new, force). Save first, or run "
+            "it in a fresh mayapy.")
     from mpynode.native.toolchain import verify as _cc
-    _cc._load_python_plugins(cmds)
-    if not cmds.pluginInfo(os.path.basename(BUNDLE), q=True, loaded=True):
-        cmds.loadPlugin(BUNDLE)
-    row = _cc._verify_one(cmds, BUNDLE, SPEC)
+    rows = _cc._default_verify(BUNDLE, [{"type_name": NAME, "spec": SPEC}])
+    row = rows[NAME]
     print("VERIFY ROW", row)
     if not row.get("ran"):
         print("VERIFY SKIP (" + str(row.get("reason")) + ")")
         return True
     if row.get("pass"):
+        if row.get("generic_ran") is False:
+            # The authored @maya_test alone passed it: say why the generic
+            # check did not run, and whether its harness failed.
+            how = "skipped"
+            if str(row.get("reason")).startswith("verify could not run"):
+                how = "COULD NOT RUN"
+            print("VERIFY PASS (authored @maya_test only; generic check "
+                  + how + ") " + str(row.get("reason")))
+            return True
         print("VERIFY PASS maxerr", row.get("maxerr"))
         return True
     print("VERIFY FAIL", row.get("reason"), row.get("maxerr"))
@@ -63,7 +97,7 @@ if __name__ == "__main__":
 
 def _family(spec: dict) -> str:
     """``geo`` / ``deformer`` / ``iksolver`` / ``scalar``: the branch
-    ``verify._verify_one`` takes for this spec."""
+    ``verify._verify_one`` (the generic check) takes for this spec."""
     base = spec.get("suggested", {}).get("mpx_base", "MPxNode")
     if codegen._geo_kind(spec):
         return "geo"
@@ -77,13 +111,22 @@ def _family(spec: dict) -> str:
 def _verify_script(spec: dict) -> str:
     """A Maya-side equivalence check: compiled node vs original mPyNode.
 
-    The script embeds ``spec`` and runs ``verify._verify_one`` on the plug-in
-    beside it, the same check the compile pipeline runs: it rebuilds the
-    Python original from the spec, so no source node needs to be in the
-    scene. It registers the mpynode node types first, as the pipeline's
-    verify does. ``_verify_one`` opens a new scene before it drives the two
-    nodes, so the script says to save first. Prints a ``VERIFY PASS`` /
-    ``FAIL`` / ``SKIP`` line and returns False only on a FAIL.
+    The script embeds ``spec`` and runs ``verify._default_verify`` on the
+    plug-in beside it, the same verify the compile pipeline runs: the
+    generic check rebuilds the Python original from the spec, so no source
+    node needs to be in the scene, and the node's authored ``@maya_test``
+    runs on the compiled node; the two merge as in the pipeline's row.
+    ``_default_verify`` registers the mpynode node types and loads the
+    plug-in itself.
+
+    The verify opens new scenes, so the script first raises when the open
+    scene has unsaved changes, before it touches the scene. Run as
+    ``__main__`` where ``maya.cmds`` is still empty (a bare mayapy), it
+    initializes ``maya.standalone`` before it imports ``mpynode``. It prints
+    the folder of the ``mpynode`` it imported first, then a ``VERIFY PASS``
+    / ``FAIL`` / ``SKIP`` line from the merged row, and returns False only
+    on a FAIL. A PASS the authored test alone decided gives the row's
+    reason, marked ``skipped`` or ``COULD NOT RUN`` (a harness error).
 
     The plug-in's extension is picked when the script runs
     (``toolchain.plugin_ext()`` on that host), never when it is generated:
@@ -93,21 +136,34 @@ def _verify_script(spec: dict) -> str:
     what, src, compared = _FAMILY_DOC[_family(spec)]
     consts = (
         '"""Equivalence check: compiled native ' + what + " vs " + src + ".\n"
-        "Run in Maya. Runs the compile pipeline's own parity check,\n"
-        "mpynode.native.toolchain.verify._verify_one, on the spec embedded\n"
-        "below: it rebuilds the Python original, builds the compiled node,\n"
-        "drives identical inputs on both, and compares\n"
-        + compared + ".\n"
-        "It opens a new scene (file new, force) before it drives the nodes:\n"
-        "save your work first.\n"
+        "Run it in Maya, or as `mayapy verify_in_maya.py`, which starts\n"
+        "Maya first. Runs the compile pipeline's own verify,\n"
+        "mpynode.native.toolchain.verify._default_verify, on the spec\n"
+        "embedded below. Its generic check rebuilds the Python original,\n"
+        "builds the compiled node, drives identical inputs on both, and\n"
+        "compares " + compared + ".\n"
+        "The node's authored @maya_test methods then run on the compiled\n"
+        "node, and the verdicts merge as in the pipeline's verify row. A\n"
+        "PASS on the authored test alone says why the generic check did\n"
+        "not run, and COULD NOT RUN when its harness failed.\n"
+        "It opens new scenes (file new, force), so it refuses to run while\n"
+        "the open scene has unsaved changes: save first, or run it in a\n"
+        "fresh mayapy. It prints the folder of the mpynode it imported.\n"
         '"""\n'
         "import os, json\n"
         "import maya.cmds as cmds\n"
+        'if __name__ == "__main__" and not hasattr(cmds, "file"):\n'
+        "    # Run as `mayapy verify_in_maya.py`: Maya has not started. Start\n"
+        "    # it before mpynode is imported, so a userSetup.py install's\n"
+        "    # paths apply.\n"
+        "    import maya.standalone\n"
+        "    maya.standalone.initialize()\n"
+        "import mpynode\n"
         "from mpynode.native.toolchain import toolchain\n\n"
         "# .mll, .bundle or .so: picked for the OS this runs on.\n"
         "EXT = toolchain.plugin_ext()\n"
-        "BUNDLE = os.path.join(os.path.dirname(__file__), "
-        + repr(name) + " + EXT)\n"
+        "NAME = " + repr(name) + "\n"
+        "BUNDLE = os.path.join(os.path.dirname(__file__), NAME + EXT)\n"
         "SPEC = json.loads(" + repr(json.dumps(spec)) + ")\n\n\n"
     )
     return consts + _BODY

@@ -2611,9 +2611,13 @@ class TestVerifyScriptHonesty(unittest.TestCase):
     cv[0]/sv[0] first-element peel that false-PASSes a vector wrong on Y/Z), and
     a node with nothing comparable reports SKIP rather than a vacuous PASS.
 
-    Every script, whatever the family, runs the pipeline's own check
-    (verify._verify_one), so the compare is the harness's (_attr_components,
-    TestAttrComponentsFlatten) and the script only reports the row."""
+    Every script, whatever the family, runs the pipeline's own verify
+    (verify._default_verify: the generic _verify_one plus the authored
+    @maya_test, merged), so the compare is the harness's (_attr_components,
+    TestAttrComponentsFlatten) and the script only reports the merged row.
+    It refuses a scene with unsaved changes before it touches it, and a PASS
+    the authored test alone decided gives the reason the generic check did
+    not run."""
 
     _SCALAR = {
         "suggested": {"node_type_name": "n", "mpx_base": "MPxNode"},
@@ -2621,44 +2625,98 @@ class TestVerifyScriptHonesty(unittest.TestCase):
         "inputs":  {"a": {"type": "double3"}},
         "outputs": {"out": {"type": "double3"}},
     }
+    _CALL = '_cc._default_verify(BUNDLE, [{"type_name": NAME, "spec": SPEC}])'
 
-    def _run_script(self, spec, row):
-        """Run the generated script's run() with verify._verify_one returning
-        ``row``; (stdout, return value)."""
-        import contextlib
-        import io
+    class _Cmds:
+        """Records every Maya command the script calls; the scene has
+        unsaved changes when ``modified``."""
 
-        from mpynode.native.ai import porter
-        from mpynode.native.toolchain import verify as cc
+        def __init__(self, modified=False):
+            self.modified = modified
+            self.calls    = []
 
-        class _Cmds:
-            def pluginInfo(self, *a, **k):
+        def __getattr__(self, name):
+            def call(*a, **k):
+                self.calls.append((name, a, k))
+                if name == "file" and k.get("modified"):
+                    return self.modified
                 return True
+            return call
+
+    def _load(self, spec, cmds):
+        from mpynode.native.ai import porter
 
         ns = {"__file__": "/x/verify_in_maya.py", "__name__": "verify_probe"}
         exec(compile(porter._verify_script(spec), "verify_in_maya.py", "exec"),
              ns)
-        ns["cmds"] = _Cmds()
-        seen = []
-        real = cc._verify_one, cc._load_python_plugins
-        cc._verify_one          = lambda *a, **k: seen.append(a) or dict(row)
-        cc._load_python_plugins = lambda *a, **k: None
-        buf = io.StringIO()
-        try:
-            with contextlib.redirect_stdout(buf):
-                ok = ns["run"]()
-        finally:
-            cc._verify_one, cc._load_python_plugins = real
-        self.assertEqual(len(seen), 1)
-        self.assertEqual(seen[0][1:], (ns["BUNDLE"], spec))
+        ns["cmds"] = cmds
+        return ns
+
+    def _run_script(self, spec, row):
+        """Run the generated script's run() with verify._default_verify
+        returning ``row`` for the node; (stdout, return value)."""
+        import contextlib
+        import io
+
+        from mpynode.native.toolchain import verify as cc
+
+        cmds = self._Cmds()
+        ns   = self._load(spec, cmds)
+        name = spec["suggested"]["node_type_name"]
+        buf  = io.StringIO()
+        with unittest.mock.patch.object(
+                cc, "_default_verify",
+                return_value={name: dict(row)}) as dv, \
+                contextlib.redirect_stdout(buf):
+            ok = ns["run"]()
+        dv.assert_called_once_with(ns["BUNDLE"],
+                                   [{"type_name": name, "spec": spec}])
+        # The script itself only asks whether the scene has unsaved changes.
+        self.assertEqual(cmds.calls, [("file", (), self._QUERY)])
+        return buf.getvalue(), ok
+
+    _QUERY = {"q": True, "modified": True}
+
+    def _run_merged(self, generic, authored):
+        """The script's output with the REAL _default_verify merging
+        ``generic`` (_verify_one's row, or the exception it raises) and
+        ``authored`` (the @maya_test aggregate); plug-in loading and the
+        timing pass stubbed out."""
+        import contextlib
+        import io
+
+        import maya.cmds as mcmds
+
+        from mpynode.native.toolchain import verify as cc
+
+        ns    = self._load(self._SCALAR, self._Cmds())
+        buf   = io.StringIO()
+        patch = unittest.mock.patch.object
+        if isinstance(generic, BaseException):
+            one = {"side_effect": generic}
+            generic = {"ran": False, "pass": None, "maxerr": None,
+                       "tol": None,
+                       "reason": "verify could not run: %s" % generic}
+        else:
+            one = {"return_value": dict(generic)}
+        with patch(cc, "_load_python_plugins"), \
+                patch(mcmds, "pluginInfo", return_value=True), \
+                patch(cc, "_timing_enabled", return_value=False), \
+                patch(cc, "_verify_one", **one), \
+                patch(cc, "_run_authored_tests",
+                      return_value=dict(authored)), \
+                contextlib.redirect_stdout(buf):
+            ok = ns["run"]()
+        merged = cc._merge_authored_test(dict(generic), dict(authored))
+        self.assertIn("VERIFY ROW " + str(merged), buf.getvalue())
         return buf.getvalue(), ok
 
     def test_geo_spec_dispatches_to_geo_verify_script(self):
         from mpynode.native.ai import porter
         s = porter._verify_script(_GEO_MESH_SPEC)
-        # Runs the AUTHORITATIVE parity branch (no duplicated, drifting logic)
-        # and embeds the spec so it is self-contained (no live SOURCE needed).
-        self.assertIn("_verify_one",       s)
+        # Runs the AUTHORITATIVE verify (no duplicated, drifting logic) and
+        # embeds the spec so it is self-contained (no live SOURCE needed).
+        self.assertIn(self._CALL,          s)
         self.assertIn("SPEC = json.loads", s)
         self.assertIn("GEOMETRY",          s)
         self.assertNotIn("cv[0]", s)
@@ -2666,7 +2724,8 @@ class TestVerifyScriptHonesty(unittest.TestCase):
     def test_scalar_verify_script_runs_the_harness_compare(self):
         from mpynode.native.ai import porter
         s = porter._verify_script(self._SCALAR)
-        self.assertIn("_cc._verify_one(cmds, BUNDLE, SPEC)", s)
+        self.assertIn(self._CALL, s)
+        self.assertNotIn("_cc._verify_one", s)
         self.assertIn("SPEC = json.loads", s)
         # No compare of its own: no getAttr, no first-element peel, no live
         # SOURCE node.
@@ -2701,6 +2760,91 @@ class TestVerifyScriptHonesty(unittest.TestCase):
         self.assertTrue(ok)
         self.assertIn("VERIFY SKIP", out)
         self.assertNotIn("VERIFY PASS", out)
+
+    def test_script_verdict_is_the_merged_row(self):
+        # The pipeline's verdict merges the generic row with the authored
+        # @maya_test (_merge_authored_test); the script reports that merge.
+        skip = {"ran": False, "pass": None, "maxerr": None, "tol": None,
+                "reason": "NURBS CV idiom"}
+        ok_g = {"ran": True, "pass": True, "maxerr": 0.0, "tol": 1e-4,
+                "reason": ""}
+        ok_a = {"ran": True, "passed": True, "count": 1, "passes": 1,
+                "reason": ""}
+        bad = {"ran": True, "passed": False, "count": 1, "passes": 0,
+               "reason": "test_x: boom"}
+        # A generic skip the authored test passes is a PASS...
+        out, ok = self._run_merged(skip, ok_a)
+        self.assertTrue(ok)
+        self.assertIn("VERIFY PASS", out)
+        self.assertNotIn("VERIFY SKIP", out)
+        # ...and a generic pass the authored test fails is a FAIL.
+        out, ok = self._run_merged(ok_g, bad)
+        self.assertFalse(ok)
+        self.assertIn("VERIFY FAIL", out)
+        self.assertIn("authored @maya_test FAILED: test_x: boom", out)
+
+    def test_a_pass_on_the_authored_test_alone_says_why(self):
+        # The merged row passes a node on its authored @maya_test when the
+        # generic check did not run: by design, or because its harness
+        # failed (an outdated mpynode rejecting an attr type). A bare
+        # "VERIFY PASS maxerr None" hid both; the line gives the reason.
+        ok_a = {"ran": True, "passed": True, "count": 1, "passes": 1,
+                "reason": ""}
+        head = "VERIFY PASS (authored @maya_test only; generic check "
+        out, ok = self._run_merged(
+            {"ran": False, "pass": None, "maxerr": None, "tol": None,
+             "reason": "NURBS CV idiom"}, ok_a)
+        self.assertTrue(ok)
+        self.assertIn(head + "skipped) NURBS CV idiom | authored "
+                      "@maya_test: 1/1 passed", out.splitlines())
+        out, ok = self._run_merged(
+            RuntimeError("attr_type 'long' not supported"), ok_a)
+        self.assertTrue(ok)
+        self.assertIn(head + "COULD NOT RUN) verify could not run: "
+                      "attr_type 'long' not supported | authored "
+                      "@maya_test: 1/1 passed", out.splitlines())
+        # A generic check that ran keeps the short line.
+        out, ok = self._run_merged(
+            {"ran": True, "pass": True, "maxerr": 0.0, "tol": 1e-4,
+             "reason": ""}, ok_a)
+        self.assertTrue(ok)
+        self.assertIn("VERIFY PASS maxerr 0.0", out.splitlines())
+
+    def test_script_refuses_unsaved_changes_before_touching_the_scene(self):
+        import contextlib
+        import io
+
+        from mpynode.native.toolchain import verify as cc
+
+        cmds  = self._Cmds(modified=True)
+        ns    = self._load(self._SCALAR, cmds)
+        buf   = io.StringIO()
+        patch = unittest.mock.patch.object
+        with patch(cc, "_default_verify") as dv, \
+                patch(cc, "_verify_one") as v1, \
+                patch(cc, "_load_python_plugins") as lp, \
+                contextlib.redirect_stdout(buf), \
+                self.assertRaises(RuntimeError) as cm:
+            ns["run"]()
+        msg = str(cm.exception)
+        self.assertIn("VERIFY REFUSED", msg)
+        self.assertIn("unsaved changes", msg)
+        self.assertIn("Save first, or run it in a fresh mayapy", msg)
+        # The query is the only Maya command it ran: no plug-in load, no
+        # file new, no verify.
+        self.assertEqual(cmds.calls, [("file", (), self._QUERY)])
+        self.assertFalse(dv.called or v1.called or lp.called)
+        self.assertNotIn("VERIFY ROW", buf.getvalue())
+
+    def test_script_names_the_mpynode_it_imported(self):
+        # An outdated mpynode on the path is obvious: the first line names
+        # the package folder the script imported, refused or not.
+        import mpynode
+
+        pkg = os.path.dirname(os.path.abspath(mpynode.__file__))
+        out, _ = self._run_script(self._SCALAR, {"ran": True, "pass": True,
+                                                 "maxerr": 0.0})
+        self.assertEqual(out.splitlines()[0], "VERIFY MPYNODE " + pkg)
 
 
 class TestDefaultVerifyReclassifiesExceptions(unittest.TestCase):
