@@ -316,7 +316,8 @@ directory reads as a story (`00_baseline.cpp` -> `01_hoist_invariant.cpp` -> …
 still gets an `NN_no_change.txt` so the numbering has no holes.
 
 On the shipped tree: 38 stage-1 files, **only 17 stage-2 files** — the assist
-stage is per node, not a fixed step — and 96 stage-3 round files.
+stage is per node, not a fixed step — and 104 stage-3 `.cpp` files (38
+`00_baseline.cpp` and 66 rounds) plus 8 `NN_no_change.txt` markers.
 
 **The compiled `_timeIn` is created, not read.** Since v43 the compiled mesh,
 curve, surface and transform types create the hidden `_timeIn` time input

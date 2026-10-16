@@ -1701,7 +1701,7 @@ def _verify_file_osl():
 # ======================================================================
 # 2b. mPyFile -- Conway's Game of Life as a procedural texture
 # ======================================================================
-# A second mPyFile template (the type slot is taken by file_brightness_contrast),
+# A second mPyFile template (the type slot is taken by File Simple),
 # so it is written by explicit rel dir via _write_template_to (like the collision
 # deformer) and registered in ALL_DECLARED_DIRS.
 GOL_INIT = r'''import numpy as np

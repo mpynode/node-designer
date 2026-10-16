@@ -65,6 +65,99 @@ Line numbers are as of 2026-10-15. The compute-side loads were not assessed.
   File Scanline, which take no splice.
 - Whether File Composite gets a fallback at all: its interpreted twin has none.
 
+## Blocking re-entered before an evaluation — KNOWN DIFFERENCE
+
+### The case
+
+Under parallel evaluation only: nodeState leaves Blocking, goes back to
+Blocking with nothing evaluated in between, an input changes, and nodeState
+leaves Blocking again. The first read through a downstream node then keeps the
+old value on the interpreted node. The compiled twin reads the new value.
+
+- Any evaluation between the two state changes avoids it.
+- Reads after the next input change are right on both sides.
+- DG evaluation does not show it.
+
+### Measured, 2026-10-15
+
+Connected-input nodeState probe: 12 cases over the 6 MPxNode families,
+nodeState 1–5, 4 sequences, every input change arriving through a connection.
+
+| Plug-in | DG | Parallel |
+|---|---|---|
+| All Templates Plugin | 0 of 1080 reads differ | 1 of 1080 |
+| De Boor Spline and Procrustes Tags finals | 0 of 540 | 1 of 540 |
+
+The one read is a Procrustes Tags `outMatrix` element read through a
+`decomposeMatrix`, at nodeState 2 (Blocking), in the sequence that reaches the
+case by undoing and redoing the state changes.
+
+### Why it stays
+
+- The interpreted node is the one that is off, so by the rule above any fix
+  belongs there. The compiled node needs nothing.
+- Entering a suspended state dirties nothing on the interpreted node
+  (`_common/plugs/dirty_affects.declare_user_affects`, whose docstring records
+  this case). Dirtying on the way in as well left that same downstream read
+  stale after resuming under the Evaluation Manager.
+- Marking the plug clean in the suspended compute was tried: 75 of 180 reads
+  then differed under parallel evaluation.
+
+## Consumers past an input-driven array length — KNOWN DIFFERENCE, fixed at re-optimization
+
+### The case
+
+Some array outputs take their length from the inputs: DNET's `positions` and
+`lengths`, and Spine's `outputTranslate`, `outputRotate`, `outputScale` and
+`controlKeys`. With consumers connected past that length, the two nodes write
+different elements:
+
+| Side | Writer | Where value k goes |
+|---|---|---|
+| Interpreted | `_api2/helpers.write_multi_plug_value` | With outgoing connections and fewer values than the highest connected index + 1: the k-th connected element, in index order. Otherwise element k |
+| Compiled | `native/compiler/emit_attr._array_write_lines` | Always element k, in a fresh builder sized to the value count. A connected element past the values is dropped and reads 0 |
+
+Example: DNET with 5 matrices, consumers on `positions[0]` and `positions[5]`.
+The interpreted `[5]` gets the 2nd value, (0.0166, -0.0193, 0). The compiled
+`[5]` reads (0, 0, 0), and its elements stop at `[4]`.
+
+An unconnected read past the length reads 0 on both sides.
+
+### Measured, 2026-10-15
+
+| Probe | Reads that differ |
+|---|---|
+| Consumers on `[0]` and on the first element past the length; read the consumer, the element, then the consumer after an input change. Finals, DG | **18** of 18 values, 3 on each of the 6 outputs; each output's index list differs too |
+| Consumers on `[2]` and `[9]`, or on `[0]` and `[5]`. Finals and All Templates, DG and parallel | DNET 15, Spine 29 (38 values, 6 index lists) at a 1e-6 tolerance, the same in each of the 4 runs of 612 reads. The probe's own 2e-3 relative tolerance counts DNET 14: it misses `lengths[2]`, which holds the 1st value interpreted (1.2806) and the 3rd compiled (1.2819), 0.1% apart |
+
+The same probes also differ in which elements exist past the values, on DNET,
+Spine and Procrustes Tags: the compiled writer drops an element it did not
+write this evaluation, where the interpreted one keeps it. That is the
+short-write divergence documented at `write_multi_plug_value` (T94), not this
+case.
+
+### Why it waits
+
+- The interpreted mapping goes into the stage-1 writer,
+  `emit_attr._array_write_lines`, first, with a port-cache recipe bump. That
+  moves every array writer's text, so the splice has a hunk in each one.
+- Where the writers stand in the 6 shipped finals with array outputs:
+
+  | Final | Array writer in `build/<t>/<t>.cpp` |
+  |---|---|
+  | De Boor Spline, Bubble Sort, Spring Chain | rewritten by an optimizer round. Their length is their own element count, so this case does not arise |
+  | DNET | rewritten, both outputs |
+  | Spine | `outputWeights` rewritten. The 4 affected outputs are still stage-1 text |
+  | Procrustes Tags | stage-1 text |
+
+- DNET: both writers are optimizer code, which a splice never edits. It takes
+  the fix at its next re-optimization, from the new stage 1.
+- Spine: the 4 affected writers are still stage-1 text, but the splice refuses
+  the whole file, because its hunk in the rewritten `outputWeights` writer
+  lands in optimizer code. The 4 writers could take the fix by hand, as
+  036ce1b inserted the nodeState gate. On 2026-10-15 it was decided to wait
+  for Spine's next re-optimization instead, as DNET does.
+
 ## See also
 
 - The compiled mesh, curve, surface and transform types create `_timeIn` but
