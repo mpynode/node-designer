@@ -10,6 +10,11 @@ when run on their own (array, mesh, string, matrix, colour and connected time
 inputs), and the scalar one compared against a live SOURCE node rather than
 a rebuilt twin. Only the docstring says which family the node is.
 
+The script picks the plug-in's extension when it runs, from the OS Maya runs
+on (``toolchain.plugin_ext()``: ``.mll``, ``.bundle`` or ``.so``), so the
+generator's output is the same whatever OS generates it. It used to write
+the generating host's extension: on macOS every script named a ``.bundle``.
+
 Built by plain string concatenation (no % / .format / f-string) because the
 embedded spec may itself contain ``%`` and ``{}``.
 """
@@ -19,7 +24,6 @@ from __future__ import annotations
 import json
 
 from mpynode.native import compiler as codegen
-from mpynode.native.toolchain import toolchain
 
 
 # What each family's check builds and compares, for the script's docstring.
@@ -80,6 +84,10 @@ def _verify_script(spec: dict) -> str:
     verify does. ``_verify_one`` opens a new scene before it drives the two
     nodes, so the script says to save first. Prints a ``VERIFY PASS`` /
     ``FAIL`` / ``SKIP`` line and returns False only on a FAIL.
+
+    The plug-in's extension is picked when the script runs
+    (``toolchain.plugin_ext()`` on that host), never when it is generated:
+    the text depends on ``spec`` alone.
     """
     name = spec["suggested"]["node_type_name"]
     what, src, compared = _FAMILY_DOC[_family(spec)]
@@ -94,9 +102,12 @@ def _verify_script(spec: dict) -> str:
         "save your work first.\n"
         '"""\n'
         "import os, json\n"
-        "import maya.cmds as cmds\n\n"
+        "import maya.cmds as cmds\n"
+        "from mpynode.native.toolchain import toolchain\n\n"
+        "# .mll, .bundle or .so: picked for the OS this runs on.\n"
+        "EXT = toolchain.plugin_ext()\n"
         "BUNDLE = os.path.join(os.path.dirname(__file__), "
-        + repr(name + toolchain.plugin_ext()) + ")\n"
+        + repr(name) + " + EXT)\n"
         "SPEC = json.loads(" + repr(json.dumps(spec)) + ")\n\n\n"
     )
     return consts + _BODY

@@ -14,7 +14,8 @@ result.
 A script is fresh when it matches the generator line for line once whitespace
 runs are collapsed, since the shipped copies may be column-aligned. A stale
 one is rewritten with the generator's text, LF. Only scripts that already
-exist are rewritten.
+exist are rewritten. The generator's text does not depend on the OS running
+this tool: each script picks its plug-in extension when it runs.
 
     mayapy tools/regen_verify_scripts.py --dry-run    report, write nothing
     mayapy tools/regen_verify_scripts.py              rewrite stale scripts

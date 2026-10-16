@@ -14,6 +14,11 @@ deformer, IK and scalar scripts had carried their own sample / set / fit
 code, and 17 of the 38 raised when run on their own (array, mesh, string,
 matrix, colour and connected time inputs).
 
+The generator also wrote the generating host's plug-in extension, so on
+macOS this gate called every shipped script stale and the tool rewrote them
+to ``.bundle``. Each script now picks ``.mll``, ``.bundle`` or ``.so`` when it
+runs, and the generator's text is the same on every OS.
+
 ``tools/regen_verify_scripts.py`` does the regenerating; this module is the
 gate over its result. Compared line by line with whitespace runs collapsed
 (the tool's ``matches``): the align sweep columnises the shipped copies, and
@@ -23,11 +28,14 @@ that is the only difference allowed.
 from __future__ import annotations
 
 import ast
+import contextlib
 import glob
 import importlib.util
 import json
 import os
+import sys
 import unittest
+from unittest import mock
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
@@ -36,6 +44,7 @@ from tests._setup import standalone_init
 
 _TOOL  = os.path.join(_paths.ROOT, "tools", "regen_verify_scripts.py")
 _REGEN = None
+_OSES  = (("win32", ".mll"), ("darwin", ".bundle"), ("linux", ".so"))
 
 
 def setUpModule():
@@ -66,6 +75,17 @@ def _finals():
             if os.path.basename(p) == os.path.basename(d) + ".cpp":
                 out.append(os.path.relpath(d, _paths.ROOT).replace("\\", "/"))
     return sorted(out)
+
+
+@contextlib.contextmanager
+def _on_os(platform):
+    """``sys.platform`` reads ``platform``: toolchain.current_os reads it."""
+    real         = sys.platform
+    sys.platform = platform
+    try:
+        yield
+    finally:
+        sys.platform = real
 
 
 class TestShippedVerifyScripts(unittest.TestCase):
@@ -103,6 +123,34 @@ class TestShippedVerifyScripts(unittest.TestCase):
             self.assertEqual(len(embedded), 1, rel)
             self.assertEqual(ast.unparse(embedded[0].func), "json.loads", rel)
             self.assertEqual(json.loads(embedded[0].args[0].value), spec, rel)
+
+    def test_the_generator_writes_the_same_text_on_every_os(self):
+        # Generated on macOS, every script named a .bundle: the generator
+        # wrote the generating host's plug-in extension.
+        from mpynode.native.ai import verify_scripts
+        from mpynode.native.toolchain import toolchain
+
+        for rel, spec, _text in _shipped():
+            texts = set()
+            for platform, ext in _OSES:
+                with _on_os(platform):
+                    texts.add(verify_scripts._verify_script(spec))
+                with mock.patch.object(toolchain, "plugin_ext",
+                                       return_value=ext):
+                    texts.add(verify_scripts._verify_script(spec))
+            self.assertEqual(len(texts), 1, rel)
+
+    def test_each_picks_the_plugin_for_the_os_it_runs_on(self):
+        for rel, _spec, text in _shipped():
+            name = os.path.basename(os.path.dirname(rel))
+            code = compile(text, rel, "exec")
+            for platform, ext in _OSES:
+                ns = {"__file__": "/x/verify_in_maya.py",
+                      "__name__": "verify_probe"}
+                with _on_os(platform):
+                    exec(code, ns)
+                self.assertEqual(os.path.basename(ns["BUNDLE"]), name + ext,
+                                 (rel, platform))
 
     def test_each_is_lf_with_a_final_newline(self):
         for rel, _spec, text in _shipped():
