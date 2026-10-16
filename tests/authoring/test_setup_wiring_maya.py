@@ -81,9 +81,12 @@ class TestSetupWiringMaya(unittest.TestCase):
         self.assertTrue(mc.isConnected(name + ".outColor", shader + ".color"))
 
     def test_mpyfile_wires_to_aiStandardSurface_baseColor(self):
-        # Skip if MtoA/aiStandardSurface unavailable.
-        if "aiStandardSurface" not in mc.allNodeTypes():
-            self.skipTest("aiStandardSurface (MtoA) not available")
+        # Load MtoA here: the result must not depend on an earlier module
+        # having loaded it in this process. Skip only when it will not load.
+        try:
+            mc.loadPlugin("mtoa", quiet=True)
+        except RuntimeError as exc:
+            self.skipTest("MtoA did not load: %s" % str(exc).strip())
         shader = mc.shadingNode("aiStandardSurface", asShader=True, name="testAi")
         mc.select(shader, replace=True)
         name = self._run_setup("mPyFile")
