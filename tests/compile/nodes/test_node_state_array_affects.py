@@ -16,7 +16,7 @@ of 30 resumed reads; 0 of both with the edge.
 The compiled node now declares ``attributeAffects(MPxNode::state, <array>)``
 for each array output, at the end of initialize(). Pinned here: the generator
 for every shipped row, and every shipped lineage file stamped from the current
-stage 1.
+stage 1 or kept on De Boor Spline's stage 1 before its one-sample guard.
 """
 from __future__ import annotations
 
@@ -31,6 +31,8 @@ import unittest
 
 from tests import _paths
 from tests._setup import ensure_plugins_loaded, standalone_init
+from tests.compile.nodes.test_deboor_single_sample import (
+    _KEPT as _DEBOOR_KEPT, _OLD_STAMP as _DEBOOR_OLD_STAMP)
 
 
 def setUpModule():
@@ -66,6 +68,15 @@ def _rel(path):
 def _stamp(text):
     m = re.search(r"^// build: ([0-9a-f]{12})", text, re.M)
     return m.group(1) if m else None
+
+
+def _deboor_kept(path, text):
+    """De Boor Spline's final, its source, rounds 01-02 and the All Templates
+    source keep the stage 1 before the one-sample guard
+    (test_deboor_single_sample). That stage 1 differs from the current one by
+    the guard in compute()'s sample loop and the stamps only, so they are
+    checked like the rest."""
+    return _rel(path) in _DEBOOR_KEPT and _stamp(text) == _DEBOOR_OLD_STAMP
 
 
 def _rows(families):
@@ -153,7 +164,7 @@ class TestShippedLineage(unittest.TestCase):
     def test_every_current_lineage_file_has_the_edge(self):
         allt = os.path.join(_paths.ROOT, "templates", "All Templates Plugin",
                             "build")
-        seen, foreign = 0, set()
+        seen, foreign, kept = 0, set(), set()
         for build, ty, spec in _rows(_SCAFFOLD):
             arrays = _array_outputs(spec)
             if not arrays:
@@ -165,13 +176,17 @@ class TestShippedLineage(unittest.TestCase):
                 for p in _lineage(b, ty):
                     text = _read(p)
                     if _stamp(text) != _stamp(s1):
-                        foreign.add(_rel(p))
-                        continue
+                        if not _deboor_kept(p, text):
+                            foreign.add(_rel(p))
+                            continue
+                        kept.add(_rel(p))
                     seen += 1
                     with self.subTest(file=_rel(p)):
                         self.assertEqual(_initialize(text), init)
         self.assertEqual(foreign, _FOREIGN)
-        # 6 rows x (template + All Templates copy): 40 current lineage files
+        self.assertEqual(kept, _DEBOOR_KEPT)
+        # 6 rows x (template + All Templates copy): 40 lineage files, the 5
+        # De Boor Spline files on the stage 1 before its guard included
         self.assertEqual(seen, 40)
 
 

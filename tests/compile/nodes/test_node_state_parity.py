@@ -15,8 +15,9 @@ measured), and the locator's gate is v44's setDependentsDirty override, so
 none of them gets this compute gate.
 
 Pinned here: the generator, every shipped lineage file stamped from the
-current stage 1 -- all of them gated, the 9 the splice refused included (the
-gate inserted by hand) -- and the interpreted reference.
+current stage 1 or kept on De Boor Spline's stage 1 before its one-sample
+guard -- all of them gated, the 9 the splice refused included (the gate
+inserted by hand) -- and the interpreted reference.
 """
 from __future__ import annotations
 
@@ -34,6 +35,8 @@ import maya.cmds as mc
 
 from tests import _paths
 from tests._setup import ensure_plugins_loaded, standalone_init
+from tests.compile.nodes.test_deboor_single_sample import (
+    _KEPT as _DEBOOR_KEPT, _OLD_STAMP as _DEBOOR_OLD_STAMP)
 
 
 def setUpModule():
@@ -85,6 +88,15 @@ def _rel(path):
 def _stamp(text):
     m = re.search(r"^// build: ([0-9a-f]{12})", text, re.M)
     return m.group(1) if m else None
+
+
+def _deboor_kept(path, text):
+    """De Boor Spline's final, its source, rounds 01-02 and the All Templates
+    source keep the stage 1 before the one-sample guard
+    (test_deboor_single_sample). That stage 1 differs from the current one by
+    the guard in compute()'s sample loop and the stamps only, so they are
+    checked like the rest."""
+    return _rel(path) in _DEBOOR_KEPT and _stamp(text) == _DEBOOR_OLD_STAMP
 
 
 def _rows(families):
@@ -151,7 +163,7 @@ class TestShippedLineage(unittest.TestCase):
     """Every lineage file stamped from the current stage 1 carries the gate."""
 
     def test_every_current_lineage_file_is_gated(self):
-        seen, by_hand = 0, set()
+        seen, by_hand, kept = 0, set(), set()
         allt = os.path.join(_paths.ROOT, "templates", "All Templates Plugin",
                             "build")
         for build, fam, ty, _spec in _rows(_GATED):
@@ -165,7 +177,9 @@ class TestShippedLineage(unittest.TestCase):
                 for path in _lineage(b, ty):
                     text = _read(path)
                     if _stamp(text) != stamp:
-                        continue  # a foreign stamp: never spliced
+                        if not _deboor_kept(path, text):
+                            continue  # a foreign stamp: never spliced
+                        kept.add(_rel(path))
                     with self.subTest(file=_rel(path)):
                         self.assertTrue(_gated(text))
                     seen += 1
@@ -173,9 +187,11 @@ class TestShippedLineage(unittest.TestCase):
                         by_hand.add(_rel(path))
         # 42 moved stage-1 files (21 templates and their 21 All Templates
         # copies), the 128 lineage files spliced from them and the 9 gated by
-        # hand
-        self.assertEqual(seen, 179)
+        # hand; the 5 De Boor Spline files on the stage 1 before its guard
+        # are among the 128
+        self.assertEqual(seen,    179)
         self.assertEqual(by_hand, _BY_HAND)
+        self.assertEqual(kept,    _DEBOOR_KEPT)
 
     def test_the_hand_gated_files_are_all_gated(self):
         for rel in sorted(_BY_HAND):
