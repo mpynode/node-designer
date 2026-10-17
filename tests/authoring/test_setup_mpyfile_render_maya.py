@@ -10,8 +10,10 @@ design §10.1/§10.2:
      Arnold render of a scene where the mPyFile drives a shader on a surface, and
      assert the result is NOT all-black (guards the `warm_init_namespace` call).
 
-Step 7's `aiStandardSurface->baseColor` assertion SKIPPED because mtoa was not
-loaded; here we `cmds.loadPlugin("mtoa")` so that path actually runs.
+The two tests that need MtoA load it themselves (`cmds.loadPlugin("mtoa")`)
+and skip when it does not load. Step 7's `aiStandardSurface->baseColor`
+assertion in `test_setup_wiring_maya.py` loads MtoA itself too, so none of the
+three needs an earlier module to have loaded it.
 """
 
 from __future__ import annotations

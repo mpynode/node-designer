@@ -12,7 +12,7 @@ If you are just installing MPyNode, the only two you need are `run_tests.sh`
 
 | | macOS / Linux | Windows |
 |---|---|---|
-| Unit suite (~6,700 tests, ~9 min) | `tools/run_tests.sh [module ...]` | `tools\run_tests.bat [module ...]` |
+| Unit suite (~8,100 tests, ~5 min) | `tools/run_tests.sh [module ...]` | `tools\run_tests.bat [module ...]` |
 | Compiled parity (12 types, ~6 min) | `tools/run_parity_sweep.sh` | `tools\run_parity_sweep.bat` |
 
 Both pairs anchor on the repo root, not on `tools/`, and both hand the real exit
