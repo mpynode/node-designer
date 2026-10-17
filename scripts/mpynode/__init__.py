@@ -1,6 +1,6 @@
 """Top-level mpynode package."""
 
-__version__ = "2.0.0a2"
+__version__ = "2.0.0rc1"
 
 # Public wrapper classes, resolved lazily (PEP 562) so ``from mpynode import
 # MPyNurbsCurve`` costs nothing at import time and cannot cycle. Importing a
