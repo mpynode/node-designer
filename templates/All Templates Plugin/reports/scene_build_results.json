@@ -132,7 +132,9 @@
      "eval_ok": true,
      "aux_interpreted": [],
      "errors": [],
-     "notes": [],
+     "notes": [
+      "1 unknown node(s) removed before save -- no plug-in in this mayapy provides them: MayaNodeEditorSavedTabsInfo"
+     ],
      "via": "mega",
      "companions": [],
      "compiled_node": "comboCorrectives"
@@ -144,19 +146,15 @@
      "compiled_nodes": 1,
      "mesh_verts": 220714,
      "unknown_nodes": 0,
-     "unknown_plugins": [
-      "vrayformaya",
-      "stereoCamera",
-      "rpmaya",
-      "mtorsubdiv",
-      "TitanDDS"
-     ],
+     "unknown_plugins": [],
      "errors": []
     },
     "status": "ok"
    }
   ],
-  "issues": [],
+  "issues": [
+   "[Combo + In-Between Correctives] note: 1 unknown node(s) removed before save -- no plug-in in this mayapy provides them: MayaNodeEditorSavedTabsInfo"
+  ],
   "multi_demo": false
  },
  {
