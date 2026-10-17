@@ -12,6 +12,10 @@ not run, and COULD NOT RUN when its harness failed.
 It opens new scenes (file new, force), so it refuses to run while
 the open scene has unsaved changes: save first, or run it in a
 fresh mayapy. It prints the folder of the mpynode it imported.
+The guard trusts Maya's own modified flag, so a selection-only
+change isn't flagged.
+Run as a script, a FAIL raises, so mayapy exits 1 and Maya shows
+an error; a PASS or SKIP exits 0. run() returns False on a FAIL.
 """
 import os, json
 import maya.cmds as cmds
@@ -58,9 +62,23 @@ def run():
             return True
         print("VERIFY PASS maxerr", row.get("maxerr"))
         return True
+    maxerr, tol = row.get("maxerr"), row.get("tol")
+    if (row.get("generic_ran", True) and maxerr is not None
+            and tol is not None and maxerr > tol):
+        # The generic check failed: name it, with its tolerance. The merged
+        # reason may speak only of the authored test, which can have passed.
+        why = row.get("reason")
+        print("VERIFY FAIL generic check maxerr " + str(maxerr) + " > tol "
+              + str(tol) + (" | " + str(why) if why else ""))
+        return False
     print("VERIFY FAIL", row.get("reason"), row.get("maxerr"))
     return False
 
 
 if __name__ == "__main__":
-    run()
+    # Run as a script, a FAIL raises: mayapy exits 1 and Maya shows an
+    # error. A caller that imports this file gets run()'s False instead.
+    if not run():
+        raise RuntimeError(
+            "VERIFY FAIL: the compiled " + NAME + " does not match the "
+            "original; see the VERIFY FAIL line above.")

@@ -34,6 +34,11 @@ alone decided printed a bare ``VERIFY PASS maxerr None``, even when the
 generic check's harness had failed (an outdated ``mpynode`` on the path):
 the line now gives the row's reason, marked ``skipped`` or ``COULD NOT RUN``.
 
+A FAIL still exited 0 like a PASS, so a shell caller read it as success.
+Run as a script, a FAIL now raises after its FAIL line, so mayapy exits 1
+and Maya shows an error; ``run()`` still returns False to a caller. A PASS,
+a PASS on the authored test alone and a SKIP exit 0.
+
 ``tools/regen_verify_scripts.py`` does the regenerating; this module is the
 gate over its result. Compared line by line with whitespace runs collapsed
 (the tool's ``matches``): the align sweep columnises the shipped copies, and
@@ -305,31 +310,46 @@ class _BareMayapy:
 
 class TestShippedVerifyScriptsRunByMayapy(unittest.TestCase):
     """``mayapy verify_in_maya.py``, the refusal's own advice: the script
-    starts Maya before it imports ``mpynode``, and only then."""
+    starts Maya before it imports ``mpynode``, and only then. Run that way,
+    a FAIL raises, so mayapy exits 1."""
 
-    def _exec(self, rel, text, bare, run_name):
+    _PASS = {"ran": True, "pass": True, "maxerr": 0.0, "tol": 1e-4,
+             "reason": ""}
+    _FAIL = {"ran": True, "pass": False, "maxerr": 0.5, "tol": 1e-4,
+             "reason": "outColor diverged"}
+    _FAIL_LINE = ("VERIFY FAIL generic check maxerr 0.5 > tol 0.0001 | "
+                  "outColor diverged")
+
+    def _exec(self, rel, text, bare, run_name, row=None, call=False):
         """Exec the shipped script under ``bare``'s maya with the pipeline's
-        verify replaced by a recorder; its stdout."""
+        verify returning ``row`` (a PASS by default), then call its run()
+        when ``call``; (stdout, what it raised or None, run()'s value)."""
         import mpynode  # noqa: F401  (imported before sys.modules is patched)
         from mpynode.native.toolchain import toolchain, verify  # noqa: F401
 
         name = os.path.basename(os.path.dirname(rel))
-        row = {"ran": True, "pass": True, "maxerr": 0.0, "tol": 1e-4,
-               "reason": ""}
-        buf = io.StringIO()
+        buf  = io.StringIO()
         ns = {"__file__": os.path.join(_paths.ROOT, rel),
               "__name__": run_name}
+        rows   = {name: dict(row or self._PASS)}
+        raised = got = None
         with bare.active(), \
                 mock.patch.object(verify, "_default_verify",
-                                  return_value={name: row}), \
+                                  return_value=rows), \
                 contextlib.redirect_stdout(buf):
-            exec(compile(text, rel, "exec"), ns)
-        return buf.getvalue()
+            try:
+                exec(compile(text, rel, "exec"), ns)
+                if call:
+                    got = ns["run"]()
+            except Exception as exc:
+                raised = exc
+        return buf.getvalue(), raised, got
 
     def test_each_starts_maya_before_importing_mpynode(self):
         for rel, _spec, text in _shipped():
             bare = _BareMayapy()
-            out  = self._exec(rel, text, bare, "__main__")
+            out, raised, _ = self._exec(rel, text, bare, "__main__")
+            self.assertIsNone(raised, rel)
             self.assertEqual(bare.events.count("initialize"), 1, rel)
             self.assertEqual(bare.events[0], "initialize", rel)
             self.assertIn("import mpynode", bare.events, rel)
@@ -341,13 +361,66 @@ class TestShippedVerifyScriptsRunByMayapy(unittest.TestCase):
         # second start. Imported rather than run, it starts nothing either.
         for rel, _spec, text in _shipped():
             bare = _BareMayapy(started=True)
-            out  = self._exec(rel, text, bare, "__main__")
+            out, raised, _ = self._exec(rel, text, bare, "__main__")
+            self.assertIsNone(raised, rel)
             self.assertNotIn("initialize", bare.events, rel)
             self.assertIn("VERIFY PASS maxerr 0.0", out, rel)
             bare = _BareMayapy()
-            out  = self._exec(rel, text, bare, "verify_probe")
+            out, raised, _ = self._exec(rel, text, bare, "verify_probe")
+            self.assertIsNone(raised, rel)
             self.assertNotIn("initialize", bare.events, rel)
             self.assertEqual(out, "", rel)
+
+    def test_each_fail_raises_when_run_and_returns_false_when_called(self):
+        # A FAIL exited 0 like a PASS. Run as a script, by a bare mayapy or
+        # in a running Maya, it now raises after its FAIL line: mayapy exits
+        # 1 and Maya shows an error. Imported, run() returns False.
+        for rel, _spec, text in _shipped():
+            name = os.path.basename(os.path.dirname(rel))
+            for started in (False, True):
+                bare = _BareMayapy(started=started)
+                out, raised, _ = self._exec(rel, text, bare, "__main__",
+                                            self._FAIL)
+                self.assertIsInstance(raised, RuntimeError, (rel, started))
+                self.assertEqual(str(raised),
+                                 "VERIFY FAIL: the compiled " + name + " does "
+                                 "not match the original; see the VERIFY "
+                                 "FAIL line above.", (rel, started))
+                self.assertEqual(out.splitlines()[-1], self._FAIL_LINE,
+                                 (rel, started))
+            bare = _BareMayapy(started=True)
+            out, raised, got = self._exec(rel, text, bare, "verify_probe",
+                                          self._FAIL, call=True)
+            self.assertIsNone(raised, rel)
+            self.assertIs(got, False, rel)
+            self.assertEqual(out.splitlines()[-1], self._FAIL_LINE, rel)
+
+    def test_a_pass_or_a_skip_run_as_a_script_raises_nothing(self):
+        # Every verdict the pipeline does not call a FAIL exits 0: a PASS, a
+        # PASS on the authored test alone (the generic check skipped, or
+        # COULD NOT RUN: the pipeline calls both PASS), and a SKIP.
+        why  = " | authored @maya_test: 1/1 passed"
+        head = "VERIFY PASS (authored @maya_test only; generic check "
+        cases = [
+            (self._PASS, "VERIFY PASS maxerr 0.0"),
+            ({"ran": True, "pass": True, "maxerr": None, "tol": 0.0,
+              "generic_ran": False, "reason": "NURBS CV idiom" + why},
+             head + "skipped) NURBS CV idiom" + why),
+            ({"ran": True, "pass": True, "maxerr": None, "tol": 0.0,
+              "generic_ran": False,
+              "reason": "verify could not run: boom" + why},
+             head + "COULD NOT RUN) verify could not run: boom" + why),
+            ({"ran": False, "pass": None, "maxerr": None, "tol": None,
+              "reason": "nothing to compare"},
+             "VERIFY SKIP (nothing to compare)"),
+        ]
+        for rel, _spec, text in _shipped():
+            for row, line in cases:
+                out, raised, _ = self._exec(rel, text,
+                                            _BareMayapy(started=True),
+                                            "__main__", row)
+                self.assertIsNone(raised, (rel, line))
+                self.assertEqual(out.splitlines()[-1], line, (rel, line))
 
 
 if __name__ == "__main__":

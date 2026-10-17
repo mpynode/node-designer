@@ -17,7 +17,9 @@ says which family the node is.
 
 The verify opens new scenes (``file new, force``), so the script refuses to
 run while the open scene has unsaved changes: it raises before it touches
-the scene, and says to save first or to run it in a fresh mayapy. Run as
+the scene, and says to save first or to run it in a fresh mayapy. The guard
+trusts Maya's own modified flag, so a selection-only change isn't flagged
+and the script runs and replaces that scene; no file is touched. Run as
 ``mayapy verify_in_maya.py`` it starts Maya itself, before it imports
 ``mpynode``: ``maya.cmds`` was empty there, so the script failed at the
 guard, and a ``userSetup.py`` install could not import ``mpynode`` at all. It
@@ -29,6 +31,15 @@ check did not run, and that includes a harness error ("verify could not
 run": an outdated ``mpynode`` that rejects an attr type, say). The PASS line
 then gives the row's reason and says whether the generic check was skipped
 or COULD NOT RUN; a bare ``VERIFY PASS maxerr None`` hid both.
+
+Run as a script, a FAIL raises after its ``VERIFY FAIL`` line, so ``mayapy
+verify_in_maya.py`` exits 1 and Maya shows an error; it used to exit 0, and
+a shell caller read the FAIL as success. When the generic check failed, the
+line names it, with its maxerr and tolerance, before the merged reason: that
+reason alone can say only "authored @maya_test: 1/1 passed". ``run()`` itself still returns
+False to a caller that imports the script. A PASS and a SKIP exit 0, and
+so does a PASS the authored test alone decided, even when the generic check
+COULD NOT RUN: the pipeline calls that a PASS too.
 
 The script picks the plug-in's extension when it runs, from the OS Maya runs
 on (``toolchain.plugin_ext()``: ``.mll``, ``.bundle`` or ``.so``), so the
@@ -86,12 +97,26 @@ _BODY = r'''def run():
             return True
         print("VERIFY PASS maxerr", row.get("maxerr"))
         return True
+    maxerr, tol = row.get("maxerr"), row.get("tol")
+    if (row.get("generic_ran", True) and maxerr is not None
+            and tol is not None and maxerr > tol):
+        # The generic check failed: name it, with its tolerance. The merged
+        # reason may speak only of the authored test, which can have passed.
+        why = row.get("reason")
+        print("VERIFY FAIL generic check maxerr " + str(maxerr) + " > tol "
+              + str(tol) + (" | " + str(why) if why else ""))
+        return False
     print("VERIFY FAIL", row.get("reason"), row.get("maxerr"))
     return False
 
 
 if __name__ == "__main__":
-    run()
+    # Run as a script, a FAIL raises: mayapy exits 1 and Maya shows an
+    # error. A caller that imports this file gets run()'s False instead.
+    if not run():
+        raise RuntimeError(
+            "VERIFY FAIL: the compiled " + NAME + " does not match the "
+            "original; see the VERIFY FAIL line above.")
 '''
 
 
@@ -125,8 +150,9 @@ def _verify_script(spec: dict) -> str:
     initializes ``maya.standalone`` before it imports ``mpynode``. It prints
     the folder of the ``mpynode`` it imported first, then a ``VERIFY PASS``
     / ``FAIL`` / ``SKIP`` line from the merged row, and returns False only
-    on a FAIL. A PASS the authored test alone decided gives the row's
-    reason, marked ``skipped`` or ``COULD NOT RUN`` (a harness error).
+    on a FAIL; run as ``__main__``, a FAIL then raises, so mayapy exits 1.
+    A PASS the authored test alone decided gives the row's reason, marked
+    ``skipped`` or ``COULD NOT RUN`` (a harness error).
 
     The plug-in's extension is picked when the script runs
     (``toolchain.plugin_ext()`` on that host), never when it is generated:
@@ -149,6 +175,10 @@ def _verify_script(spec: dict) -> str:
         "It opens new scenes (file new, force), so it refuses to run while\n"
         "the open scene has unsaved changes: save first, or run it in a\n"
         "fresh mayapy. It prints the folder of the mpynode it imported.\n"
+        "The guard trusts Maya's own modified flag, so a selection-only\n"
+        "change isn't flagged.\n"
+        "Run as a script, a FAIL raises, so mayapy exits 1 and Maya shows\n"
+        "an error; a PASS or SKIP exits 0. run() returns False on a FAIL.\n"
         '"""\n'
         "import os, json\n"
         "import maya.cmds as cmds\n"

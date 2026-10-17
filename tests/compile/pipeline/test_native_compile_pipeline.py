@@ -2617,7 +2617,7 @@ class TestVerifyScriptHonesty(unittest.TestCase):
     TestAttrComponentsFlatten) and the script only reports the merged row.
     It refuses a scene with unsaved changes before it touches it, and a PASS
     the authored test alone decided gives the reason the generic check did
-    not run."""
+    not run. Run as a script, a FAIL raises, so mayapy exits 1."""
 
     _SCALAR = {
         "suggested": {"node_type_name": "n", "mpx_base": "MPxNode"},
@@ -2810,6 +2810,47 @@ class TestVerifyScriptHonesty(unittest.TestCase):
         self.assertTrue(ok)
         self.assertIn("VERIFY PASS maxerr 0.0", out.splitlines())
 
+    def test_a_failed_generic_check_is_named_on_the_fail_line(self):
+        # The merged reason of a generic FAIL whose authored test passed is
+        # only "authored @maya_test: 1/1 passed", so the FAIL line, and the
+        # error that points to it, read like a pass. The line names the
+        # generic check, its maxerr and its tolerance first.
+        ok_a = {"ran": True, "passed": True, "count": 1, "passes": 1,
+                "reason": ""}
+        out, ok = self._run_merged(
+            {"ran": True, "pass": False, "maxerr": 0.038, "tol": 0.001,
+             "reason": ""}, ok_a)
+        self.assertFalse(ok)
+        self.assertEqual(out.splitlines()[-1],
+                         "VERIFY FAIL generic check maxerr 0.038 > tol 0.001"
+                         " | authored @maya_test: 1/1 passed")
+        # Without an authored test the row is the generic one: its own
+        # reason follows, and none leaves no trailing separator.
+        out, ok = self._run_script(self._SCALAR, {
+            "ran": True, "pass": False, "maxerr": 0.5, "tol": 1e-4,
+            "reason": "outColor diverged"})
+        self.assertFalse(ok)
+        self.assertEqual(out.splitlines()[-1],
+                         "VERIFY FAIL generic check maxerr 0.5 > tol 0.0001"
+                         " | outColor diverged")
+        out, ok = self._run_script(self._SCALAR, {
+            "ran": True, "pass": False, "maxerr": float("inf"), "tol": 1e-4,
+            "reason": ""})
+        self.assertFalse(ok)
+        self.assertEqual(out.splitlines()[-1],
+                         "VERIFY FAIL generic check maxerr inf > tol 0.0001")
+        # The authored test failed and the generic check passed: the merged
+        # reason already says so.
+        bad = {"ran": True, "passed": False, "count": 1, "passes": 0,
+               "reason": "test_x: boom"}
+        out, ok = self._run_merged(
+            {"ran": True, "pass": True, "maxerr": 0.0, "tol": 1e-4,
+             "reason": ""}, bad)
+        self.assertFalse(ok)
+        self.assertEqual(out.splitlines()[-1],
+                         "VERIFY FAIL authored @maya_test FAILED: test_x: "
+                         "boom 0.0")
+
     def test_script_refuses_unsaved_changes_before_touching_the_scene(self):
         import contextlib
         import io
@@ -2845,6 +2886,77 @@ class TestVerifyScriptHonesty(unittest.TestCase):
         out, _ = self._run_script(self._SCALAR, {"ran": True, "pass": True,
                                                  "maxerr": 0.0})
         self.assertEqual(out.splitlines()[0], "VERIFY MPYNODE " + pkg)
+
+    def _run_as_script(self, row):
+        """Exec the generated script as ``__main__``, as mayapy and Maya's
+        Script Editor run it, in an unmodified scene with
+        verify._default_verify returning ``row``; (stdout, what it raised
+        or None)."""
+        import contextlib
+        import io
+        import sys
+        import types
+
+        from mpynode.native.ai import porter
+        from mpynode.native.toolchain import verify as cc
+
+        cmds      = self._Cmds()
+        maya      = types.ModuleType("maya")
+        maya.cmds = cmds
+        ns = {"__file__": "/x/verify_in_maya.py",
+              "__name__": "__main__"}
+        buf    = io.StringIO()
+        raised = None
+        text   = porter._verify_script(self._SCALAR)
+        code   = compile(text, "verify_in_maya.py", "exec")
+        with unittest.mock.patch.dict(sys.modules,
+                                      {"maya": maya, "maya.cmds": cmds}), \
+                unittest.mock.patch.object(cc, "_default_verify",
+                                           return_value={"n": dict(row)}), \
+                contextlib.redirect_stdout(buf):
+            try:
+                exec(code, ns)
+            except Exception as exc:
+                raised = exc
+        return buf.getvalue(), raised
+
+    def test_a_fail_raises_when_run_as_a_script(self):
+        # A FAIL exited 0 like a PASS, so a shell caller read it as success.
+        # Run as a script it raises after its FAIL line: mayapy exits 1 and
+        # Maya shows an error. run() still returns False to a caller
+        # (test_script_reports_the_row_it_gets).
+        out, raised = self._run_as_script({"ran": True, "pass": False,
+                                           "maxerr": 0.5, "reason": "off"})
+        self.assertIsInstance(raised, RuntimeError)
+        self.assertEqual(str(raised),
+                         "VERIFY FAIL: the compiled n does not match the "
+                         "original; see the VERIFY FAIL line above.")
+        self.assertEqual(out.splitlines()[-1], "VERIFY FAIL off 0.5")
+
+    def test_a_pass_or_a_skip_run_as_a_script_raises_nothing(self):
+        # Every verdict the pipeline does not call a FAIL exits 0: a PASS, a
+        # PASS the authored test alone decided (the generic check skipped,
+        # or COULD NOT RUN), and a SKIP.
+        why  = " | authored @maya_test: 1/1 passed"
+        head = "VERIFY PASS (authored @maya_test only; generic check "
+        cases = [
+            ({"ran": True, "pass": True, "maxerr": 0.0},
+             "VERIFY PASS maxerr 0.0"),
+            ({"ran": True, "pass": True, "maxerr": None, "tol": 0.0,
+              "generic_ran": False, "reason": "NURBS CV idiom" + why},
+             head + "skipped) NURBS CV idiom" + why),
+            ({"ran": True, "pass": True, "maxerr": None, "tol": 0.0,
+              "generic_ran": False,
+              "reason": "verify could not run: boom" + why},
+             head + "COULD NOT RUN) verify could not run: boom" + why),
+            ({"ran": False, "pass": None, "maxerr": None,
+              "reason": "nothing to compare"},
+             "VERIFY SKIP (nothing to compare)"),
+        ]
+        for row, line in cases:
+            out, raised = self._run_as_script(row)
+            self.assertIsNone(raised, line)
+            self.assertEqual(out.splitlines()[-1], line)
 
 
 class TestDefaultVerifyReclassifiesExceptions(unittest.TestCase):
