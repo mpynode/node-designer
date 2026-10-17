@@ -335,6 +335,244 @@ class TestNodeAddedLifecycleEndToEnd(unittest.TestCase):
 
 
 # ===========================================================================
+# P2 on a MAYA worker thread -- the Evaluation Manager's parallel evaluation
+# ===========================================================================
+class TestWarmInitOnAMayaWorkerThread(unittest.TestCase):
+    """P2 on one of Maya's own worker threads, through compute()'s data-block
+    reads, with and without the warm call.
+
+    The Hypershade swatch (``swatch/2dTextureSwatchGen``) evaluates outColor
+    off the main thread, but mayapy renders no swatches: ``swatchRefresh``
+    errors and no compute runs. The Evaluation Manager in parallel mode is the
+    worker-thread evaluation mayapy can drive: it runs compute() on a Maya
+    worker thread (a ``threading._DummyThread``), where
+    ``ensure_init_namespace_for_mobject`` will not lazy-load the Init source.
+    The tests above evaluate on a Python thread instead.
+
+    Each test builds the EM graph first: its first frame evaluates on the main
+    thread, which lazy-loads the Init namespace. It then drops that
+    registration, the state of a node whose first evaluation is on a worker,
+    and evaluates a frame: black, because the Compute raises NameError on an
+    Init name before it assigns outColor. Then it warms the node the way
+    production does and evaluates the next frame: the real colour. Every
+    compute of the node must run off the main thread, and reading the result
+    must not compute it again, or the test would pass without reaching the
+    worker. Nothing between the two frames may add a connection or an
+    attribute: either rebuilds the graph, and the rebuilt graph evaluates the
+    node on the main thread first.
+    """
+
+    INIT_SRC = (
+        "import numpy as np\n"
+        "def _tint():\n"
+        "    return (0.5, 0.25, 0.75)\n"
+    )
+    COMPUTE_SRC = (
+        "r, g, b = _tint()\n"
+        "self.outColor = (float(np.float32(r)), g, b)\n"
+        "self.outAlpha = 1.0\n"
+    )
+    COLOUR = (0.5, 0.25, 0.75)
+
+    def setUp(self):
+        import maya.utils as mu
+        from mpynode._api2.mpy_file import MPyFile
+        from mpynode._common.lifecycle import init_registry as ir
+
+        self._barebones        = MPyFile.BAREBONES_MODE
+        MPyFile.BAREBONES_MODE = False
+        self._em_mode          = mc.evaluationManager(query=True, mode=True)[0]
+        mc.evaluationManager(mode="off")
+        mc.file(new=True, force=True)
+
+        # One row per compute of an mPyFile: the node (an MObjectHandle hash,
+        # safe on any thread), whether it ran on the main thread, and whether
+        # the Init namespace was found.
+        self.ir      = ir
+        self._ensure = ir.ensure_init_namespace_for_mobject
+        self.calls   = []
+
+        def spy(mobject):
+            ns = self._ensure(mobject)
+            self.calls.append((
+                om.MObjectHandle(mobject).hashCode(),
+                threading.current_thread() is threading.main_thread(),
+                ns is not None,
+            ))
+            return ns
+
+        ir.ensure_init_namespace_for_mobject = spy
+
+        # mayapy never runs Maya's idle queue. Hold what the node-added
+        # callback defers, so a test runs it where the idle loop would.
+        self._mu      = mu
+        self._defer   = mu.executeDeferred
+        self.deferred = []
+        mu.executeDeferred = lambda fn, *a, **k: self.deferred.append(
+            (fn, a, k))
+
+    def tearDown(self):
+        from mpynode._api2.mpy_file import MPyFile
+
+        self.ir.ensure_init_namespace_for_mobject = self._ensure
+        self._mu.executeDeferred                  = self._defer
+        mc.evaluationManager(mode="off")
+        mc.file(new=True, force=True)
+        mc.evaluationManager(mode=self._em_mode)
+        MPyFile.BAREBONES_MODE = self._barebones
+
+    @staticmethod
+    def _handle_hash(node):
+        sel = om.MSelectionList()
+        sel.add(node)
+        return om.MObjectHandle(sel.getDependNode(0)).hashCode()
+
+    def _arm(self, *nodes):
+        """Feed each node's outColor to a shader, key its uCoord so every
+        frame change evaluates it, and build the graph in parallel mode."""
+        for node in nodes:
+            lam = mc.shadingNode("lambert", asShader=True)
+            mc.connectAttr(node + ".outColor", lam + ".color", force=True)
+            mc.setKeyframe(node, attribute="uCoord", time=1, value=0.0)
+            mc.setKeyframe(node, attribute="uCoord", time=100, value=1.0)
+        mc.evaluationManager(mode="parallel")
+        mc.evaluationManager(invalidate=True)
+        mc.currentTime(1)
+        mc.currentTime(2)
+
+    def _worker_frame(self, frame, *nodes):
+        """Evaluate ``frame``; return each node's outColor and compute rows,
+        checking that every one of those computes ran off the main thread."""
+        keys = {node: self._handle_hash(node) for node in nodes}
+        del self.calls[:]
+        mc.currentTime(frame)
+        calls = list(self.calls)
+        del self.calls[:]
+        result = {}
+        for node in nodes:
+            rows = [c for c in calls if c[0] == keys[node]]
+            self.assertTrue(rows,
+                            "frame %d did not evaluate %s" % (frame, node))
+            self.assertFalse(
+                any(on_main for _key, on_main, _ns in rows),
+                "%s was evaluated on the main thread: %r" % (node, rows))
+            result[node] = (tuple(mc.getAttr(node + ".outColor")[0]), rows)
+        self.assertEqual(
+            self.calls, [],
+            "reading outColor computed it again, so the value read is not "
+            "the worker's")
+        return result
+
+    def _assert_cold(self, node, colour, rows):
+        self.assertFalse(
+            any(found for _key, _main, found in rows),
+            "the worker found an Init namespace for %s without the warm call: "
+            "%r" % (node, rows))
+        for c in colour:
+            self.assertAlmostEqual(
+                c, 0.0, places=6,
+                msg="cold, the worker must leave %s.outColor black: the "
+                    "Compute raises NameError on an Init name first; got %r"
+                    % (node, colour))
+
+    def _assert_warm(self, node, colour, rows, expected):
+        self.assertTrue(
+            all(found for _key, _main, found in rows),
+            "the worker found no Init namespace for %s after the warm call: "
+            "%r" % (node, rows))
+        for got, want in zip(colour, expected):
+            self.assertAlmostEqual(
+                got, want, places=5,
+                msg="warmed, the worker must compute %s.outColor %r; got %r"
+                    % (node, tuple(expected), colour))
+
+    def test_warm_init_namespace_turns_the_worker_colour_right(self):
+        from mpynode._api2.mpy_file import warm_init_namespace
+        from mpynode.wrappers.mpy_file import MPyFile as W
+
+        node    = mc.shadingNode("mPyFile", asTexture=True, name="warmWorker")
+        wrapper = W(node)
+        wrapper.set_init_expression(self.INIT_SRC)
+        wrapper.set_compute_expression(self.COMPUTE_SRC)
+        self._arm(node)
+
+        self.ir.clear_init_expression(node)
+        colour, rows = self._worker_frame(10, node)[node]
+        self._assert_cold(node, colour, rows)
+
+        self.assertTrue(warm_init_namespace(node))
+        colour, rows = self._worker_frame(11, node)[node]
+        self._assert_warm(node, colour, rows, self.COLOUR)
+
+    def test_the_node_added_warm_reaches_the_worker(self):
+        """A texture made with ``shadingNode -asTexture`` (the Hypershade's
+        create) whose Init and Compute arrive as plain plug values, the way a
+        script's setAttr leaves them: nothing registers the Init. The
+        node-added callback queued its warm for Maya's idle loop; running that
+        is what lets the worker compute the colour."""
+        node   = mc.shadingNode("mPyFile", asTexture=True, name="scriptedTex")
+        queued = [args for _fn, args, _kw in self.deferred]
+        self.assertIn((node,), queued,
+                      "the node-added callback queued no warm for %s" % node)
+        mc.addAttr(node, longName="_initSource", dataType="string",
+                   hidden=True)
+        mc.setAttr(node + "._initSource", self.INIT_SRC, type="string")
+        mc.setAttr(node + "._computeSource", self.COMPUTE_SRC, type="string")
+        self._arm(node)
+
+        self.ir.clear_init_expression(node)
+        colour, rows = self._worker_frame(10, node)[node]
+        self._assert_cold(node, colour, rows)
+
+        pending = list(self.deferred)
+        del self.deferred[:]
+        for fn, args, kwargs in pending:  # what Maya's idle loop does
+            fn(*args, **kwargs)
+        colour, rows = self._worker_frame(11, node)[node]
+        self._assert_warm(node, colour, rows, self.COLOUR)
+
+    def test_run_setup_warms_a_duplicated_template_node_for_the_worker(self):
+        """The shipped File Scanline template's Compute uses ``np`` from its
+        Init. A duplicate carries that Init on a plug, with nothing registered
+        for the new node. Its own Run setup (the mPyFile setup the gallery
+        seeds) warms it: then the worker computes what the original computes
+        in parallel, and what the main thread computes."""
+        from mpynode._base.commands import _ImportNodeCommand, run_undoable
+        from mpynode._common.io import mpn_io
+        from mpynode.wrappers.mpy_file import MPyFile as W
+
+        tmpl = os.path.join(
+            os.environ.get("MPYNODE_ROOT", ""),
+            "templates/MPyFile/File Scanline/template.mpn",
+        )
+        payload = mpn_io.load_mpn(tmpl, trusted=True)
+        run_undoable(
+            _ImportNodeCommand(payload, restore_persistent=False,
+                               seed_setup=True)
+        )
+        src = (mc.ls(type="mPyFile") or [])[-1]
+        png = os.path.join(tempfile.mkdtemp(), "_solid200.png")
+        _make_solid_png(png, 200)
+        mc.setAttr(src + ".fileName", png, type="string")
+        dup = mc.duplicate(src, inputConnections=True)[0]
+        self._arm(src, dup)
+
+        self.ir.clear_init_expression(dup)
+        frame = self._worker_frame(10, src, dup)
+        colour, rows = frame[dup]
+        self._assert_cold(dup, colour, rows)
+        self.assertGreater(max(frame[src][0]), 0.05,
+                           "the original is black too: %r" % (frame[src][0],))
+
+        W(dup).run_setup(selection=[])
+        frame = self._worker_frame(11, src, dup)
+        colour, rows = frame[dup]
+        self._assert_warm(dup, colour, rows, frame[src][0])
+        main = mc.getAttr(dup + ".outColor", time=11)[0]
+        self._assert_warm(dup, colour, rows, main)
+
+
+# ===========================================================================
 # P3 -- Save (F5 / Save button) must push Viewport + OSL to VP2 immediately
 # ===========================================================================
 class TestForceViewportRefresh(unittest.TestCase):

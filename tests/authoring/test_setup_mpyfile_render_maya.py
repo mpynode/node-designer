@@ -149,7 +149,9 @@ class TestArnoldRenderNonBlack(unittest.TestCase):
     `warm_init_namespace` protects (the cold-init-namespace NameError ->
     black-swatch regression, memory topic
     `mpyfile-three-bugs-hypershade-black-saverefresh-2026-06-23.md`): the
-    render stays red without that call."""
+    render stays red without that call. TestWarmInitOnAMayaWorkerThread in
+    tests/nodes/test_mpyfile_lifecycle.py evaluates the node on a Maya worker
+    thread, with and without it."""
 
     def setUp(self):
         mc.file(new=True, force=True)
