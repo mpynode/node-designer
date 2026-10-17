@@ -73,11 +73,12 @@ class TestOpenInEditor(unittest.TestCase):
 
     def test_absolute_command_used_directly(self):
         # An existing absolute template command is used as-is, skipping which;
-        # point it at a path we know exists.
+        # point it at a path we know exists. Quoted, because the repo's folder
+        # may have a space in it.
         import mpynode.ui.preferences as prefs
         real = editor_launch.__file__  # some file that definitely exists
         prefs.get_pref = lambda k, d=None: (
-            "%s --goto {file}:{line}" % real
+            '"%s" --goto {file}:{line}' % real
             if k == "external_editor_command" else self._orig_get(k, d))
         ok, err = editor_launch.open_in_editor("/a b/c.py", 5)
         self.assertTrue(ok, err)
@@ -117,6 +118,114 @@ class TestOpenInEditor(unittest.TestCase):
 
     def test_reveal_label_nonempty(self):
         self.assertTrue(editor_launch.reveal_label())
+
+
+class TestAnAbsoluteCommandLaunchesTheExactExecutable(unittest.TestCase):
+    """An absolute editor command reaches Popen as the exact executable.
+
+    Windows splits the command non-POSIX (a POSIX split takes each backslash
+    for an escape), and that split keeps the quotes around a quoted token. A
+    path with a space has to be quoted, so it came back as
+    '"C:\\...\\my editor.exe"': not an absolute path, never found. Unquoted,
+    it splits at the space. Nothing resolves on the search path here, so only
+    the absolute path itself can launch.
+    """
+
+    def setUp(self):
+        import tempfile
+
+        import mpynode.ui.preferences as prefs
+        # Imported now, under the real os.name, before a test patches it.
+        from mpynode.native.toolchain import toolchain  # noqa: F401
+
+        base = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, base, True)
+        self.spaced   = self._exe(base, "with space", "my editor.exe")
+        self.plain    = self._exe(base, "nospace", "editor.exe")
+        self.calls    = []
+        self.template = None
+
+        def fake_popen(argv, *a, **kw):
+            self.calls.append(list(argv))
+
+            class P:
+                pass
+            return P()
+
+        orig_get = prefs.get_pref
+
+        def get_pref(k, d=None):
+            if k == "external_editor_command":
+                return self.template
+            return orig_get(k, d)
+
+        for owner, name, value in (
+                (editor_launch.subprocess, "Popen", fake_popen),
+                (editor_launch.shutil, "which", lambda name, path=None: None),
+                (prefs, "get_pref", get_pref)):
+            self.addCleanup(setattr, owner, name, getattr(owner, name))
+            setattr(owner, name, value)
+
+    @staticmethod
+    def _exe(base, folder, name):
+        os.makedirs(os.path.join(base, folder))
+        path = os.path.join(base, folder, name)
+        with open(path, "w") as fh:
+            fh.write("")
+        return path
+
+    def _launch(self, template, path="/a b/c.py", line=5):
+        self.template = template
+        del self.calls[:]
+        ok, err = editor_launch.open_in_editor(path, line)
+        self.assertTrue(ok, err)
+        self.assertEqual(len(self.calls), 1)
+        return self.calls[0]
+
+    def test_a_quoted_path_with_a_space_is_launched_as_is(self):
+        for quote in ('"', "'"):
+            with self.subTest(quote=quote):
+                argv = self._launch(
+                    "%s%s%s --goto {file}:{line}" % (quote, self.spaced, quote))
+                self.assertEqual(argv, [self.spaced, "--goto", "/a b/c.py:5"])
+
+    def test_a_path_without_a_space_quoted_or_not(self):
+        if " " in self.plain:
+            self.skipTest("the temp folder has a space: %s" % self.plain)
+        for template in ("%s --goto {file}:{line}",
+                         '"%s" --goto {file}:{line}'):
+            with self.subTest(template=template):
+                argv = self._launch(template % self.plain)
+                self.assertEqual(argv, [self.plain, "--goto", "/a b/c.py:5"])
+
+    def test_a_command_with_arguments(self):
+        # A quoted argument loses its quotes too, the {file}:{line} one
+        # included: the editor gets the path, not a path wrapped in quotes.
+        data = os.path.join(os.path.dirname(self.spaced), "user data")
+        argv = self._launch(
+            '"%s" --new-window --goto "{file}:{line}" --user-data-dir "%s"'
+            % (self.spaced, data), path="/x y/z.py", line=12)
+        self.assertEqual(argv, [self.spaced, "--new-window", "--goto",
+                                "/x y/z.py:12", "--user-data-dir", data])
+        argv = self._launch('"%s" --line {line} {file}' % self.spaced,
+                            path="/x y/z.py", line=12)
+        self.assertEqual(argv, [self.spaced, "--line", "12", "/x y/z.py"])
+
+    def test_the_windows_split_on_any_host(self):
+        # os.name picks the split. These paths have no backslash, so on a Mac
+        # or Linux host the Windows split reads them too.
+        with mock.patch.object(os, "name", "nt"):
+            argv = self._launch(
+                '"%s" --goto "{file}:{line}"' % self.spaced)
+        self.assertEqual(argv, [self.spaced, "--goto", "/a b/c.py:5"])
+
+    def test_a_missing_quoted_path_is_named_without_its_quotes(self):
+        gone          = os.path.join(os.path.dirname(self.spaced), "gone.exe")
+        self.template = '"%s" --goto {file}:{line}' % gone
+        ok, err = editor_launch.open_in_editor("/a b/c.py", 5)
+        self.assertFalse(ok)
+        self.assertIn("could not find %r" % gone, err)
+        self.assertEqual(self.calls, [])
 
 
 if __name__ == "__main__":

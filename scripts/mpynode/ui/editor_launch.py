@@ -91,9 +91,27 @@ def detect_default_editor_command():
     return _DEFAULT_EDITOR_COMMAND
 
 
+def _unquote(token):
+    """``token`` without the pair of quotes around it, if it has one.
+
+    Windows splits the command non-POSIX, because a POSIX split takes every
+    backslash of a path for an escape. A non-POSIX split keeps the quotes
+    around a quoted token, and a path with a space has to be quoted, so
+    ``"C:\\Program Files\\...\\code.cmd"`` came back with its quotes: not an
+    absolute path, never found, never launched. Popen quotes an argument
+    that holds a space again by itself."""
+    if len(token) >= 2 and token[0] == token[-1] and token[0] in "\"'":
+        return token[1:-1]
+    return token
+
+
 def open_in_editor(path, line):
     """Launch the external editor (external_editor_command pref) at path:line.
-    Returns (ok, error_message_or_None). Never raises."""
+    Returns (ok, error_message_or_None). Never raises.
+
+    A path with a space is written quoted, on Windows too:
+    ``"C:\\Program Files\\Editor\\editor.exe" --goto {file}:{line}`` launches
+    that exact executable."""
     from mpynode.ui import preferences
     from mpynode.native.toolchain import toolchain
 
@@ -104,6 +122,8 @@ def open_in_editor(path, line):
         parts = shlex.split(template, posix=(os.name != "nt"))
     except ValueError as exc:
         return False, "bad external_editor_command: %s" % exc
+    if os.name == "nt":
+        parts = [_unquote(p) for p in parts]
     if not parts:
         return False, "external_editor_command is empty"
     argv = [p.replace("{file}", str(path)).replace("{line}", str(int(line)))
