@@ -624,8 +624,10 @@ class TestParityReadsEveryOutputKind(unittest.TestCase):
     def test_transform_family_compares_its_native_matrix(self):
         from mpynode.native.toolchain.verify import _native_family_outputs as nfo
 
+        native = {"type": "matrix", "native": True}
         self.assertEqual(nfo({"mpy_type": "mPyTransform"}),
-                         {"matrix": {"type": "matrix", "native": True}})
+                         {"matrix": native, "dagLocalMatrix": native,
+                          "worldMatrix[0]": native})
         self.assertEqual(nfo({"mpy_type": "mPyNode"}), {})
         self.assertEqual(nfo({}), {})
 

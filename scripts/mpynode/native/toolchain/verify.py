@@ -959,19 +959,75 @@ def _read_array_output(cmds, node, attr):
     return comps, len(idxs)
 
 
+def _is_transform_family(spec):
+    """Is this node's RESULT its own transform? An mPyTransform, or any spec
+    whose compiled base is MPxTransform. Its reference is built as an
+    mPyTransform, and its result is compared as a transform (see
+    :func:`_native_family_outputs`)."""
+    if (spec.get("mpy_type") or "") == "mPyTransform":
+        return True
+    from mpynode.native.compiler.emit_transform import _TRANSFORM_BASE
+    base = (spec.get("suggested") or {}).get("mpx_base") or ""
+    return base == _TRANSFORM_BASE
+
+
+# The plugs that carry a transform-family node's result, in the order compared:
+# its TRS, its local matrix with the offset parent matrix applied, and its
+# world matrix.
+_TRANSFORM_RESULT_PLUGS = ("matrix", "dagLocalMatrix", "worldMatrix[0]")
+
+
 def _native_family_outputs(spec):
     """Outputs a family writes through NATIVE plugs rather than declared ones.
 
-    An mPyTransform's compute sets ``self.local_matrix`` and the result leaves
-    through the transform's own ``matrix`` plug; with no declared outputs the
-    scalar path called that "no scalar outputs to compare" and aimTransform was
-    never checked. The plug exists on both the interpreted reference (built as
-    an mPyTransform) and the compiled MPxTransform, so it is compared like any
-    declared matrix output. Marked ``native`` so the reference builder does not
-    try to add it."""
-    if (spec.get("mpy_type") or "") == "mPyTransform":
-        return {"matrix": {"type": "matrix", "native": True}}
+    An mPyTransform's compute sets ``self.local_matrix``; with no declared
+    outputs the scalar path called that "no scalar outputs to compare" and
+    aimTransform was never checked. Its result does not land in ``matrix``,
+    though: the interpreted mPyTransform and the compiled MPxTransform both
+    keep ``matrix`` the plain TRS and deliver the compute's matrix through
+    ``offsetParentMatrix`` (the ``_outLocalFlat`` relay). Comparing ``matrix``
+    alone compared two untouched TRS stacks, and a compiled aimTransform whose
+    offset matrix was 0.25 off read maxerr 0.0.
+
+    So a transform-family node is compared on its result
+    (``_TRANSFORM_RESULT_PLUGS``): ``matrix``, ``dagLocalMatrix`` (``matrix``
+    times ``offsetParentMatrix``, the local transform its children see) and
+    ``worldMatrix[0]``. Each plug exists on both the interpreted reference
+    (built as an mPyTransform) and the compiled MPxTransform. Marked
+    ``native`` so the reference builder does not try to add them. The world
+    matrix is compared under the identical parents
+    :func:`_parent_transform_twins` gives both nodes."""
+    if _is_transform_family(spec):
+        return {p: {"type": "matrix", "native": True}
+                for p in _TRANSFORM_RESULT_PLUGS}
     return {}
+
+
+# The parent each transform-family twin gets: translate, rotate (degrees).
+# Rigid, so an error in the world matrix has the size of the local one.
+_TWIN_PARENT_TRS = ((1.5, -2.0, 0.75), (30.0, -45.0, 60.0))
+
+
+def _parent_transform_twins(cmds, nodes):
+    """Put each node under its own parent, every parent the same non-identity
+    transform (``_TWIN_PARENT_TRS``); return the nodes' names after parenting.
+
+    At the world root a transform's world matrix IS its local matrix, so the
+    world compare would only repeat the local one. Under a parent it also
+    covers how the node composes with its parent (``inheritsTransform``, or a
+    world matrix the node works out some other way). The parenting is
+    relative: each node keeps its TRS, and neither compute reads its DAG
+    parent."""
+    t, r = _TWIN_PARENT_TRS
+    out = []
+    for nd in nodes:
+        par = cmds.createNode("transform",
+                              name="verifyParent_" + nd.split("|")[-1],
+                              skipSelect=True)
+        cmds.setAttr(par + ".translate", *t, type="double3")
+        cmds.setAttr(par + ".rotate", *r, type="double3")
+        out.append(cmds.parent(nd, par, relative=True)[0])
+    return tuple(out)
 
 
 def _side_effect_gated_enums(spec):
@@ -2777,7 +2833,7 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
     # Python original AS an mPyFile; a preset already present on the fresh node is
     # skipped in the add loops below. Genuine USER attrs are still added normally.
     is_texture   = spec.get("mpy_type") == "mPyFile"
-    is_transform = spec.get("mpy_type") == "mPyTransform"
+    is_transform = _is_transform_family(spec)
     if is_texture:
         from mpynode.wrappers.mpy_file import MPyFile
         w = MPyFile.create(name="orig_" + name)
@@ -2820,6 +2876,9 @@ def _verify_one(cmds, bundle_path, spec, maya=_MAYA_DEFAULT, deadline=None):
     unregistered = _unregistered_type(cmds, comp, name, tol)
     if unregistered:
         return unregistered
+    if is_transform:
+        # The world matrix is compared too, so give it a parent to compose with.
+        orig, comp = _parent_transform_twins(cmds, (orig, comp))
     # An array OUTPUT has no elements until something consumes them, and the
     # runtime sizes it from those elements -- so spline / springChain /
     # procrustesTags wrote nothing on either side ("no comparable components")
