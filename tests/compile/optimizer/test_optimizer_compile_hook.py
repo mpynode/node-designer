@@ -6,6 +6,8 @@ gated optimizer per surviving node; when off, that seam is never entered.
 
 from __future__ import annotations
 
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import inspect
 import os
 import tempfile

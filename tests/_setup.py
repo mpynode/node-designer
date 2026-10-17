@@ -20,15 +20,8 @@ def standalone_init() -> None:
         return
     import maya.standalone
 
-    # Point the per-user data home at a throwaway dir so tests never read/write
-    # the real ~/.mpynode.
-    # setdefault so an outer MPYNODE_HOME (CI) still wins.
-    import os
-    import tempfile
-
-    os.environ.setdefault(
-        "MPYNODE_HOME", tempfile.mkdtemp(prefix="mpynode-test-home-"))
-
+    # The per-user data home is already this run's temp folder: importing the
+    # tests package set it (tests/__init__.py), before any test module ran.
     maya.standalone.initialize()
     _STANDALONE_INITIALIZED = True
 

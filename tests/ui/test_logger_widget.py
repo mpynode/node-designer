@@ -8,6 +8,8 @@ it can't inherit a leaked color.
 """
 from __future__ import annotations
 
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import os
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")

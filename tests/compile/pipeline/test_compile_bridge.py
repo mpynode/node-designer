@@ -5,6 +5,8 @@ CompileController result into a conversational hand-off for the AI assistant
 
 from __future__ import annotations
 
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import unittest
 
 

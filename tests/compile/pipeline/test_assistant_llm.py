@@ -5,6 +5,8 @@ Consolidated from: test_assistant_cli_models.py, test_cli_effort_values.py, test
 
 from __future__ import annotations
 
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 # ===================== from test_assistant_cli_models.py =====================
 import unittest
 

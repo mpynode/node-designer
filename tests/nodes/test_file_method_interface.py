@@ -1,3 +1,5 @@
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import unittest
 
 from mpynode._common.interface.file_method_interface import INTERNAL_API_METHODS

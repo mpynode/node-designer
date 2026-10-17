@@ -9,6 +9,8 @@ value -- so it must be rejected (build "dropped"), never shipped as a silent no-
 
 from __future__ import annotations
 
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import unittest
 
 from mpynode.native.compiler.node_scaffold import _reject_unbound_deform_reads

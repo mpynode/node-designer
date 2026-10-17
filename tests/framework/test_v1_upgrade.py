@@ -30,6 +30,8 @@ plug, so an upgrade sequenced after that finds the v1 payload already gone.
 
 from __future__ import annotations
 
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import base64
 import json
 import pickle

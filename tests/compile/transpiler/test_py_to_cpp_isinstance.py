@@ -23,6 +23,8 @@ routing to the AI porter instead of being mis-lowered.
 
 from __future__ import annotations
 
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import unittest
 
 from mpynode.native.compiler import py_to_cpp as p2c

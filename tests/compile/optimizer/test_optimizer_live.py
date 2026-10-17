@@ -8,6 +8,8 @@ BENCH_JSON parsing, and the safe SKIP when no parity harness is available.
 
 from __future__ import annotations
 
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import os
 import tempfile
 import threading

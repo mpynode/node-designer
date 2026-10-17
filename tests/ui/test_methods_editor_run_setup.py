@@ -11,6 +11,9 @@ OWN showcase scene, taking no selection).
 Importing methods_editor pulls in Qt widgets, which need a QApplication at
 import time under mayapy; mirror the guard used by the other UI test modules.
 """
+
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import inspect
 import unittest
 

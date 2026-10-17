@@ -23,6 +23,8 @@ numeric bit-parity is proven by the compile-and-compare harnesses (py_to_cpp_tes
 
 from __future__ import annotations
 
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import unittest
 
 from mpynode.native.compiler.py_to_cpp import (

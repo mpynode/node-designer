@@ -1,3 +1,5 @@
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import unittest
 from mpynode._common.methods.blessed_source import resolve_method_source
 from mpynode._common.interface import skin_method_interface as smi

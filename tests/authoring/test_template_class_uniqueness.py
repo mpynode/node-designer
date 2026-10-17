@@ -13,6 +13,8 @@ hand-edited file on disk has to fail here too.
 """
 from __future__ import annotations
 
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import collections
 import glob
 import json

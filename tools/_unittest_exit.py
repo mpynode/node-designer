@@ -20,6 +20,13 @@ import sys
 import unittest
 
 sys.path.insert(0, os.getcwd())
+sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# The repo's tests package points MPYNODE_HOME at a temp folder for this run
+# (tests/__init__.py). Import it before unittest loads anything, so no test
+# module, whatever is asked for and whatever it imports first, reaches the
+# user's real ~/.mpynode.
+import tests  # noqa: E402,F401
 
 try:
     prog = unittest.main(module=None,

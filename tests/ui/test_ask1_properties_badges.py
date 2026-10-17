@@ -10,6 +10,9 @@ Two surfaces, each a light touch (nothing removed/moved):
     pass relabeled them "Read" / "Write"; reverted per user preference --
     input/output reads clearer than read/write for attribute plugs.)
 """
+
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import os
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 

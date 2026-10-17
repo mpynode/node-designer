@@ -22,6 +22,8 @@ tuple index rejects rather than lowering a near-miss.
 
 from __future__ import annotations
 
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import unittest
 
 from mpynode.native.compiler import py_to_cpp as p2c

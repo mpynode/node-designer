@@ -18,6 +18,8 @@ The tests worth keeping honest are the ones covering what used to fail SILENTLY:
 """
 from __future__ import annotations
 
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import unittest
 
 import numpy as np

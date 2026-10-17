@@ -4,6 +4,9 @@ Runnable both under mayapy (via the gate's ``unittest discover``) and under a
 plain ``python3`` interpreter, because ``methods_split`` and its one dependency
 (``py_export._classify_funcdef``) import only ``ast`` + stdlib.
 """
+
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import unittest
 
 from mpynode._common.methods.methods_split import (

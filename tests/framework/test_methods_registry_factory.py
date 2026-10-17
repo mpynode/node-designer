@@ -1,3 +1,5 @@
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 # tests/framework/test_methods_registry_factory.py  (pure -- no setUpModule)
 import unittest
 from mpynode._common.methods.methods_registry import invoke_factory, _resolved_is_factory

@@ -15,6 +15,8 @@ so a later node reusing the freed hash does not inherit a dead extent.
 """
 from __future__ import annotations
 
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import unittest
 
 
@@ -83,8 +85,8 @@ class TestCompiledLocatorReportsItsExtent(unittest.TestCase):
                         self.cpp.index("MBoundingBox boundingBox() const override {"))
 
     def test_a_dead_node_does_not_leave_its_extent_behind(self):
-        self.assertIn("g_bbox.erase(hash);", self.cpp)     # per-node removal
-        self.assertIn("g_bbox.clear();", self.cpp)         # scene change
+        self.assertIn("g_bbox.erase(hash);", self.cpp)  # per-node removal
+        self.assertIn("g_bbox.clear();", self.cpp)      # scene change
 
     def test_the_draw_override_stays_unbounded(self):
         """Load-bearing pairing, not an oversight.

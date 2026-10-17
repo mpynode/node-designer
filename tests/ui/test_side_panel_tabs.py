@@ -1,3 +1,5 @@
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import inspect
 import os
 import unittest

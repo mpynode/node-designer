@@ -3,6 +3,9 @@
 Maya-free (ast/warnings only), mirrors test_maya_command_gate. detect_demos must
 behave like detect_commands but keyed on the maya_demo marker + a `label=` kwarg.
 """
+
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import unittest
 import warnings
 

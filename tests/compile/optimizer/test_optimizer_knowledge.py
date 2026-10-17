@@ -6,6 +6,8 @@ Pure-text module (no Maya import), so this test needs no standalone Maya.
 
 from __future__ import annotations
 
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import unittest
 
 from mpynode.native.ai import optimizer_knowledge as ok

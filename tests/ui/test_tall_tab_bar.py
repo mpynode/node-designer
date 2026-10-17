@@ -10,6 +10,8 @@ The vertical West ``_mode_tabs`` must stay on ``_WideTabBar`` (width scaling),
 NOT the tall bar — this file guards that too.
 """
 
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import inspect
 import os
 import unittest

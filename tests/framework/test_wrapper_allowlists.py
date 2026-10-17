@@ -6,6 +6,9 @@ allowlist content, prove the names are REAL inherited attrs on a live node (typo
 guard), and enforce the cross-cutting invariants (every registered type declares
 its own set; EXPOSED_INPUT_PLUGS is a subset).
 """
+
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import os
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 

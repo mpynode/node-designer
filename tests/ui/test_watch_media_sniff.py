@@ -12,6 +12,9 @@ WAVE, so an 80 KB mp3 was over the 64 KB generic cap, never earned the 2 MB
 media cap, and was elided to "<bytes too large to display>" -- while a wav of
 the same size rendered. These tests pin the two lists together.
 """
+
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import unittest
 
 from mpynode._common.instrumentation import watch as _iw

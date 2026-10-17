@@ -1,3 +1,5 @@
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import unittest
 from mpynode._common.methods.outline_model import build_outline, OUTLINE_GROUPS
 SRC = (

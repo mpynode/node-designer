@@ -1,3 +1,5 @@
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import ast, unittest
 from mpynode._common.methods.maya_command import detect_commands, detect_demos
 SRC = (

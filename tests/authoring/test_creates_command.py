@@ -5,6 +5,9 @@ Covers the four pieces that make a self-first ``setup`` double as a
 blendShape-style create command: the marker, the name resolution, the
 compile-time proxy-safety gate, and the generated dispatcher's classification.
 """
+
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import ast
 import contextlib
 import inspect

@@ -75,7 +75,7 @@ and no AI — which is what makes the freshness gates (section 5) possible.
 | `templates/All Templates Plugin/` | The multi-node build tree that links every template into one plug-in, plus the turnkey demo around it: `build/` (37 namespaced fragments + the generated `plugin_main.cpp`, and the full stage lineage), 39 `.ma` demo scenes, `reports/`, and one `<year>/` folder per Maya version you build for — where `mPyMega` lands (37/37 node types + 32 bundled commands). No binary is committed; its `build.sh` / `build.bat` compiles `build/` and writes the result to `2026/mPyMega.*` (the folder named after the Maya version). The filename must stay `mPyMega.*` — Maya takes the plug-in name from it and the scenes `requires "mPyMega"`. |
 | `tests/` | The unit suite, outside the package so shipping `scripts/mpynode/` does not ship the tests. 278 test modules grouped by area: `nodes/`, `ui/`, `authoring/`, `attributes/`, `framework/`, and `compile/` (split into `transpiler/`, `pipeline/`, `nodes/`, `optimizer/`, `freshness/`, `native/`). Shared bootstrap `_setup.py`, repo anchors `_paths.py`, fixtures in `data/` and `test_assets/`. `compile/native/` is the odd one out: eleven standalone transpiler oracle harnesses, named `*_test.py` / `*_parity.py` so discovery does **not** collect them — `compile/transpiler/test_native_transpiler_harnesses.py` subprocesses each one and asserts its printed marker. |
 | `docs/` | All reference material: `index.md` (the API guide), `CHEATSHEET.md` (the authoring quick reference), this file, `PORTING.md` (Windows/Linux finish-and-verify handoff), and `node_types/` (one `.md` per type + `_input_type_contract.md`). Only `index.md` and `node_types/` are reachable from the in-app Help menu — `docs_locator` enumerates exactly those. |
-| `tools/` | Every dev/CI script, and the only place they live — there are no runners at the repo root. The four gate launchers are `run_tests.sh` / `run_tests.bat` (unit suite) and `run_parity_sweep.sh` / `.bat` (compiled parity), plus `build_compiled_templates.sh`, `bundle.sh` / `bundle.bat` (combine compiled node sources into one plug-in), the freshness checkers (`check_stage1_freshness.py`, `check_std_includes.py`, `regen_build_scripts.py`, `regen_plugin_main.py`, `regen_mega_transpiled.py`, `regen_verify_scripts.py`), `parity_sweep/`, and the probes and audits. Most of these are not optional: `tools/README.md` lists thirty-five scripts under "Enforced by the unit suite", the scripts in `tools/` and its subfolders whose deletion breaks the unit suite. Deleting any of them turns tests red, except `_unittest_exit.py`, which no test needs but both `run_tests` launchers run the suite through, so without it they cannot start. `tools/harness/` holds the attended out-of-suite mayapy drivers (see its `README.md`), including `benchmark_node.py`, which the AI optimizer shells out to at runtime. |
+| `tools/` | Every dev/CI script, and the only place they live — there are no runners at the repo root. The four gate launchers are `run_tests.sh` / `run_tests.bat` (unit suite) and `run_parity_sweep.sh` / `.bat` (compiled parity), plus `build_compiled_templates.sh`, `bundle.sh` / `bundle.bat` (combine compiled node sources into one plug-in), the freshness checkers (`check_stage1_freshness.py`, `check_std_includes.py`, `regen_build_scripts.py`, `regen_plugin_main.py`, `regen_mega_transpiled.py`, `regen_verify_scripts.py`), `parity_sweep/`, and the probes and audits. Most of these are not optional: `tools/README.md` lists thirty-five scripts under "Enforced by the unit suite", the scripts in `tools/` and its subfolders whose deletion breaks the unit suite. Deleting any of them turns tests red. `tools/harness/` holds the attended out-of-suite mayapy drivers (see its `README.md`), including `benchmark_node.py`, which the AI optimizer shells out to at runtime. |
 | `icons/` | UI icons for the Node Designer. |
 | `README.md`, `INSTALL.md`, `LICENSE.md` | The only docs at the root, and only because each is an entry point: the landing page, the two-env-var install, and the licence. Everything longer-form lives in `docs/`. `README.md` and `LICENSE.md` are additionally load-bearing — `docs_locator._repo_root_doc()` resolves them relative to the parent of `docs/` for the About dialog and the Help menu, so they cannot move. |
 | `userSetup.py` | **Copy** (never symlink — `PROJECT_DIR` uses `abspath`, which does not follow links) into a Maya prefs `scripts/` dir, then set `MPYNODE_PROJECT_DIR`. Sets both paths, purges foreign `mpynode.*` modules from `sys.modules`. Skipped when `MPYNODE_USE_STUDIO=1`. |
@@ -577,6 +577,22 @@ Both run `tools/_unittest_exit.py`, **not** `-m unittest`: after
 were reported as success. With no args they spell out `discover -s tests -t .
 -p "test_*.py"`, because forwarding `"$@"` bare made a bare invocation print
 "Ran 0 tests / OK" — a false green that survives an `^OK` grep.
+
+**The data home.** No test run touches the user's `~/.mpynode`. Importing the
+`tests` package (`tests/__init__.py`) points `MPYNODE_HOME` at a fresh temp
+folder for the run and drops the five per-location variables
+(`MPYNODE_PREFS`, `MPYNODE_PORT_CACHE`, `MPYNODE_TRUST_STORE`,
+`MPYNODE_TYPEID_REGISTRY`, `MPYNODE_COMPILED`). Every test module imports the
+package first, before anything from the project, so this happens before any
+test imports mpynode, even for a module run on its own (`mayapy
+tests/ui/test_x.py`) or discovered from its own folder, and what reads the
+home at import time (`preferences.PREFS_PATH`) resolves under the temp folder
+too. `_unittest_exit.py` imports the package before it loads a test, so a
+module outside the package is covered as well. An outer `MPYNODE_HOME` is
+replaced; subprocesses inherit the run's.
+`authoring/test_suite_home_isolation.py` checks the import order of every test
+module, checks the running process, and starts fresh processes each of those
+ways to check theirs.
 
 **Size.** 6,784 `def test_` methods across 278 test modules (307 `.py` under
 `tests/`; the non-test twenty-nine are `_setup.py`, `_paths.py`,

@@ -23,6 +23,8 @@ Two of the bundler changes are load-bearing for correctness, not features:
 
 from __future__ import annotations
 
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import json
 import os
 import tempfile

@@ -1,3 +1,5 @@
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import os
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 import unittest

@@ -5,6 +5,8 @@ Consolidated from: test_editor_indent_comment.py, test_editor_find.py, test_phas
 
 from __future__ import annotations
 
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 # ===================== from test_editor_indent_comment.py =====================
 import os
 

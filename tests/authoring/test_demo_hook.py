@@ -5,6 +5,9 @@ mirrors the existing setup-hook tests. Detection must behave EXACTLY like
 ``find_setup`` but keyed on the name ``demo`` -- last self-first def wins, a later
 ``demo = ...`` rebind cancels, factory/static defs are rejected.
 """
+
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import unittest
 
 from mpynode._common import node_setups

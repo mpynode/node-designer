@@ -13,6 +13,8 @@ draw call itself -- nothing upstream in the buffers shows whether it survived.
 """
 from __future__ import annotations
 
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import unittest
 
 import numpy as np

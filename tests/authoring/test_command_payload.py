@@ -9,6 +9,8 @@ tests keep running on the interpreted node, and verify reads the tests from
 
 from __future__ import annotations
 
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import ast
 import copy
 import sys

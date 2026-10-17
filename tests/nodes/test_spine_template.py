@@ -15,6 +15,8 @@ The compiled node is held to the same source by the compile's parity check and
 the template's own ``@maya_test`` methods.
 """
 
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import json
 import math
 import os

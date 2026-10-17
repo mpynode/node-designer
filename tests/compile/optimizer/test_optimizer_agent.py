@@ -7,6 +7,8 @@ LLM, no Maya, no compiler. Pure filesystem + logic.
 
 from __future__ import annotations
 
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import os
 import shutil
 import tempfile

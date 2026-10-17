@@ -5,6 +5,8 @@ Consolidated from: test_import_follower.py, test_shared_helpers.py, test_nonscal
 
 from __future__ import annotations
 
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 # ===================== from test_import_follower.py =====================
 import importlib
 import os

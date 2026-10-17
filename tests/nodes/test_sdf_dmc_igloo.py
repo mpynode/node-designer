@@ -9,6 +9,8 @@ source test's assertions exactly: point_count, points allclose
 """
 from __future__ import annotations
 
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import os
 import unittest
 

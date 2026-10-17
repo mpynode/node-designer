@@ -27,11 +27,9 @@ cannot run it until `build_compiled_templates.sh` has run. It says so and exits
 ## Enforced by the unit suite
 
 These 35 scripts are **not optional**. Deleting any one of them turns the unit
-suite red: a test runs, imports or reads it, or checks that it is there. The
-one exception is `_unittest_exit.py`: no test needs it, but both `run_tests`
-launchers run the suite through it, so without it they cannot start. Each row
-was measured by deleting the file in a copy of the tree and running the tests
-that name it. Deleting any other script here turns no test red.
+suite red: a test runs, imports or reads it, or checks that it is there. Each
+row was measured by deleting the file in a copy of the tree and running the
+tests that name it. Deleting any other script here turns no test red.
 
 | Script | Enforced by |
 |---|---|
@@ -46,7 +44,7 @@ that name it. Deleting any other script here turns no test red.
 | `sweep_compile_one.py` | `test_optimizer_live` |
 | `run_tests.sh`, `run_tests.bat` | `test_native_toolchain` — every mayapy call goes through `_unittest_exit.py`, both anchor on the repo root and hand back the real exit status |
 | `run_parity_sweep.sh`, `run_parity_sweep.bat` | `test_native_toolchain` — the same, for the parity gate |
-| `_unittest_exit.py` | no test: the two `run_tests` launchers cannot start the suite without it |
+| `_unittest_exit.py` | `test_suite_home_isolation` — runs a test through it in a fresh process and checks that the run's data home is a temp folder; the two `run_tests` launchers cannot start the suite without it either |
 | `parity_sweep/run_parity_sweep.py` | `test_native_compile_pipeline` (`TestParitySweepWiring`), `test_native_toolchain` |
 | `parity_sweep/parity_<type>.py`, all 12 | `test_native_compile_pipeline` (`TestParitySweepWiring`) — each one is there and names no user's path |
 | `harness/benchmark_node.py` | `test_bench_gate`, `test_benchmark_harness_lock`, `test_benchmark_harness_scene`, `test_optimizer_compile_hook`, `test_ai_unavailable_status`, `test_native_compile_pipeline` |

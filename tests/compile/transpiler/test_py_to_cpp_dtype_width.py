@@ -24,6 +24,8 @@ mapping was faithful.
 
 from __future__ import annotations
 
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import unittest
 
 import numpy as np

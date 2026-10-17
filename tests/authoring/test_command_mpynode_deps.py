@@ -29,6 +29,8 @@ with no edit to the import itself. That is the LATENT bucket, and it is how the
 
 from __future__ import annotations
 
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import ast
 import contextlib
 import importlib.util

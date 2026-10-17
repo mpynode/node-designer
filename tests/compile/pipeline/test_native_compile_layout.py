@@ -13,6 +13,8 @@ needed): the source/scripts are written regardless of whether the link runs.
 """
 from __future__ import annotations
 
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import os
 import shutil
 import tempfile

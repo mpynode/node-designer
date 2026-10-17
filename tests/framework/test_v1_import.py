@@ -9,6 +9,8 @@ actually did and an earlier draft of the importer got wrong.
 
 from __future__ import annotations
 
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import base64
 import io
 import os

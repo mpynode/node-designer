@@ -1,3 +1,5 @@
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 # tests/authoring/test_node_setups_sources.py  (pure -- no setUpModule)
 import ast
 import os

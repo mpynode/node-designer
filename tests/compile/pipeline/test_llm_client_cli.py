@@ -20,6 +20,8 @@ rejected as truncated.
 
 from __future__ import annotations
 
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import unittest
 from unittest import mock
 

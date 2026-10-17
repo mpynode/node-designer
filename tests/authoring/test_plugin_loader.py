@@ -7,6 +7,9 @@ if every registered node type has an entry in
 ``plugin_loader._NODE_TYPE_TO_PLUGIN`` -- a missing entry makes
 ``ensure_loaded`` raise ``RuntimeError`` for that type.
 """
+
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import unittest
 
 from mpynode import _node_registry

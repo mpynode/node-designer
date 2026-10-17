@@ -3,6 +3,9 @@
 The script editor with no tab open and the gallery preview with no preview
 file both show the same relief, painted by ``logo_relief.paint_relief``. These
 tests pin the painter itself and that both surfaces actually go through it."""
+
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import os
 import unittest
 

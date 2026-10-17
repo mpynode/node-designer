@@ -4,6 +4,9 @@ Pure-string / parse-level checks -- no Maya needed. The runtime deform behavior
 is proven by the demo test (_demos/build_mPySkinCluster_customLBS.py); here we
 pin the shape of the starter code the Designer seeds.
 """
+
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import unittest
 
 from mpynode._defaults import skin_cluster_defaults as scd

@@ -7,6 +7,8 @@ callables built by ``file_texture_cpp.make_blessed_lowerings`` -- no Maya, no AI
 """
 from __future__ import annotations
 
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import unittest
 
 from mpynode.native.compiler.py_to_cpp import transpile_compute_block, scalar_t

@@ -21,6 +21,8 @@ Pure data movement: the values, their order and their casts are unchanged.
 
 from __future__ import annotations
 
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import os
 import re
 import unittest

@@ -7,6 +7,8 @@ them as wrapper class tuples. These tests AST-parse the REAL seed dicts out of
 ``_api1`` / ``_api2`` and fail the moment the declaration stops matching.
 """
 
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import os
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 

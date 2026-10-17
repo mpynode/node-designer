@@ -8,6 +8,8 @@ Pure argv-builder assertions -> no standalone Maya needed.
 
 from __future__ import annotations
 
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import os
 import tempfile
 import unittest

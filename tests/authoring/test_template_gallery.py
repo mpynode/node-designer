@@ -8,6 +8,8 @@ JSON envelope (mpn_io.load_mpn_header) -- never decoding pickled stored_vars.
 
 from __future__ import annotations
 
+import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
+
 import json
 import os
 import shutil
