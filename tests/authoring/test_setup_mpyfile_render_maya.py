@@ -6,9 +6,12 @@ design §10.1/§10.2:
   1. Shader destination attr names: confirm that with a `lambert` selected, setup
      wires `outColor -> lambert.color`, and with an `aiStandardSurface` selected
      (MtoA), it wires `outColor -> aiStandardSurface.baseColor`.
-  2. Black-swatch / warm_init regression guard: after create-with-setup, do a REAL
-     Arnold render of a scene where the mPyFile drives a shader on a surface, and
-     assert the result is NOT all-black (guards the `warm_init_namespace` call).
+  2. Black-swatch check: after create-with-setup, do a REAL Arnold render of a
+     scene where the mPyFile drives a shader on a surface, and assert the
+     surface renders in the texture's red, not black. MtoA bakes the mPyFile's
+     outColor into the shader when it exports the scene, on the main thread, so
+     this does not reach the worker-thread evaluation `warm_init_namespace`
+     guards.
 
 The two tests that need MtoA load it themselves (`cmds.loadPlugin("mtoa")`)
 and skip when it does not load. Step 7's `aiStandardSurface->baseColor`
@@ -133,13 +136,20 @@ class TestShaderDestinationAttrNames(unittest.TestCase):
 
 
 # ===========================================================================
-# §10.2 — Arnold render non-black (warm_init_namespace regression guard)
+# §10.2 — Arnold render non-black
 # ===========================================================================
 class TestArnoldRenderNonBlack(unittest.TestCase):
-    """Verify that a mPyFile created via setup (which calls `warm_init_namespace`)
-    renders NON-BLACK in a real Arnold scene render. This guards against the
-    cold-init-namespace NameError -> black-swatch regression (memory topic
-    `mpyfile-three-bugs-hypershade-black-saverefresh-2026-06-23.md`)."""
+    """Verify that a mPyFile created via setup renders in its texture's colour,
+    NOT black, in a real Arnold scene render.
+
+    MtoA has no translator for an mPyFile: when it exports the scene it bakes
+    the node's outColor into the shader as a constant, on the main thread. So
+    this checks the setup's wiring and the node's output all the way into a
+    rendered image, but not the worker-thread evaluation that
+    `warm_init_namespace` protects (the cold-init-namespace NameError ->
+    black-swatch regression, memory topic
+    `mpyfile-three-bugs-hypershade-black-saverefresh-2026-06-23.md`): the
+    render stays red without that call."""
 
     def setUp(self):
         mc.file(new=True, force=True)
@@ -165,10 +175,15 @@ class TestArnoldRenderNonBlack(unittest.TestCase):
 
     def test_render_non_black_with_aiStandardSurface(self):
         """Build a minimal Arnold scene (poly sphere + aiStandardSurface driven by
-        an mPyFile created via setup with a non-black test texture) and render to
-        a temp image file. Assert at least one pixel channel is meaningfully > 0
-        (non-black). This exercises the `warm_init_namespace` call in the setup
-        body and guards the worker-thread black-swatch regression."""
+        an mPyFile created via setup with a red test texture), render it to a
+        PNG in a temp folder, and assert the sphere's centre pixel is red.
+
+        Arnold writes the image through its own driver, `defaultArnoldDriver`,
+        whose format defaults to EXR: it does not read
+        `defaultRenderGlobals.imageFormat`. So the driver is set to PNG here.
+        The check reads the centre pixel, where the sphere is: the sky dome is
+        in view and fills the background white, so the brightest pixel says
+        nothing about the sphere."""
         # Create a test texture (solid red sRGB 255, 0, 0).
         test_png = os.path.join(self.tmpdir, "test_red.png")
         _make_test_png(test_png, (255, 0, 0))
@@ -211,9 +226,14 @@ class TestArnoldRenderNonBlack(unittest.TestCase):
         # Create a light so the surface is lit (aiSkyDomeLight is simplest).
         light = mc.shadingNode("aiSkyDomeLight", asLight=True, name="skyDome")
 
-        # Render with Arnold to a temp image file.
-        render_path = os.path.join(self.tmpdir, "test_render.png")
-        mc.setAttr("defaultRenderGlobals.imageFormat", 32)  # PNG
+        # Render with Arnold to a temp image file. Arnold's own driver sets the
+        # format (EXR by default); defaultRenderGlobals.imageFormat is not read.
+        # createOptions() makes defaultArnoldDriver, which a render would
+        # otherwise create only when it starts.
+        import mtoa.core
+
+        mtoa.core.createOptions()
+        mc.setAttr("defaultArnoldDriver.aiTranslator", "png", type="string")
         mc.setAttr("defaultRenderGlobals.animation", 0)     # Still frame
         mc.setAttr("defaultRenderGlobals.putFrameBeforeExt", 1)
         mc.setAttr("defaultRenderGlobals.extensionPadding", 4)
@@ -227,11 +247,10 @@ class TestArnoldRenderNonBlack(unittest.TestCase):
         base_name = os.path.join(self.tmpdir, "test_render")
         mc.setAttr("defaultRenderGlobals.imageFilePrefix", base_name, type="string")
 
-        try:
-            # Render the current frame via Arnold.
-            mc.arnoldRender(width=64, height=64, camera=cam)
-        except Exception as exc:
-            self.skipTest(f"arnoldRender failed (no Arnold license/driver?): {exc}")
+        # Render the current frame via Arnold. Without a licence it still
+        # renders, with a watermark: abort_on_license_fail stops batch
+        # renders (arnoldRender -batch) only.
+        mc.arnoldRender(width=64, height=64, camera=cam)
 
         # Find the actual rendered file (Maya appends .0000.png or similar).
         rendered_files = [
@@ -239,8 +258,11 @@ class TestArnoldRenderNonBlack(unittest.TestCase):
             for f in os.listdir(self.tmpdir)
             if f.startswith("test_render") and f.endswith(".png")
         ]
-        if not rendered_files:
-            self.skipTest("arnoldRender produced no output file (Arnold unavailable?)")
+        self.assertTrue(
+            rendered_files,
+            f"arnoldRender wrote no test_render*.png; {self.tmpdir} holds "
+            f"{sorted(os.listdir(self.tmpdir))}",
+        )
 
         actual_render = os.path.join(self.tmpdir, rendered_files[0])
 
@@ -255,20 +277,20 @@ class TestArnoldRenderNonBlack(unittest.TestCase):
         h = img.getSize()[1]
         self.assertGreater(w * h, 0, "Rendered image must have non-zero dimensions")
 
-        # Extract pixel data (uint8 RGBA).
+        # Extract pixel data (uint8 RGBA) and read the centre pixel, which the
+        # framed sphere covers. Red renders about (252, 10, 10) here; a black
+        # baseColor about (10, 11, 10).
         import ctypes
 
-        ptr    = img.pixels()
-        buf    = ctypes.string_at(ptr, w * h * 4)
-        pixels = [buf[i] for i in range(0, len(buf), 4)]  # R channel of each pixel
-
-        max_channel = max(pixels)
-        self.assertGreater(
-            max_channel,
-            10,  # Scene-linear red ~0.22 -> uint8 ~56 after tone-map; 10 is safe margin
-            f"Rendered image must be non-black (max R channel = {max_channel}). "
-            "If all-black, warm_init_namespace did NOT prevent the worker-thread "
-            "NameError -> (0,0,0) default outColor regression.",
+        ptr = img.pixels()
+        buf = ctypes.string_at(ptr, w * h * 4)
+        i   = ((h // 2) * w + w // 2) * 4
+        r, g, b = buf[i], buf[i + 1], buf[i + 2]
+        self.assertTrue(
+            r >= 128 and g <= 64 and b <= 64,
+            f"The sphere's centre pixel must show the red texture, got RGB "
+            f"({r}, {g}, {b}). Black means the mPyFile's outColor did not "
+            "reach the render.",
         )
 
 
