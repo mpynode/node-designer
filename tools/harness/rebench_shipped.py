@@ -121,7 +121,8 @@ def write_record(rounds_path, record):
     with open(rounds_path, encoding="utf-8") as fh:
         doc = json.load(fh)
     doc["remeasured"] = record
-    with open(rounds_path, "w", encoding="utf-8") as fh:
+    # newline="": LF on every host, as the repository stores it.
+    with open(rounds_path, "w", encoding="utf-8", newline="") as fh:
         json.dump(doc, fh, indent=2, sort_keys=True, default=str)
         fh.write("\n")
 

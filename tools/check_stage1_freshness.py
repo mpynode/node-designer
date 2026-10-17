@@ -189,7 +189,8 @@ def _write_baseline(result):
     now = sorted(rel for rel, row in result["artifacts"].items()
                  if row["state"] == "stale")
     doc["stale"] = now
-    with open(BASELINE, "w", encoding="utf-8") as fh:
+    # newline="": LF on every host, as the repository stores it.
+    with open(BASELINE, "w", encoding="utf-8", newline="") as fh:
         json.dump(doc, fh, indent=2)
         fh.write("\n")
     print("baseline: %d -> %d  (+%d newly stale, -%d refreshed)"

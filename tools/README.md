@@ -26,20 +26,21 @@ cannot run it until `build_compiled_templates.sh` has run. It says so and exits
 
 ## Enforced by the unit suite
 
-These 35 scripts are **not optional**. Deleting any one of them turns the unit
+These 37 scripts are **not optional**. Deleting any one of them turns the unit
 suite red: a test runs, imports or reads it, or checks that it is there. Each
 row was measured by deleting the file in a copy of the tree and running the
 tests that name it. Deleting any other script here turns no test red.
 
 | Script | Enforced by |
 |---|---|
-| `check_stage1_freshness.py` | `test_stage1_codegen_freshness` — checked-in stage-1 C++ vs fresh transpiler output |
+| `check_stage1_freshness.py` | `test_stage1_codegen_freshness` — checked-in stage-1 C++ vs fresh transpiler output; `test_tracked_files_write_lf` — `--write-baseline` writes LF |
 | `regen_build_scripts.py` | `test_build_script_freshness` — every committed `build.sh`/`.bat` vs today's generators |
 | `regen_plugin_main.py` | `test_plugin_main_freshness` — every committed multi-node `plugin_main.cpp` vs today's generator, derived from the fragments beside it |
 | `regen_verify_scripts.py` | `test_shipped_verify_scripts` — every shipped `verify_in_maya.py` vs today's generator, from its manifest row's spec |
+| `regen_mega_transpiled.py` | `test_tracked_files_write_lf` — a stale or CRLF All Templates stage 1 is written back LF, as shipped |
 | `check_std_includes.py` | `test_std_include_check` — a `std::` facility used with no include (libc++ forgives, MSVC does not) |
 | `scan_command_mpynode_deps.py` | `test_command_mpynode_deps` — what an embedded `@maya_command` can still reach |
-| `sync_harness_manifest.py`, `list_template_coverage.py` | `test_harness_manifest_coverage` — a template missing from the manifest is silently never audited |
+| `sync_harness_manifest.py`, `list_template_coverage.py` | `test_harness_manifest_coverage` — a template missing from the manifest is silently never audited; `test_tracked_files_write_lf` — `sync_harness_manifest.py` writes LF |
 | `migrate_attr_names.py` | `test_attr_type_table` — the attr type rename in each file kind, and that the repo is already migrated |
 | `sweep_compile_one.py` | `test_optimizer_live` |
 | `run_tests.sh`, `run_tests.bat` | `test_native_toolchain` — every mayapy call goes through `_unittest_exit.py`, both anchor on the repo root and hand back the real exit status |
@@ -48,15 +49,16 @@ tests that name it. Deleting any other script here turns no test red.
 | `parity_sweep/run_parity_sweep.py` | `test_native_compile_pipeline` (`TestParitySweepWiring`), `test_native_toolchain` |
 | `parity_sweep/parity_<type>.py`, all 12 | `test_native_compile_pipeline` (`TestParitySweepWiring`) — each one is there and names no user's path |
 | `harness/benchmark_node.py` | `test_bench_gate`, `test_benchmark_harness_lock`, `test_benchmark_harness_scene`, `test_optimizer_compile_hook`, `test_ai_unavailable_status`, `test_native_compile_pipeline` |
-| `harness/demo_specs.py` | `test_harness_manifest_coverage` |
+| `harness/demo_specs.py` | `test_harness_manifest_coverage`, `test_tracked_files_write_lf` |
+| `harness/mega_plugin.py` | `test_tracked_files_write_lf` — the All Templates relink writes `mega_results.json` LF |
 | `harness/optimize_node.py` | `test_optimize_node_driver` |
 | `harness/idle_probe.py` | `test_idle_probe` — its Maya-free helpers |
 | `harness/viewport_bench.py` | `test_viewport_bench` — its Maya-free helpers |
-| `harness/rebench_shipped.py` | `test_rebench_shipped` — planning and record shape, no compile, no Maya |
-| `harness/reverify_shipped.py` | `test_reverify_shipped` — the same |
+| `harness/rebench_shipped.py` | `test_rebench_shipped` — planning and record shape, no compile, no Maya; `test_tracked_files_write_lf` — `rounds.json` written LF |
+| `harness/reverify_shipped.py` | `test_reverify_shipped` — planning and record shape, no compile, no Maya |
 
 `harness/templates.json` is not a script, but deleting it turns
-`test_harness_manifest_coverage` red too.
+`test_harness_manifest_coverage` and `test_tracked_files_write_lf` red too.
 
 `harness/benchmark_node.py` is also the one exception noted at the top: shipped
 code shells out to it at runtime (`native/ai/optimizer_live.py` and

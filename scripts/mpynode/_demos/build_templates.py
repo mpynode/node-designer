@@ -482,7 +482,9 @@ def _write_template(payload, native_type, description, root=None):
             out              = dict(out)
             out["node_name"] = node_name
         save_mpn(out, os.path.join(folder, "template.mpn"))
-        with open(os.path.join(folder, "description.md"), "w") as f:
+        # newline="": LF on every host, as the repository stores it.
+        with open(os.path.join(folder, "description.md"), "w",
+                  newline="") as f:
             f.write(description.rstrip() + "\n")
 
 
@@ -512,7 +514,9 @@ def _write_template_to(rel, payload, description, root=None):
     folder = os.path.join(root if root is not None else TPL, *rel.split("/"))
     os.makedirs(folder, exist_ok=True)
     save_mpn(_with_metadata(rel, payload), os.path.join(folder, "template.mpn"))
-    with open(os.path.join(folder, "description.md"), "w") as f:
+    # newline="": LF on every host, as the repository stores it.
+    with open(os.path.join(folder, "description.md"), "w",
+              newline="") as f:
         f.write(description.rstrip() + "\n")
 
 

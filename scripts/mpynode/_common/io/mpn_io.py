@@ -226,7 +226,9 @@ def save_mpn(payload: dict, path: str, compression: str = "zlib") -> None:
         stored, compression=compression
     )
     envelope = {"version": MPN_FORMAT_VERSION, "data": data}
-    with open(path, "w") as f:
+    # newline="": LF on every host, and no final newline, as the shipped
+    # templates are stored.
+    with open(path, "w", newline="") as f:
         json.dump(envelope, f, indent=2, sort_keys=True)
 
 

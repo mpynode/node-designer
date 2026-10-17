@@ -266,7 +266,9 @@ def main():
     # bundle's version folder).
     build_dir = os.path.join(OUT_DIR, "build")
     os.makedirs(build_dir, exist_ok=True)
-    with open(os.path.join(build_dir, "mega_results.json"), "w") as f:
+    # newline="": LF on every host, as the repository stores it.
+    with open(os.path.join(build_dir, "mega_results.json"), "w",
+              newline="") as f:
         json.dump(out, f, indent=2, default=str)
     # Sweep a stale top-level copy a pre-reorg run left behind.
     _stale = os.path.join(OUT_DIR, "mega_results.json")

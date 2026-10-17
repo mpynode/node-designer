@@ -78,7 +78,8 @@ def main():
         return 1
 
     rows.sort(key=lambda r: r["mpn"])
-    with open(MANIFEST, "w") as fh:
+    # newline="": LF on every host, as the repository stores it.
+    with open(MANIFEST, "w", newline="") as fh:
         json.dump(rows, fh, indent=1)
         fh.write("\n")
     print("\nwrote %s (%d rows)" % (MANIFEST, len(rows)))

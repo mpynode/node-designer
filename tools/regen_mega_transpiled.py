@@ -70,7 +70,12 @@ def main():
         except Exception as exc:
             failed.append((type_name, "%s: %s" % (type(exc).__name__, exc)))
             continue
-        with open(dst) as fh:
+        # As tools/regen_stage1.py reads and writes stage 1: UTF-8, since
+        # read in the Windows locale encoding (cp1252) a file with a non-ASCII
+        # comment differs from fresh codegen and gets written back cp1252, and
+        # newline="", so a CRLF copy is stale and every write is LF, as the
+        # repository stores it.
+        with open(dst, encoding="utf-8", newline="") as fh:
             old = fh.read()
         if old == cpp:
             same.append(type_name)
@@ -82,7 +87,7 @@ def main():
         if out_dir:
             target = os.path.join(out_dir, type_name, "1_transpiled.cpp")
             os.makedirs(os.path.dirname(target), exist_ok=True)
-        with open(target, "w") as fh:
+        with open(target, "w", encoding="utf-8", newline="") as fh:
             fh.write(cpp)
 
     print("=" * 70)
