@@ -155,6 +155,7 @@ class NDPreferencesDialog(QDialog):
         self._external_editor_edit = QLineEdit()
         self._external_editor_edit.setToolTip(
             "Command run to open a file in your external editor. "
+            "Put quotes around a path that has a space. "
             "{file} and {line} are replaced with the target path and "
             "1-based line number. Leave blank to auto-detect an installed "
             "editor (Cursor / VS Code / VSCodium / Sublime / PyCharm)."

@@ -19,7 +19,10 @@ The verify opens new scenes (``file new, force``), so the script refuses to
 run while the open scene has unsaved changes: it raises before it touches
 the scene, and says to save first or to run it in a fresh mayapy. The guard
 trusts Maya's own modified flag, so a selection-only change isn't flagged
-and the script runs and replaces that scene; no file is touched. Run as
+and the script runs and replaces that scene; no file is touched. A verify
+leaves the scene it made modified, so a second run in the same session is
+refused as well: the refusal says to clear a scene a previous verify left
+with ``cmds.file(new=True, force=True)`` first. Run as
 ``mayapy verify_in_maya.py`` it starts Maya itself, before it imports
 ``mpynode``: ``maya.cmds`` was empty there, so the script failed at the
 guard, and a ``userSetup.py`` install could not import ``mpynode`` at all. It
@@ -77,7 +80,8 @@ _BODY = r'''def run():
         raise RuntimeError(
             "VERIFY REFUSED: the open scene has unsaved changes, and this "
             "check opens new scenes (file new, force). Save first, or run "
-            "it in a fresh mayapy.")
+            "it in a fresh mayapy. If a previous verify left this scene, "
+            "run cmds.file(new=True, force=True) first.")
     from mpynode.native.toolchain import verify as _cc
     rows = _cc._default_verify(BUNDLE, [{"type_name": NAME, "spec": SPEC}])
     row = rows[NAME]
@@ -145,7 +149,9 @@ def _verify_script(spec: dict) -> str:
     plug-in itself.
 
     The verify opens new scenes, so the script first raises when the open
-    scene has unsaved changes, before it touches the scene. Run as
+    scene has unsaved changes, before it touches the scene; the error says
+    to clear a scene a previous verify left with
+    ``cmds.file(new=True, force=True)``. Run as
     ``__main__`` where ``maya.cmds`` is still empty (a bare mayapy), it
     initializes ``maya.standalone`` before it imports ``mpynode``. It prints
     the folder of the ``mpynode`` it imported first, then a ``VERIFY PASS``
@@ -176,7 +182,9 @@ def _verify_script(spec: dict) -> str:
         "the open scene has unsaved changes: save first, or run it in a\n"
         "fresh mayapy. It prints the folder of the mpynode it imported.\n"
         "The guard trusts Maya's own modified flag, so a selection-only\n"
-        "change isn't flagged.\n"
+        "change isn't flagged. A verify leaves its own scene modified, so\n"
+        "a second run in the same session is refused too: clear that\n"
+        "scene with cmds.file(new=True, force=True) first.\n"
         "Run as a script, a FAIL raises, so mayapy exits 1 and Maya shows\n"
         "an error; a PASS or SKIP exits 0. run() returns False on a FAIL.\n"
         '"""\n'

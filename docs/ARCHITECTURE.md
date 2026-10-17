@@ -594,7 +594,7 @@ replaced; subprocesses inherit the run's.
 module, checks the running process, and starts fresh processes each of those
 ways to check theirs.
 
-**Size.** 8,176 `def test_` methods across 359 test modules (388 `.py` under
+**Size.** 8,181 `def test_` methods across 359 test modules (388 `.py` under
 `tests/`; the non-test twenty-nine are `_setup.py`, `_paths.py`,
 `_bench_lock_child.py`, `_stub_compiled_plugin.py`, `data/scanline_defs.py`, the
 thirteen package `__init__.py`, and the eleven `compile/native/` harnesses that

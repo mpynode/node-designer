@@ -39,6 +39,12 @@ Run as a script, a FAIL now raises after its FAIL line, so mayapy exits 1
 and Maya shows an error; ``run()`` still returns False to a caller. A PASS,
 a PASS on the authored test alone and a SKIP exit 0.
 
+A verify leaves the scene it made modified, so a second run in the same
+session is refused, and the refusal's advice (save first, or a fresh
+mayapy) fit only the user's own work. It now ends by saying to clear a
+scene a previous verify left with ``cmds.file(new=True, force=True)``; that
+command, run as written, lets the script run again.
+
 ``tools/regen_verify_scripts.py`` does the regenerating; this module is the
 gate over its result. Compared line by line with whitespace runs collapsed
 (the tool's ``matches``): the align sweep columnises the shipped copies, and
@@ -71,6 +77,9 @@ from tests._setup import standalone_init
 _TOOL  = os.path.join(_paths.ROOT, "tools", "regen_verify_scripts.py")
 _REGEN = None
 _OSES  = (("win32", ".mll"), ("darwin", ".bundle"), ("linux", ".so"))
+# The refusal's last sentence: how to clear a scene a previous verify left.
+_ADVICE = ("If a previous verify left this scene, run "
+           "cmds.file(new=True, force=True) first.")
 
 
 def setUpModule():
@@ -303,12 +312,52 @@ class TestShippedVerifyScriptsInAScene(unittest.TestCase):
             self.assertIn("unsaved changes", str(cm.exception), rel)
             self.assertIn("Save first, or run it in a fresh mayapy",
                           str(cm.exception), rel)
+            self.assertTrue(str(cm.exception).endswith(_ADVICE), rel)
             self.assertFalse(dv.called, rel)
             self.assertEqual(buf.getvalue().splitlines(),
                              ["VERIFY MPYNODE " + pkg], rel)
             self.assertTrue(mc.file(q=True, modified=True), rel)
             self.assertEqual(sorted(mc.ls()), before, rel)
             self.assertEqual(mc.getAttr(node + ".translateX"), 3.5, rel)
+
+    def test_the_refusal_clears_the_scene_a_previous_verify_left(self):
+        # A verify leaves the scene it made modified, so a second run in the
+        # same session was refused, with advice that fit only the user's own
+        # work: save it, or start a fresh mayapy. The refusal now names the
+        # command that clears such a scene; run as written, it lets the
+        # script run again.
+        import re
+
+        import maya.cmds as mc
+        from mpynode.native.toolchain import verify
+
+        def a_verify(bundle, rows):
+            # What a verify does to the scene: new scene, its own nodes.
+            mc.file(new=True, force=True)
+            mc.createNode("transform", name="verifyTwin")
+            return {rows[0]["type_name"]: {"ran": True, "pass": True,
+                                           "maxerr": 0.0, "tol": 1e-4}}
+
+        for rel, _spec, text in _shipped():
+            mc.file(new=True, force=True)
+            ns = _load_script(rel, text)
+            with mock.patch.object(verify, "_default_verify",
+                                   side_effect=a_verify) as dv, \
+                    contextlib.redirect_stdout(io.StringIO()) as buf:
+                self.assertTrue(ns["run"](), rel)
+                self.assertTrue(mc.file(q=True, modified=True), rel)
+                with self.assertRaises(RuntimeError) as cm:
+                    ns["run"]()
+                self.assertEqual(dv.call_count, 1, rel)
+                advice = re.search(r"run (\S+\(.*\)) first\.$",
+                                   str(cm.exception))
+                self.assertIsNotNone(advice, (rel, str(cm.exception)))
+                exec(advice.group(1), ns)
+                self.assertFalse(mc.file(q=True, modified=True), rel)
+                self.assertTrue(ns["run"](), rel)
+            self.assertEqual(dv.call_count, 2, rel)
+            self.assertEqual(buf.getvalue().splitlines()[-1],
+                             "VERIFY PASS maxerr 0.0", rel)
 
     def test_each_reports_the_merged_row_on_a_clean_scene(self):
         # An untitled scene with no changes runs: the script hands its own

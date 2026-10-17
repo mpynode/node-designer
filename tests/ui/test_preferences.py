@@ -496,6 +496,25 @@ class TestPreferencesDialogShape(unittest.TestCase):
         self.assertIn("reset_to_defaults", src)
 
 
+@unittest.skipUnless(_qt_available(), "Qt unavailable")
+class TestExternalEditorCommandTooltip(unittest.TestCase):
+    """open_in_editor splits the editor command at its spaces, so a path that
+    has a space has to be quoted; the command field's tooltip says so, in the
+    words the "could not find" error uses."""
+
+    def test_the_tooltip_says_to_quote_a_path_that_has_a_space(self):
+        from mpynode.ui.dialogs.preferences import NDPreferencesDialog
+
+        dlg = NDPreferencesDialog()
+        try:
+            tip = dlg._external_editor_edit.toolTip()
+        finally:
+            dlg.deleteLater()
+        self.assertIn(" Put quotes around a path that has a space. ", tip)
+        self.assertTrue(tip.startswith("Command run to open a file in your "
+                                       "external editor."), tip)
+
+
 # ===========================================================================
 # New Nodes combo: live index<->value round-trip (not just source inspection)
 # ===========================================================================

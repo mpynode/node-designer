@@ -13,7 +13,9 @@ It opens new scenes (file new, force), so it refuses to run while
 the open scene has unsaved changes: save first, or run it in a
 fresh mayapy. It prints the folder of the mpynode it imported.
 The guard trusts Maya's own modified flag, so a selection-only
-change isn't flagged.
+change isn't flagged. A verify leaves its own scene modified, so
+a second run in the same session is refused too: clear that
+scene with cmds.file(new=True, force=True) first.
 Run as a script, a FAIL raises, so mayapy exits 1 and Maya shows
 an error; a PASS or SKIP exits 0. run() returns False on a FAIL.
 """
@@ -42,7 +44,8 @@ def run():
         raise RuntimeError(
             "VERIFY REFUSED: the open scene has unsaved changes, and this "
             "check opens new scenes (file new, force). Save first, or run "
-            "it in a fresh mayapy.")
+            "it in a fresh mayapy. If a previous verify left this scene, "
+            "run cmds.file(new=True, force=True) first.")
     from mpynode.native.toolchain import verify as _cc
     rows = _cc._default_verify(BUNDLE, [{"type_name": NAME, "spec": SPEC}])
     row  = rows[NAME]

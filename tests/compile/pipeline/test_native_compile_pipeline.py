@@ -2871,6 +2871,11 @@ class TestVerifyScriptHonesty(unittest.TestCase):
         self.assertIn("VERIFY REFUSED", msg)
         self.assertIn("unsaved changes", msg)
         self.assertIn("Save first, or run it in a fresh mayapy", msg)
+        # A verify leaves its own scene modified, so a rerun in the same
+        # session lands here too: the refusal says how to clear that scene.
+        self.assertTrue(msg.endswith(
+            " If a previous verify left this scene, run "
+            "cmds.file(new=True, force=True) first."), msg)
         # The query is the only Maya command it ran: no plug-in load, no
         # file new, no verify.
         self.assertEqual(cmds.calls, [("file", (), self._QUERY)])

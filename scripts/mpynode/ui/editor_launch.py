@@ -105,13 +105,39 @@ def _unquote(token):
     return token
 
 
+def _cut_at_a_space(template, first):
+    """True when the command's first word, ``first``, is an absolute path
+    written without quotes and a space follows it in ``template``.
+
+    The split ends an unquoted word at its first space, so an unquoted path
+    with a space comes back as its first word alone:
+    ``C:\\Program Files\\...\\code.cmd`` is looked up as ``C:\\Program``. A
+    quoted or backslash-escaped path never reads as ``first`` followed by a
+    space."""
+    text = template.strip()
+    return (os.path.isabs(first) and text.startswith(first)
+            and text[len(first):len(first) + 1].isspace())
+
+
+def _quoted_path_example():
+    """An editor command whose path has a space, quoted: a Windows one on
+    Windows, a macOS one elsewhere."""
+    if os.name == "nt":
+        return ('"C:\\Program Files\\Microsoft VS Code\\bin\\code.cmd" '
+                "--goto {file}:{line}")
+    return ('"/Applications/Visual Studio Code.app/Contents/Resources/app/'
+            'bin/code" --goto {file}:{line}')
+
+
 def open_in_editor(path, line):
     """Launch the external editor (external_editor_command pref) at path:line.
     Returns (ok, error_message_or_None). Never raises.
 
     A path with a space is written quoted, on Windows too:
     ``"C:\\Program Files\\Editor\\editor.exe" --goto {file}:{line}`` launches
-    that exact executable."""
+    that exact executable. Unquoted, it is cut at its first space, and the
+    error that names the first word says to put quotes around it, with a
+    Windows example on Windows."""
     from mpynode.ui import preferences
     from mpynode.native.toolchain import toolchain
 
@@ -129,6 +155,13 @@ def open_in_editor(path, line):
     argv = [p.replace("{file}", str(path)).replace("{line}", str(int(line)))
             for p in parts]
     exe = _resolve_editor_exe(argv[0])
+    if exe is None and _cut_at_a_space(template, parts[0]):
+        # The word is named as written: %r would double each backslash of a
+        # Windows path ('C:\\Program'), next to an example that has one.
+        return False, (
+            "could not find '%s'. In Preferences > Editor > Open-in-editor "
+            "command, put quotes around a path that has a space, e.g. %s"
+            % (argv[0], _quoted_path_example()))
     if exe is None:
         return False, (
             "could not find %r. GUI Maya may not see your shell PATH -- set an "

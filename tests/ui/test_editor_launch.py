@@ -1,6 +1,7 @@
 import tests  # noqa: F401 -- first: keeps the run out of ~/.mpynode
 
 import os
+import shlex
 import shutil
 import sys
 import unittest
@@ -225,6 +226,71 @@ class TestAnAbsoluteCommandLaunchesTheExactExecutable(unittest.TestCase):
         ok, err = editor_launch.open_in_editor("/a b/c.py", 5)
         self.assertFalse(ok)
         self.assertIn("could not find %r" % gone, err)
+        self.assertEqual(self.calls, [])
+
+    def test_an_unquoted_path_with_a_space_says_to_put_quotes_around_it(self):
+        # Unquoted, the split cuts the path at its first space, and the error
+        # named only the first word ("could not find '...\\with'"). It now
+        # says to put quotes around a path that has a space, with an example
+        # (a Windows one on Windows); quoted as it says, the path launches.
+        # The word is named as written, each backslash single on Windows, as
+        # in the example: not its repr.
+        first         = self.spaced.split(" ")[0]
+        self.template = "%s --goto {file}:{line}" % self.spaced
+        ok, err = editor_launch.open_in_editor("/a b/c.py", 5)
+        self.assertFalse(ok)
+        self.assertEqual(self.calls, [])
+        self.assertEqual(
+            err,
+            "could not find '%s'. In Preferences > Editor > Open-in-editor "
+            "command, put quotes around a path that has a space, e.g. %s"
+            % (first, editor_launch._quoted_path_example()))
+        argv = self._launch('"%s" --goto {file}:{line}' % self.spaced)
+        self.assertEqual(argv, [self.spaced, "--goto", "/a b/c.py:5"])
+
+    def test_the_example_is_a_windows_one_on_windows(self):
+        # The Windows split on any host: the error gives a Windows path, and
+        # that split reads the example's quoted path as one executable.
+        with mock.patch.object(os, "name", "nt"):
+            self.template = "%s --goto {file}:{line}" % self.spaced
+            ok, err = editor_launch.open_in_editor("/a b/c.py", 5)
+            example = editor_launch._quoted_path_example()
+        self.assertFalse(ok)
+        self.assertEqual(example, '"C:\\Program Files\\Microsoft VS Code\\bin'
+                                  '\\code.cmd" --goto {file}:{line}')
+        self.assertTrue(err.endswith("a path that has a space, e.g. " + example),
+                        err)
+        words = [editor_launch._unquote(w)
+                 for w in shlex.split(example, posix=False)]
+        self.assertEqual(words, ["C:\\Program Files\\Microsoft VS Code\\bin"
+                                 "\\code.cmd", "--goto", "{file}:{line}"])
+        # Elsewhere the example is a macOS one, read whole by the POSIX split.
+        with mock.patch.object(os, "name", "posix"):
+            example = editor_launch._quoted_path_example()
+        self.assertEqual(shlex.split(example),
+                         ["/Applications/Visual Studio Code.app/Contents/"
+                          "Resources/app/bin/code", "--goto", "{file}:{line}"])
+
+    def test_only_a_path_cut_at_its_space_gets_that_advice(self):
+        # A quoted path was not cut: named without its quotes, no advice. A
+        # lone unquoted path has nothing after it, so no space was cut. A
+        # bare name gets the search-path advice, as before.
+        lone = os.path.join(os.path.dirname(self.plain), "gone.exe")
+        if " " in lone:
+            self.skipTest("the temp folder has a space: %s" % lone)
+        quoted = os.path.join(os.path.dirname(self.spaced), "gone.exe")
+        for template, named in (
+                ('"%s" --goto {file}:{line}' % quoted, quoted),
+                (lone, lone),
+                ("noSuchEditor --goto {file}:{line}", "noSuchEditor")):
+            with self.subTest(template=template):
+                self.template = template
+                ok, err = editor_launch.open_in_editor("/a b/c.py", 5)
+                self.assertFalse(ok)
+                self.assertTrue(err.startswith("could not find %r. " % named),
+                                err)
+                self.assertNotIn("quotes", err)
+                self.assertIn("GUI Maya may not see your shell PATH", err)
         self.assertEqual(self.calls, [])
 
 
