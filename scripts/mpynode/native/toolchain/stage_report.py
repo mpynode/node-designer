@@ -439,12 +439,15 @@ def node_report_text(out_dir, type_name, *, row=None, spec=None):
 
 
 def write_node_report(out_dir, type_name, *, row=None, spec=None):
-    """Write ``build/stages/<Type>/REPORT.md``. Best-effort; returns path/None."""
+    """Write ``build/stages/<Type>/REPORT.md``. Best-effort; returns path/None.
+
+    ``newline=""``, here and in ``write_index_report``: LF on every host, as
+    the repository stores both reports (CRLF on Windows otherwise)."""
     try:
         d = bundler.stage_dir_for(out_dir, type_name)
         os.makedirs(d, exist_ok=True)
         path = os.path.join(d, "REPORT.md")
-        with open(path, "w", encoding="utf-8") as fh:
+        with open(path, "w", newline="", encoding="utf-8") as fh:
             fh.write(node_report_text(out_dir, type_name, row=row, spec=spec))
         return path
     except OSError:
@@ -510,7 +513,7 @@ def write_index_report(out_dir, plugin_name, rows):
     try:
         os.makedirs(out_dir, exist_ok=True)
         path = os.path.join(out_dir, "REPORT.md")
-        with open(path, "w", encoding="utf-8") as fh:
+        with open(path, "w", newline="", encoding="utf-8") as fh:
             fh.write(index_report_text(out_dir, plugin_name, rows))
         return path
     except OSError:

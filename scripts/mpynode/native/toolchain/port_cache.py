@@ -795,9 +795,11 @@ def get(key: str) -> Optional[str]:
 
 def _atomic_write(path: str, text: str) -> None:
     """Write ``text`` to ``path`` via a per-pid tmp file + ``os.replace``
-    (atomic on POSIX). Mirrors ``typeid_registry._save``."""
+    (atomic on POSIX). Mirrors ``typeid_registry._save``. ``newline=""``: LF
+    on every host, so a cache hit hands the build the LF ``.cpp`` a miss
+    writes (a Windows host cached CRLF)."""
     tmp = "%s.tmp-%d" % (path, os.getpid())
-    with open(tmp, "w", encoding="utf-8") as fh:
+    with open(tmp, "w", newline="", encoding="utf-8") as fh:
         fh.write(text)
     os.replace(tmp, path)  # atomic on POSIX
 

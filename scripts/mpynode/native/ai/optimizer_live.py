@@ -848,7 +848,7 @@ def make_adapters(spec: dict, out_dir: str, *,
 
     def compile_fn(cpp_text):
         cpp_path = os.path.join(out_dir, name + ".cpp")
-        with open(cpp_path, "w", encoding="utf-8") as fh:
+        with open(cpp_path, "w", newline="", encoding="utf-8") as fh:
             fh.write(cpp_text)
         # optimize=True enforces -O3 -ffp-contract=off on the unix recompile.
         return porter.compile_cpp(cpp_path, spec, out_dir, maya=maya,
@@ -1330,7 +1330,7 @@ def make_version_writer(out_dir, type_name, keep_bundles=False):
         try:
             os.makedirs(d, exist_ok=True)
             path = os.path.join(d, "%02d_no_change.txt" % record.index)
-            with open(path, "w", encoding="utf-8") as fh:
+            with open(path, "w", newline="", encoding="utf-8") as fh:
                 fh.write("round %d: no-change -- the candidate was identical "
                          "to the source this round was given, so there is no "
                          ".cpp of its own to keep. See rounds.json.\n"
@@ -1358,7 +1358,10 @@ def make_version_writer(out_dir, type_name, keep_bundles=False):
             stem = "%02d_%s" % (record.index,
                                 _slugify(record.slug, record.outcome))
             path = os.path.join(d, stem + ".cpp")
-            with open(path, "w", encoding="utf-8") as fh:
+            # newline="", as for every .cpp, round marker and rounds.json this
+            # module writes: LF on every host, as the repository stores them
+            # (CRLF on Windows otherwise).
+            with open(path, "w", newline="", encoding="utf-8") as fh:
                 fh.write(cpp_text)
         except OSError:
             return None
@@ -1411,7 +1414,7 @@ def write_rounds_json(out_dir, type_name, result, *, parity_gate="",
         d = bundler.stage_dir_for(out_dir, type_name)
         os.makedirs(d, exist_ok=True)
         path = os.path.join(d, "rounds.json")
-        with open(path, "w", encoding="utf-8") as fh:
+        with open(path, "w", newline="", encoding="utf-8") as fh:
             json.dump(doc, fh, indent=2, sort_keys=True, default=str)
             fh.write("\n")
         return path
@@ -1584,7 +1587,7 @@ def optimize_surviving(nodes, out_dir, *, maya=None, verify_fn=None,
                     shutil.copy2(cpp_path, cpp_path + ".preopt")
                 except Exception:
                     pass
-                with open(cpp_path, "w", encoding="utf-8") as fh:
+                with open(cpp_path, "w", newline="", encoding="utf-8") as fh:
                     fh.write(res.best_cpp)
             results[type_name] = res
         except _OptimizeCancelled:

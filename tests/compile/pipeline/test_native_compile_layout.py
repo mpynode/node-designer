@@ -340,6 +340,215 @@ class TestVerifyScriptIsWrittenLF(unittest.TestCase):
         self._assert_generator_text(spec, data)
 
 
+class TestACompileWritesLF(unittest.TestCase):
+    """Every text file a compile writes is LF, as the repository stores it;
+    build.bat alone is CRLF, on purpose. On Windows the pipeline wrote the
+    final and source .cpp, the stage files, both REPORT.md, manifest.json,
+    compile.log, the optimizer's rounds and the port cache in text mode, so
+    each came out CRLF and differed on every line from the LF copy the
+    repository ships.
+
+    A Windows compile on any host: Windows is the host OS (build.bat, cl),
+    the porter's compile_cpp is a stub, the bundler's compiles and link are
+    faked, and the optimizer's engine accepts one round. compile_plugin
+    builds three nodes, one lowered whole, one with an AI body and an
+    mPyFile with its viewport override, then each again on its own from the
+    port cache. A two-node assemble adds a shared helper unit. On Windows
+    the real text layer writes the files; elsewhere a text-mode write is
+    made to translate as on Windows, as in TestVerifyScriptIsWrittenLF."""
+
+    # A failure names every file with a wrong line ending.
+    maxDiff = None
+
+    _FILE_SIMPLE = ("templates", "MPyFile", "File Simple", "build",
+                    "manifest.json")
+
+    @staticmethod
+    def _spec(name, compute, type_id):
+        return {
+            "source_node": name,
+            "mpy_type":    "mPyNode",
+            "suggested": {"node_type_name": name,
+                          "class_name": name[:1].upper() + name[1:],
+                          "mpx_base": "MPxNode", "type_id": type_id},
+            "inputs":      {"a": {"type": "double"}},
+            "outputs":     {"out": {"type": "double"}},
+            "compute":     compute,
+            "init":        "",
+            "portability": {"portable": True, "blockers": []},
+        }
+
+    def _specs(self):
+        """A node lowered whole, one the AI ports, and File Simple's
+        mPyFile (lowered whole, then given its viewport override)."""
+        import json
+
+        from tests import _paths
+
+        with open(os.path.join(_paths.ROOT, *self._FILE_SIMPLE),
+                  encoding="utf-8") as fh:
+            texture = json.load(fh)["nodes"][0]["spec"]
+        return [self._spec("lfWhole", "self.out = self.a * 2.0", "0x0013a1d0"),
+                self._spec("lfPorted", "out = a * 2.0", "0x0013a1d1"),
+                texture]
+
+    @staticmethod
+    def _windows():
+        """The patches for a Windows compile on any host, as one context."""
+        import contextlib
+        from unittest import mock
+
+        from mpynode.native.ai import optimizer, optimizer_live, porter
+        from mpynode.native.ai.optimizer import OptimizeResult, RoundRecord
+        from tests.compile.pipeline.test_native_toolchain import _touch_outputs
+
+        real_os = toolchain.current_os
+
+        def fake_compile(cpp_path, spec, out_dir, **kwargs):
+            if kwargs.get("log_cb") is not None:
+                kwargs["log_cb"]("cl /c %s" % os.path.basename(cpp_path))
+            return True, "", os.path.join(out_dir, "x" + toolchain.plugin_ext())
+
+        def fake_run(cmd, **kwargs):
+            _touch_outputs(cmd)
+            return 0, ""
+
+        def engine(baseline, round_cb=None, **kwargs):
+            best = baseline + "// round 1\n"
+            ledger = [RoundRecord(0, "baseline", compiled=True, ms=2.0),
+                      RoundRecord(1, "accept", compiled=True, parity="pass",
+                                  ms=1.0, speedup=2.0, slug="hoist"),
+                      RoundRecord(2, "no-change", compiled=True, slug="noop")]
+            for rec, text in zip(ledger, (baseline, best, best)):
+                round_cb(rec, text)
+            return OptimizeResult(True, best, 2.0, 1.0, 2.0, 2, ledger,
+                                  "accepted (2.00x)")
+
+        provider = {"ok": True, "problems": [], "provider": "anthropic",
+                    "kind": "api"}
+        patches = [
+            (toolchain, "current_os",
+             lambda name=None: real_os(name) if name else "win32"),
+            (toolchain, "check_toolchain",
+             lambda *a, **k: {"ok": True, "problems": [], "compiler": "cl"}),
+            (toolchain, "default_compiler", lambda *a: "cl"),
+            (toolchain, "build_env", lambda *a, **k: {"PATH": "x"}),
+            (toolchain, "resolve_compiler", lambda c, *a, **k: c),
+            (toolchain, "diagnose_toolset_mismatch", lambda *a, **k: None),
+            (toolchain, "run_streaming", fake_run),
+            (porter, "compile_cpp", fake_compile),
+            (porter, "check_provider", lambda *a, **k: dict(provider)),
+            (optimizer_live, "benchmark_harness_problem", lambda: None),
+            (optimizer_live, "make_adapters", lambda *a, **k: {}),
+            (optimizer, "optimize_cpp", engine),
+        ]
+        stack = contextlib.ExitStack()
+        for target, name, value in patches:
+            stack.enter_context(mock.patch.object(target, name, value))
+        stack.enter_context(TestVerifyScriptIsWrittenLF._windows_text_mode())
+        return stack
+
+    @staticmethod
+    def _scan(roots):
+        """Every text file under ``roots`` (``{label: folder}``), and the
+        ones whose line endings are wrong: a CR anywhere but build.bat, and
+        anything but CRLF in build.bat."""
+        seen, bad = set(), {}
+        for label, root in roots.items():
+            for folder, _dirs, files in os.walk(root):
+                for name in files:
+                    path = os.path.join(folder, name)
+                    with open(path, "rb") as fh:
+                        data = fh.read()
+                    try:
+                        data.decode("utf-8")
+                    except UnicodeDecodeError:
+                        continue
+                    if b"\0" in data:
+                        continue
+                    rel = "%s/%s" % (label, os.path.relpath(path, root)
+                                     .replace(os.sep, "/"))
+                    seen.add(rel)
+                    if name != "build.bat":
+                        if b"\r" in data:
+                            bad[rel] = "%d CR" % data.count(b"\r")
+                    elif (not data or b"\r\r" in data
+                          or data.count(b"\r\n") != data.count(b"\n")):
+                        bad[rel] = "not CRLF"
+        return seen, bad
+
+    def test_a_windows_compile_writes_every_text_file_lf(self):
+        import copy
+        from unittest import mock
+
+        from mpynode.native.toolchain import compile_controller as cc
+
+        d = tempfile.mkdtemp(prefix="layout_lf_")
+        self.addCleanup(shutil.rmtree, d, True)
+        cache = os.path.join(d, "port_cache")
+        roots = {"cache": cache}
+        specs = self._specs()
+
+        def compile_(label, nodes):
+            out = roots[label] = os.path.join(d, label)
+            res = cc.compile_plugin(
+                copy.deepcopy(nodes), "lfPlugin", out, strict=True,
+                verify=False, verify_fn=lambda *a, **k: {},
+                provider="anthropic", model="m", optimize=True,
+                clean_scratch=False,
+                complete_fn=lambda system, user: "out = a * 2.0;")
+            self.assertTrue(res["ok"], res.get("errors"))
+            self.assertEqual({r["build_status"] for r in res["nodes"]},
+                             {"compiled"})
+
+        with mock.patch.dict(os.environ, {"MPYNODE_PORT_CACHE": cache}), \
+                self._windows():
+            compile_("all", specs)
+            for spec in specs:
+                compile_(spec["suggested"]["node_type_name"], [spec])
+        seen, bad = self._scan(roots)
+
+        # Each kind of file a compile writes is there to be checked.
+        want = {"all/build/" + f for f in (
+            "build.bat", "build.sh", "README.txt", "manifest.json",
+            "source/plugin_main.cpp", "stages/lfPorted/2_assisted.cpp")}
+        want |= {"all/REPORT.md"}
+        for t in ("lfWhole", "lfPorted", "fileTexture"):
+            want |= {"all/build/" + f % {"t": t} for f in (
+                "%(t)s/%(t)s.cpp", "%(t)s/build.bat", "%(t)s/compile.log",
+                "%(t)s/verify_in_maya.py", "source/%(t)s.cpp",
+                "stages/%(t)s/1_transpiled.cpp", "stages/%(t)s/REPORT.md")}
+            want |= {"%s/build/source/%s.cpp" % (t, t),
+                     "%s/build/stages/%s/1_transpiled.cpp" % (t, t)}
+        for t in ("lfWhole", "lfPorted"):
+            want |= {"all/build/stages/%s/%s" % (t, f) for f in (
+                "3_optimized/00_baseline.cpp", "3_optimized/01_hoist.cpp",
+                "3_optimized/02_no_change.txt", "rounds.json")}
+        want |= {"lfPorted/build/stages/lfPorted/2_assisted.cpp"}
+        self.assertEqual(sorted(want - seen), [])
+        self.assertEqual(len([r for r in seen if r.startswith("cache/")]), 6)
+        self.assertEqual(bad, {})
+
+    def test_a_shared_helper_unit_is_written_lf(self):
+        d = tempfile.mkdtemp(prefix="layout_lf_shared_")
+        self.addCleanup(shutil.rmtree, d, True)
+        nodes = []
+        for i in range(2):
+            p = os.path.join(d, "n%dNode.cpp" % i)
+            with open(p, "w", newline="", encoding="utf-8") as fh:
+                fh.write(_node_src("n%dNode" % i, "N%dNode" % i,
+                                   "0x0008100%d" % i, with_block=True))
+            nodes.append(("n%dNode" % i, p))
+        out = os.path.join(d, "out")
+        with self._windows():
+            report = bundler.assemble(nodes, "plug", out, strict=True,
+                                      registry=_reg(d))
+        self.assertTrue(report.get("ok"), report)
+        seen, bad = self._scan({"out": out})
+        self.assertIn("out/build/source/" + bundler.SHARED_HELPERS_FILE, seen)
+        self.assertEqual(bad, {})
+
+
 class TestCleanWorkingSubdirs(unittest.TestCase):
     """The controller's post-build scratch sweep: drop a built node's
     build/<type>/, keep a dropped node's for debugging, and MIGRATE away any

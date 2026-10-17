@@ -1793,7 +1793,9 @@ def assemble(
 
                 frag, info = transform_node_cpp(src, type_name, id_for)
             frag_path = os.path.join(src_dir, _node_cpp_name(info["node_name"]))
-            with open(frag_path, "w", encoding="utf-8") as fh:
+            # newline="": every generated source is LF on every host,
+            # as the repository stores it (CRLF on Windows otherwise).
+            with open(frag_path, "w", newline="", encoding="utf-8") as fh:
                 fh.write(frag)
             rec["id"]     = id_map.get(type_name) or id_map.get(info["node_name"])
             rec["status"] = "transformed"
@@ -1887,7 +1889,8 @@ def assemble(
         shared_path = None
         if shared_blocks:
             shared_path = os.path.join(src_dir, SHARED_HELPERS_FILE)
-            with open(shared_path, "w", encoding="utf-8") as fh:
+            with open(shared_path, "w", newline="",
+                      encoding="utf-8") as fh:
                 fh.write(make_shared_helpers_cpp(shared_blocks))
             report["shared_helpers"] = [b["name"] for b in shared_blocks]
         if shared_path is not None:
@@ -1907,7 +1910,8 @@ def assemble(
 
         # 3) plugin_main (into build/source) + BOTH build scripts + README (into
         #    build/), then link the bundle into its version folder (out_dir/2025/).
-        with open(os.path.join(src_dir, "plugin_main.cpp"), "w", encoding="utf-8") as fh:
+        with open(os.path.join(src_dir, "plugin_main.cpp"), "w", newline="",
+                  encoding="utf-8") as fh:
             fh.write(make_plugin_main(compiled_infos, plugin_name,
                                       vendor=vendor, version=version,
                                       strict_load=strict_load))
@@ -2039,7 +2043,9 @@ def _assemble_single(node, plugin_name, out_dir, reg, report, *, strict, maya,
     src_dir   = source_dir_for(out_dir)
     build_dir = build_dir_for(out_dir)
     os.makedirs(src_dir, exist_ok=True)
-    with open(os.path.join(src_dir, node_file), "w", encoding="utf-8") as fh:
+    # newline="": LF on every host, as the repository stores it.
+    with open(os.path.join(src_dir, node_file), "w", newline="",
+              encoding="utf-8") as fh:
         fh.write(cpp_text)
     rec["id"]     = id_map.get(type_name)
     rec["status"] = "transformed"

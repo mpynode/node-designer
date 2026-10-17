@@ -165,7 +165,9 @@ def write_plugin(spec: dict, out_dir: str) -> dict:
         "load_test": os.path.join(out_dir, "load_test.py"),
         "node":      name,
     }
-    with open(paths["cpp"], "w", encoding="utf-8") as f:
+    # newline="" on all three: the .cpp and load_test.py are LF on every host
+    # (CRLF on Windows otherwise), the build script carries its own endings.
+    with open(paths["cpp"], "w", newline="", encoding="utf-8") as f:
         f.write(cpp_src)
     # newline="": generate_build_bat emits its own CRLF and generate_build_sh
     # its own LF. A second translation on a Windows host turns the .bat into
@@ -177,7 +179,7 @@ def write_plugin(spec: dict, out_dir: str) -> dict:
     # A Windows Qt build force-includes toolchain.QT_MSVC_COMPAT_HEADER by BARE
     # name, so the copy has to sit beside the .cpp for build.bat to find it.
     toolchain.ship_qt_msvc_compat_header(out_dir, bool(spec.get("needs_hover")))
-    with open(paths["load_test"], "w", encoding="utf-8") as f:
+    with open(paths["load_test"], "w", newline="", encoding="utf-8") as f:
         f.write(generate_load_test(spec))
     return paths
 

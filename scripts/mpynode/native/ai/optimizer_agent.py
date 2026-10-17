@@ -630,7 +630,10 @@ def build_workspace(spec, ws_dir, cpp_text, *, maya=None, ntype=None,
 
     os.makedirs(ws_dir, exist_ok=True)
     cpp_path = os.path.join(ws_dir, name + ".cpp")
-    with open(cpp_path, "w", encoding="utf-8") as fh:
+    # newline="" on every file here: LF on every host, like the source the
+    # agent was handed (a text-mode write made the .cpp and TASK.md CRLF on
+    # Windows).
+    with open(cpp_path, "w", newline="", encoding="utf-8") as fh:
         fh.write(cpp_text)
 
     # The SAME build script the shipped node uses -- flat layout, so <name>.cpp
@@ -676,7 +679,8 @@ def build_workspace(spec, ws_dir, cpp_text, *, maya=None, ntype=None,
         geo=int(bench_geo), verts="{:,}".format(verts),
         array=int(bench_array), iters=int(bench_iters), cpp_path=cpp_path,
         baseline=("%.3f ms" % baseline_ms) if baseline_ms else "run ./bench.sh")
-    with open(os.path.join(ws_dir, "TASK.md"), "w", encoding="utf-8") as fh:
+    with open(os.path.join(ws_dir, "TASK.md"), "w", newline="",
+              encoding="utf-8") as fh:
         fh.write(task)
     # The workspace is reused every round. A leftover ROUND.json would be read
     # back as THIS round's account of itself, mislabelling one change with the

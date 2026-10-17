@@ -42,7 +42,10 @@ a PASS on the authored test alone and a SKIP exit 0.
 ``tools/regen_verify_scripts.py`` does the regenerating; this module is the
 gate over its result. Compared line by line with whitespace runs collapsed
 (the tool's ``matches``): the align sweep columnises the shipped copies, and
-that is the only difference allowed.
+that is the only difference allowed. Each script is also LF. The tool's own
+check compared line by line only, so it called a CRLF script fresh and never
+rewrote it; a CRLF script is now stale there too, and the tool writes it
+back LF with its own text, columns kept.
 """
 
 from __future__ import annotations
@@ -186,6 +189,77 @@ class TestShippedVerifyScripts(unittest.TestCase):
         for rel, _spec, text in _shipped():
             self.assertNotIn("\r", text, rel)
             self.assertTrue(text.endswith("\n"), rel)
+
+
+class TestTheToolRewritesACrlfScriptLF(unittest.TestCase):
+    """The tool's --check compared line by line, which ignores line endings,
+    so it called a CRLF script fresh and a run never rewrote it. Every
+    shipped script, copied to a scratch tree as CRLF: --check exits 1 and
+    names each one, a run writes each back LF with its own text, so its
+    columns stay, and --check then passes. One copy is also stale in its
+    text: it is rewritten with the generator's text, LF."""
+
+    def _tool(self, root, rows, *argv):
+        """The tool's main(argv) on the scripts in ``rows``; (rc, stdout)."""
+        buf = io.StringIO()
+        with mock.patch.object(_REGEN, "_ROOT", root), \
+                mock.patch.object(_REGEN, "shipped", lambda: rows), \
+                contextlib.redirect_stdout(buf):
+            rc = _REGEN.main(list(argv))
+        return rc, buf.getvalue()
+
+    def test_a_crlf_script_is_stale_and_rewritten_lf(self):
+        import shutil
+        import tempfile
+
+        from mpynode.native.ai import verify_scripts
+
+        root = tempfile.mkdtemp(prefix="verify_crlf_")
+        self.addCleanup(shutil.rmtree, root, True)
+        rows, want = [], {}
+        for i, (rel, spec, text) in enumerate(_shipped()):
+            path = os.path.join(root, *rel.split("/"))
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            # The LF text, whatever the shipped copy holds (the test above
+            # gates that), made LF the way the tool makes it: a lone CR too.
+            # The first copy is also stale in its text.
+            text = _REGEN.lf(text)
+            body = text + "# stale\n" if i == 0 else text
+            with open(path, "wb") as fh:
+                fh.write(body.replace("\n", "\r\n").encode("utf-8"))
+            rows.append((path, os.path.basename(os.path.dirname(rel)), spec))
+            want[rel] = (verify_scripts._verify_script(spec) if i == 0
+                         else text).encode("utf-8")
+        self.assertTrue(len(want) > 1)
+        first = next(iter(want))
+
+        def read_all():
+            out = {}
+            for rel in want:
+                with open(os.path.join(root, *rel.split("/")), "rb") as fh:
+                    out[rel] = fh.read()
+            return out
+
+        before = read_all()
+        n      = len(want)
+        rc, out = self._tool(root, rows, "--check")
+        self.assertEqual(rc, 1, out)
+        self.assertIn("0 fresh, %d stale" % n, out)
+        for rel in want:
+            line = "   stale " + rel + ("" if rel == first
+                                         else " (CRLF line endings)")
+            self.assertIn(line + "\n", out)
+        rc, out = self._tool(root, rows, "--dry-run")
+        self.assertEqual(rc, 0, out)
+        self.assertEqual(read_all(), before, "--dry-run wrote")
+
+        rc, out = self._tool(root, rows)
+        self.assertEqual(rc, 0, out)
+        self.assertIn("0 fresh, %d rewritten" % n, out)
+        self.assertEqual(read_all(), want)
+        rc, out = self._tool(root, rows, "--check")
+        self.assertEqual(rc, 0, out)
+        self.assertIn("%d fresh, 0 stale" % n, out)
 
 
 def _load_script(rel, text):

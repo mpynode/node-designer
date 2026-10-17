@@ -11,9 +11,11 @@ too. This tool writes each one again from its row in the build tree's
 ``tests/compile/freshness/test_shipped_verify_scripts`` is the gate over its
 result.
 
-A script is fresh when it matches the generator line for line once whitespace
-runs are collapsed, since the shipped copies may be column-aligned. A stale
-one is rewritten with the generator's text, LF. Only scripts that already
+A script is fresh when it is LF and matches the generator line for line once
+whitespace runs are collapsed, since the shipped copies may be
+column-aligned. A stale one is rewritten LF: with the generator's text, or,
+when its line endings are all that is wrong (a CRLF copy matches line for
+line), with its own text, so its columns stay. Only scripts that already
 exist are rewritten. The generator's text does not depend on the OS running
 this tool: each script picks its plug-in extension when it runs.
 
@@ -62,6 +64,11 @@ def matches(text, want):
     return _lines(text) == _lines(want)
 
 
+def lf(text):
+    """``text`` with every CRLF or lone CR line ending made LF."""
+    return text.replace("\r\n", "\n").replace("\r", "\n")
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--dry-run", action="store_true",
@@ -84,18 +91,21 @@ def main(argv=None) -> int:
         with open(path, encoding="utf-8", newline="") as fh:
             old = fh.read()
         new = verify_scripts._verify_script(spec)
-        if matches(old, new):
+        if "\r" not in old and matches(old, new):
             fresh.append(rel)
             continue
-        stale.append(rel)
+        # A CRLF script matches line for line, so only its line endings are
+        # stale: it keeps its own text, and its columns.
+        crlf_only = matches(old, new)
+        stale.append((rel, " (CRLF line endings)" if crlf_only else ""))
         if not read_only:
             with open(path, "w", encoding="utf-8", newline="") as fh:
-                fh.write(new)
+                fh.write(lf(old) if crlf_only else new)
 
     verb = "stale" if read_only else "rewritten"
     print("verify_in_maya.py: %d fresh, %d %s" % (len(fresh), len(stale), verb))
-    for rel in stale:
-        print("   %s %s" % (verb, rel))
+    for rel, why in stale:
+        print("   %s %s%s" % (verb, rel, why))
     if args.check and stale:
         print("\nSTALE. Run: mayapy tools/regen_verify_scripts.py")
         return 1

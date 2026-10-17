@@ -639,7 +639,8 @@ def write_manifest(out_dir: str, name: str, plan: Plan, report: dict, *,
     }
     path = os.path.join(bundler.build_dir_for(out_dir), "manifest.json")
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", encoding="utf-8") as fh:
+    # newline="": LF on every host, as compile_controller writes its manifest.
+    with open(path, "w", newline="", encoding="utf-8") as fh:
         json.dump(man, fh, indent=1)
     return path
 

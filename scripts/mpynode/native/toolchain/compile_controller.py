@@ -137,7 +137,8 @@ def _make_port_log_cb(progress_cb, node, i, n, log_path):
             _emit(progress_cb, "log", node, "line", line, i, n)
         if log_path:
             try:
-                with open(log_path, "a", encoding="utf-8") as fh:
+                with open(log_path, "a", newline="",
+                          encoding="utf-8") as fh:
                     fh.write(line if str(line).endswith("\n") else str(line) + "\n")
             except Exception:
                 pass
@@ -584,12 +585,16 @@ def _write_stage(out_dir, type_name, stage, text):
 
     Best-effort: a build must never fail because its audit trail could not be
     written. Returns the path, or None.
+
+    Every generated text file this module writes uses ``newline=""``: LF on
+    every host, as the repository stores them. A text-mode write made each one
+    CRLF on Windows.
     """
     try:
         d = bundler.stage_dir_for(out_dir, type_name)
         os.makedirs(d, exist_ok=True)
         path = os.path.join(d, stage + ".cpp")
-        with open(path, "w", encoding="utf-8") as fh:
+        with open(path, "w", newline="", encoding="utf-8") as fh:
             fh.write(text)
         return path
     except OSError:
@@ -870,7 +875,12 @@ def compile_plugin(specs, plugin_name, out_dir, *, strict=True, verify=True,
         cached    = port_cache.get_path(key) if use_cache else None
         if cached:
             # HIT: copy the cached .cpp into the node out-dir; no LLM, no codegen.
-            shutil.copyfile(cached, cpp_dst)
+            # Copied as text and written LF: an entry a Windows host cached
+            # before the cache wrote LF is CRLF, and a byte copy kept that.
+            with open(cached, encoding="utf-8") as _fh:
+                _cached_text = _fh.read()
+            with open(cpp_dst, "w", newline="", encoding="utf-8") as _fh:
+                _fh.write(_cached_text)
             # No holes in the stage history: re-derive the deterministic skeleton
             # (cheap, no LLM) so build/stages/<Type>/1_transpiled.cpp exists for a
             # cached node too. A codegen change since caching can make this raise
@@ -1092,7 +1102,7 @@ def compile_plugin(specs, plugin_name, out_dir, *, strict=True, verify=True,
             if not reason:
                 new = emit_vp2_override.inject_vp2_override(src, spec)
                 if new != src:
-                    with open(cpp, "w", encoding="utf-8") as fh:
+                    with open(cpp, "w", newline="", encoding="utf-8") as fh:
                         fh.write(new)
                     _emit(progress_cb, "port", tn, "ok",
                           "VP2 viewport override injected", 0, n_total)
@@ -1659,7 +1669,7 @@ def _write_manifest(out_dir, plugin_name, bundle_path, rows, strict, provider,
     os.makedirs(build_dir, exist_ok=True)
     path = os.path.join(build_dir, "manifest.json")
     tmp  = "%s.tmp-%d" % (path, os.getpid())
-    with open(tmp, "w", encoding="utf-8") as fh:
+    with open(tmp, "w", newline="", encoding="utf-8") as fh:
         # NOT sort_keys: the embedded spec carries attribute DECLARATION ORDER
         # only as its dict INSERTION order (emit_attr iterates spec[kind].items()),
         # and unlike the ``.mpn`` attr map there is no per-meta ``order`` field to

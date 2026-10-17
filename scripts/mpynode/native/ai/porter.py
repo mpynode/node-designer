@@ -188,6 +188,14 @@ def _write_verify_script(spec: dict, out_dir: str) -> str:
     return verify_path
 
 
+def _write_cpp(cpp_path: str, text: str) -> None:
+    """Write the node's ``.cpp`` with ``newline=""``, so LF on every host, as
+    the repository stores every generated ``.cpp``. A text-mode write made it
+    CRLF on Windows."""
+    with open(cpp_path, "w", newline="", encoding="utf-8") as f:
+        f.write(text)
+
+
 def apply_type_name(spec: dict, type_name: str) -> dict:
     """Override the generated node *type* name (and derived class name).
 
@@ -295,8 +303,7 @@ def port_node(spec: dict, out_dir: str, complete_fn=None,
     # no fix-loop. Still emit the build + verify helpers and return the same shape.
     if codegen.PORT_BEGIN not in inline_skeleton:
         _log("[%s] deterministic compute (verified helpers); compiling..." % name)
-        with open(cpp_path, "w", encoding="utf-8") as f:
-            f.write(inline_skeleton)
+        _write_cpp(cpp_path, inline_skeleton)
         ok, log, bundle = compile_cpp(cpp_path, spec, out_dir, maya=maya,
                                       log_cb=log_cb)
         _write_build_script(spec, out_dir)
@@ -315,8 +322,7 @@ def port_node(spec: dict, out_dir: str, complete_fn=None,
         n_regions = inline_skeleton.count(codegen.PORT_BEGIN)
         _log("[%s] AI assist off; stopping at the deterministic stage "
              "(%d region(s) unported)" % (name, n_regions))
-        with open(cpp_path, "w", encoding="utf-8") as f:
-            f.write(inline_skeleton)
+        _write_cpp(cpp_path, inline_skeleton)
         return {
             "ok": False, "node": name, "cpp": cpp_path, "bundle": None,
             "fix_rounds": 0, "compiler_log": "", "verify_script": None,
@@ -357,8 +363,7 @@ def port_node(spec: dict, out_dir: str, complete_fn=None,
     _log("[%s] requesting AI compute body..." % name)
     body = complete_fn(system, user)
     cpp  = _splice(skeleton, body)
-    with open(cpp_path, "w", encoding="utf-8") as f:
-        f.write(cpp)
+    _write_cpp(cpp_path, cpp)
 
     _log("[%s] compiling (initial)..." % name)
     ok, log, bundle = compile_cpp(cpp_path, spec, out_dir, maya=maya,
@@ -377,8 +382,7 @@ def port_node(spec: dict, out_dir: str, complete_fn=None,
         )
         body = complete_fn(system, fix_user)
         cpp  = _splice(skeleton, body)
-        with open(cpp_path, "w", encoding="utf-8") as f:
-            f.write(cpp)
+        _write_cpp(cpp_path, cpp)
         ok, log, bundle = compile_cpp(cpp_path, spec, out_dir, maya=maya,
                                        log_cb=log_cb)
 
@@ -392,8 +396,7 @@ def port_node(spec: dict, out_dir: str, complete_fn=None,
         system, user = build_prompt(spec, inline_skeleton, shared_protos=None)
         body = complete_fn(system, user)
         cpp  = _splice(inline_skeleton, body)
-        with open(cpp_path, "w", encoding="utf-8") as f:
-            f.write(cpp)
+        _write_cpp(cpp_path, cpp)
         ok, log, bundle = compile_cpp(cpp_path, spec, out_dir, maya=maya,
                                        log_cb=log_cb)
         rounds2 = 0
@@ -408,8 +411,7 @@ def port_node(spec: dict, out_dir: str, complete_fn=None,
             )
             body = complete_fn(system, fix_user)
             cpp  = _splice(inline_skeleton, body)
-            with open(cpp_path, "w", encoding="utf-8") as f:
-                f.write(cpp)
+            _write_cpp(cpp_path, cpp)
             ok, log, bundle = compile_cpp(cpp_path, spec, out_dir, maya=maya,
                                        log_cb=log_cb)
         rounds += rounds2
