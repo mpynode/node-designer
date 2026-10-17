@@ -60,9 +60,14 @@ class TestTimePair(unittest.TestCase):
         self.v = verify
 
     def test_a_ten_fold_difference_is_measured_as_a_ten_fold_ratio(self):
+        # 20 ms vs 200 ms. On a busy machine a thread woken from a sleep can
+        # wait a scheduler tick (15.6 ms on Windows) or more before it runs
+        # again, and that wait adds the same to both sides: 1 ms vs 10 ms read
+        # 1.6x with every core busy. Here the ratio stays above 4 while the
+        # wait stays under 40 ms.
         perturbs = [lambda: None, lambda: None]
         res = self.v._time_pair(None, "py", "cpp",
-                                _sleeper(0.001), _sleeper(0.010),
+                                _sleeper(0.020), _sleeper(0.200),
                                 perturbs, time.perf_counter() + 60.0)
         self.assertIsNotNone(res)
         self.assertEqual(res["n"], self.v._TIMING_SAMPLES)

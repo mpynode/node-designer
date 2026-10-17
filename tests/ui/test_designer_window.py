@@ -5,6 +5,27 @@ Consolidated from: test_designer_reopen_autoselect.py, test_phase16.py, test_pha
 
 from __future__ import annotations
 
+import os
+
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+# A QApplication made at import and held, so it exists before setUpModule's
+# standalone_init. maya.standalone.initialize() makes a QGuiApplication when no
+# Qt application exists yet, and QMainWindow() needs a QApplication: without
+# one, TestShowDesignerRestoresAMinimizedWindow aborted the process
+# (0xC0000409). In the full suite another module made one at import.
+_QAPP = None
+try:
+    from PySide6.QtWidgets import QApplication as _QApplication
+except Exception:
+    try:
+        from PySide2.QtWidgets import QApplication as _QApplication
+    except Exception:
+        _QApplication = None
+if _QApplication is not None:
+    _QAPP = (_QApplication.instance()
+             or _QApplication(["mayapy-designer-window-test"]))
+
 # ===================== from test_designer_reopen_autoselect.py =====================
 import ast
 import inspect
@@ -688,8 +709,19 @@ class TestShowDesignerRestoresAMinimizedWindow(unittest.TestCase):
 
         try:
             from PySide6.QtGui import QGuiApplication
+            from PySide6.QtWidgets import QApplication
         except ImportError:
             from PySide2.QtGui import QGuiApplication
+            from PySide2.QtWidgets import QApplication
+
+        # Without a QApplication, QMainWindow() aborts the whole run instead
+        # of failing this test.
+        app = QGuiApplication.instance()
+        if not isinstance(app, QApplication):
+            self.fail("no QApplication to build the window in (found %s): "
+                      "maya.standalone.initialize() ran before this module "
+                      "was imported and made a QGuiApplication"
+                      % type(app).__name__)
 
         parent = QMainWindow()
         self.addCleanup(parent.deleteLater)

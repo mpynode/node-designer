@@ -19,7 +19,7 @@ def setUpModule():
 
 
 # A real, importable MPyNode subclass used by the import-on-wrap / ls / stamp
-# tests. Its dotted path is stable: this test module is always importable.
+# tests.
 from mpynode.wrappers._mpy_node import MPyNode  # noqa: E402
 
 
@@ -27,7 +27,11 @@ class _PyClassSub(MPyNode):
     """Test-only logical subclass of MPyNode (native type stays mPyNode)."""
 
 
-_SUB_PATH = "tests.authoring.test_pyclass_identity._PyClassSub"
+# Read from the class, the way create() stamps it. Run as a script (mayapy
+# tests/authoring/test_pyclass_identity.py) this module is __main__: the
+# spelled-out "tests.authoring.test_pyclass_identity._PyClassSub" then imported
+# a second copy of the module, whose _PyClassSub is another class.
+_SUB_PATH = _PyClassSub.__module__ + "." + _PyClassSub.__qualname__
 
 
 # Logical subclasses of every SUBTYPE wrapper -- the auto-stamp on create()
