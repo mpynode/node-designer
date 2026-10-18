@@ -7616,7 +7616,7 @@ createNode blendShape -n "bls_head";
 	setAttr ".mlpr" 0;
 	setAttr ".pndr[0]"  0;
 	setAttr ".tgdt[0].cid" -type "Int32Array" 1 0 ;
-	setAttr ".aal" -type "attributeAlias" ;
+	setAttr ".aal" -type "attributeAlias" 2 "jawDrop" "weight[0]" ;
 createNode animCurveTU -n "bls_head_jawDrop";
 	rename -uid "15335DFF-F348-A982-C9B0-1EB7908B1F34";
 	setAttr ".tan" 18;

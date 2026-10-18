@@ -3808,7 +3808,7 @@ createNode blendShape -n "bs_smile";
 	setAttr ".mlpr" 0;
 	setAttr ".pndr[0]"  0;
 	setAttr ".tgdt[0].cid" -type "Int32Array" 1 0 ;
-	setAttr ".aal" -type "attributeAlias" ;
+	setAttr ".aal" -type "attributeAlias" 2 "smile" "weight[0]" ;
 createNode animCurveTU -n "bs_smile_smile";
 	rename -uid "76133749-46B2-9DCB-A67C-FAB1EA84FD0B";
 	setAttr ".tan" 18;
