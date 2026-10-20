@@ -29,6 +29,7 @@ from __future__ import annotations
 from mpynode.ui import preferences
 from mpynode.ui.qt_wrapper import (
     Qt,
+    QCheckBox,
     QDialog,
     QHBoxLayout,
     QLabel,
@@ -80,6 +81,18 @@ def _type_id_is_valid(text: str) -> bool:
     except Exception:
         return False
     return 0 <= val <= 0x0007FFFF
+
+
+def _is_locator(py_node) -> bool:
+    """Whether the node is an mPyLocator, the one type a drawing flag applies to."""
+    if type(py_node).__name__ == "MPyLocator":
+        return True
+    try:
+        from maya import cmds
+
+        return cmds.nodeType(py_node.get_name()) == "mPyLocator"
+    except Exception:
+        return False
 
 
 def _authors_to_text(authors) -> str:
@@ -174,6 +187,19 @@ class NDNodeInfoDialog(QDialog):
         self._type_id_edit.textChanged.connect(self._refresh_type_id_state)
         outer.addLayout(_row("Type ID:", self._type_id_edit))
 
+        # Locators only: a static drawing (see _common.draw.static_draw) is
+        # rebuilt only when an input changes; this forces a rebuild on every
+        # refresh, for a drawing that reads something the analysis cannot see.
+        self._dynamic_draw_check = QCheckBox("Always redraw", self)
+        self._dynamic_draw_check.setToolTip(
+            "Rebuild this locator's drawing on every viewport refresh.\n"
+            "Leave it off: a drawing that reads only its inputs is then built\n"
+            "once per change, in Python and in the compiled node. Turn it on\n"
+            "when the drawing reads something that is not an input -- another\n"
+            "node, the scene, a global changed by a method.")
+        self._dynamic_draw_check.setVisible(_is_locator(self._py_node))
+        outer.addLayout(_row("Drawing:", self._dynamic_draw_check))
+
         # License + Description share a draggable splitter (equal by default).
         # Scrollbars are ALWAYS-ON: macOS overlay bars fade out, so
         # ScrollBarAsNeeded leaves nothing to grab on a long license.
@@ -247,6 +273,7 @@ class NDNodeInfoDialog(QDialog):
         self._license_edit.setPlainText(str(meta.get("license") or ""))
         self._description_edit.setPlainText(str(meta.get("description") or ""))
         self._type_id_edit.setText(str(meta.get("type_id") or ""))
+        self._dynamic_draw_check.setChecked(bool(meta.get("dynamic_draw")))
 
         # placeholder hints from global defaults
         self._authors_edit.setPlaceholderText(self._default("authors"))
@@ -280,13 +307,17 @@ class NDNodeInfoDialog(QDialog):
     def metadata_from_fields(self) -> dict:
         """The editable state as a metadata dict (empty fields stay empty so the
         compile-time merge can fall back to the live global default)."""
-        return {
+        meta = {
             "authors":     _text_to_authors(self._authors_edit.toPlainText()),
             "version":     self._version_edit.text().strip(),
             "license":     self._license_edit.toPlainText().strip(),
             "description": self._description_edit.toPlainText().strip(),
             "type_id":     self._type_id_edit.text().strip(),
         }
+        # kept only when on, so a node that never sets it keeps its spec
+        if _is_locator(self._py_node) and self._dynamic_draw_check.isChecked():
+            meta["dynamic_draw"] = True
+        return meta
 
     def save(self) -> None:
         """Persist via ``set_metadata`` and accept. Best-effort: a write failure

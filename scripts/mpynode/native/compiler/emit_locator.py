@@ -71,6 +71,11 @@ _LOCATOR_INCLUDES_HOVER = [
 # common pre-#ifndef block; attr-function-set + plug-read headers are plugin-only
 # (initialize()/prepareForDraw() live inside #ifndef MPYNODE_PROBE).
 _LOCATOR_INCLUDES_GENERIC_COMMON = ["maya/MMatrix.h"]
+# draw_mode "static": the selection callback and the Evaluation Manager hook.
+_LOCATOR_INCLUDES_STATIC = [
+    "atomic", "maya/MModelMessage.h", "maya/MMessage.h", "maya/MEvaluationNode.h",
+    "maya/MDGContext.h",
+]
 _LOCATOR_INCLUDES_GENERIC_PLUGIN = [
     "maya/MFnUnitAttribute.h", "maya/MFnCompoundAttribute.h",
     "maya/MFnMatrixAttribute.h", "maya/MFnMatrixData.h", "maya/MAngle.h",
@@ -811,9 +816,9 @@ def _generate_locator_cpp(spec, for_port=False):
     the Python ``evaluateDrawItems`` (incl. the polygon buffer); the on-screen
     draw is the user's visual check.
     """
-    # No deterministic lowering exists for this node type -- the
-    # compute ALWAYS goes to the AI porter, so a file read could
-    # never be attached to real buffers.
+    # A file read is never attached to real buffers here: the deterministic
+    # lowering (nd_lower.try_lower_locator) covers the draw subset only, and
+    # anything else goes to the AI porter, which cannot wire file IO.
     nd_io_cpp.reject_unlowered_io(spec, None, "locator")
     sg             = spec["suggested"]
     cls            = sg["class_name"]
@@ -833,6 +838,11 @@ def _generate_locator_cpp(spec, for_port=False):
     svars       = _loc_stored_vars(spec)
     has_mesh    = bool(meshes)
     needs_hover = bool(spec.get("needs_hover"))
+    # draw_mode "static" (_common.draw.static_draw, set by the spec builders):
+    # the drawing depends on its inputs alone and needs no camera, so the draw
+    # override stays clean until an input changes. Everything this adds is
+    # gated on it: a dynamic locator's C++ is byte-identical to before.
+    static_draw = spec.get("draw_mode") == "static"
     tween_cls   = cls + "Tween"
 
     # ---- companion commands (Methods tab @maya_command defs) ----------------
@@ -918,6 +928,8 @@ def _generate_locator_cpp(spec, for_port=False):
         plug_inc += _LOCATOR_INCLUDES_TWEEN
     if generics:
         plug_inc += _LOCATOR_INCLUDES_GENERIC_PLUGIN
+    if static_draw:
+        plug_inc += _LOCATOR_INCLUDES_STATIC
     if has_commands:
         plug_inc += cmd_out["includes"]
     if disp_out["includes"]:
@@ -1302,10 +1314,14 @@ def _generate_locator_cpp(spec, for_port=False):
     redraw_triggers = ["attr == a_%s" % x["member"]
                        for x in scalars + meshes + strings + colors]
     redraw_triggers += ["attr == %s" % gm["member"] for gm in generics]
+    # the same plugs as attributes, for MEvaluationNode::dirtyPlugExists
+    trigger_attrs = ["a_%s" % x["member"] for x in scalars + meshes + strings + colors]
+    trigger_attrs += [gm["member"] for gm in generics]
     if needs_region:
         redraw_triggers.append(
             'attr == MFnDependencyNode(thisMObject()).attribute("%s")'
             % _REGION_ATTR)
+        trigger_attrs.append('MFnDependencyNode(thisMObject()).attribute("%s")' % _REGION_ATTR)
     # ---- the locator node ----------------------------------------------------
     # The extent of each node's last drawing, for boundingBox() below.
     # Measured in prepareForDraw, where the buffers exist -- the node itself
@@ -1336,6 +1352,18 @@ def _generate_locator_cpp(spec, for_port=False):
     L.append("        if (it == g_bbox.end()) return MPxLocatorNode::boundingBox();")
     L.append("        return it->second;")
     L.append("    }")
+    if static_draw:
+        L.append("    // draw_mode static: the drawing changes only with its inputs. The box")
+        L.append("    // of the last drawing stands until one changes (the override culls on")
+        L.append("    // it). m_fedDraw counts inputs fed by a connection: the only ones an")
+        L.append("    // Evaluation Manager frame changes without a setDependentsDirty.")
+        L.append("    std::atomic<bool> m_drawnBoxValid{false};")
+        if redraw_triggers:
+            L.append("    std::atomic<int>  m_fedDraw{0};")
+            L.append("    bool    _isRedrawPlug(const MPlug& plug) const;")
+            L.append("    MStatus connectionMade(const MPlug& plug, const MPlug& other, bool asSrc) override;")
+            L.append("    MStatus connectionBroken(const MPlug& plug, const MPlug& other, bool asSrc) override;")
+            L.append("    MStatus preEvaluation(const MDGContext& context, const MEvaluationNode& node) override;")
     if redraw_triggers:
         L.append("    MStatus setDependentsDirty(const MPlug& plug, MPlugArray& affected) override;")
         L.append("    // nodeState != Normal, cached as dirty_affects.api2_dirty_gate caches")
@@ -1490,11 +1518,52 @@ def _generate_locator_cpp(spec, for_port=False):
         L.append("    while (root.isChild() || root.isElement())")
         L.append("        root = root.isElement() ? root.array() : root.parent();")
         L.append("    const MObject attr = root.attribute();")
-        L.append("    if (%s)" % (" ||\n        ").join(redraw_triggers))
-        L.append("        MHWRender::MRenderer::setGeometryDrawDirty(thisMObject());")
+        if static_draw:
+            L.append("    if (%s) {" % (" ||\n        ").join(redraw_triggers))
+            L.append("        m_drawnBoxValid = false;")
+            L.append("        MHWRender::MRenderer::setGeometryDrawDirty(thisMObject());")
+            L.append("    }")
+        else:
+            L.append("    if (%s)" % (" ||\n        ").join(redraw_triggers))
+            L.append("        MHWRender::MRenderer::setGeometryDrawDirty(thisMObject());")
         L.append("    return MS::kSuccess;")
         L.append("}")
         L.append("")
+        if static_draw:
+            L.append("// draw_mode static: the Evaluation Manager hook. Under EM playback a")
+            L.append("// keyed or driven input changes with no setDependentsDirty; marking the")
+            L.append("// geometry draw dirty here (topology changed: the default) is what brings")
+            L.append("// prepareForDraw back -- measured: a dirty mark with topologyChanged=false")
+            L.append("// re-ran addUIDrawables only, on the old drawing. Skipped outright for a")
+            L.append("// node with no connected input, which the EM still evaluates every frame")
+            L.append("// its parent moves.")
+            L.append("bool %s::_isRedrawPlug(const MPlug& plug) const {" % cls)
+            L.append("    MPlug root(plug);")
+            L.append("    while (root.isChild() || root.isElement())")
+            L.append("        root = root.isElement() ? root.array() : root.parent();")
+            L.append("    const MObject attr = root.attribute();")
+            L.append("    return %s;" % (" ||\n        ").join(redraw_triggers))
+            L.append("}")
+            L.append("MStatus %s::connectionMade(const MPlug& plug, const MPlug& other, bool asSrc) {" % cls)
+            L.append("    if (!asSrc && _isRedrawPlug(plug)) m_fedDraw.fetch_add(1, std::memory_order_relaxed);")
+            L.append("    return MPxLocatorNode::connectionMade(plug, other, asSrc);")
+            L.append("}")
+            L.append("MStatus %s::connectionBroken(const MPlug& plug, const MPlug& other, bool asSrc) {" % cls)
+            L.append("    if (!asSrc && _isRedrawPlug(plug)) m_fedDraw.fetch_sub(1, std::memory_order_relaxed);")
+            L.append("    return MPxLocatorNode::connectionBroken(plug, other, asSrc);")
+            L.append("}")
+            L.append("MStatus %s::preEvaluation(const MDGContext& context, const MEvaluationNode& node) {" % cls)
+            L.append("    if (!context.isNormal() || m_fedDraw.load(std::memory_order_relaxed) <= 0)")
+            L.append("        return MS::kSuccess;")
+            L.append("    if (m_suspended > 0) return MS::kSuccess;")
+            L.append("    if (%s) {" % (" ||\n        ").join(
+                "node.dirtyPlugExists(%s)" % a for a in trigger_attrs))
+            L.append("        m_drawnBoxValid = false;")
+            L.append("        MHWRender::MRenderer::setGeometryDrawDirty(thisMObject());")
+            L.append("    }")
+            L.append("    return MS::kSuccess;")
+            L.append("}")
+            L.append("")
     if has_commands:
         # Companion MPxCommand classes (region helpers + the recognised cmds).
         # Placed in the scaffold head AFTER <cls>::id is defined (the classes
@@ -1541,6 +1610,48 @@ def _generate_locator_cpp(spec, for_port=False):
     L.append("static void _setBBox(unsigned hash, const MBoundingBox& bb, bool any) {")
     L.append("    if (any) g_bbox[hash] = bb; else g_bbox.erase(hash);")
     L.append("}")
+    if static_draw:
+        L.append("// draw_mode static: whether anything drawn is see-through, so only a")
+        L.append("// drawing that needs it goes through the transparent pass.")
+        L.append("static bool _anyTranslucent(const %s& d) {" % data_cls)
+        L.append("    for (size_t i = 0; i < d.lineColor.size(); ++i)  if (d.lineColor[i].a  < 1.0f) return true;")
+        L.append("    for (size_t i = 0; i < d.pointColor.size(); ++i) if (d.pointColor[i].a < 1.0f) return true;")
+        L.append("    for (size_t i = 0; i < d.textColor.size(); ++i)  if (d.textColor[i].a  < 1.0f) return true;")
+        L.append("    for (size_t i = 0; i < d.shapeColor.size(); ++i) if (d.shapeColor[i].a < 1.0f) return true;")
+        L.append("    for (size_t p = 0; p < d.polys.size(); ++p) {")
+        L.append("        const DrawPoly& pg = d.polys[p];")
+        L.append("        if (pg.colorMode == 0 && pg.uniform.a < 1.0f) return true;")
+        L.append("        for (size_t i = 0; i < pg.faceColors.size(); ++i)       if (pg.faceColors[i].a       < 1.0f) return true;")
+        L.append("        for (size_t i = 0; i < pg.vertexColors.size(); ++i)     if (pg.vertexColors[i].a     < 1.0f) return true;")
+        L.append("        for (size_t i = 0; i < pg.faceVertexColors.size(); ++i) if (pg.faceVertexColors[i].a < 1.0f) return true;")
+        L.append("        if (pg.hasWire && pg.wireColor.a < 1.0f) return true;")
+        L.append("    }")
+        L.append("    return false;")
+        L.append("}")
+        L.append("// draw_mode static: a clean override is not re-prepared when the selection")
+        L.append("// changes, and the selection tint is read in prepareForDraw. Every static")
+        L.append("// node drawn so far is marked dirty on a selection change.")
+        L.append("static std::map<unsigned, MObjectHandle> g_staticNodes;")
+        L.append("static MCallbackId g_staticSelCb = 0;")
+        L.append("static void _staticOnSelection(void*) {")
+        L.append("    for (std::map<unsigned, MObjectHandle>::iterator it = g_staticNodes.begin();")
+        L.append("         it != g_staticNodes.end();) {")
+        L.append("        if (!it->second.isValid()) { g_staticNodes.erase(it++); continue; }")
+        L.append("        MHWRender::MRenderer::setGeometryDrawDirty(it->second.object());")
+        L.append("        ++it;")
+        L.append("    }")
+        L.append("}")
+        L.append("static void _ensureStaticStarted() {")
+        L.append("    if (g_staticSelCb) return;")
+        L.append("    MStatus s;")
+        L.append("    g_staticSelCb = MModelMessage::addCallback(MModelMessage::kActiveListModified,")
+        L.append("                                               _staticOnSelection, NULL, &s);")
+        L.append("    if (!s) g_staticSelCb = 0;")
+        L.append("}")
+        L.append("static void _stopStatic() {")
+        L.append("    if (g_staticSelCb) { MMessage::removeCallback(g_staticSelCb); g_staticSelCb = 0; }")
+        L.append("    g_staticNodes.clear();")
+        L.append("}")
     L.append("class %s : public MHWRender::MPxDrawOverride {" % draw_cls)
     L.append("public:")
     L.append("    static MHWRender::MPxDrawOverride* creator(const MObject& obj) {")
@@ -1551,8 +1662,25 @@ def _generate_locator_cpp(spec, for_port=False):
     L.append("        return MHWRender::kAllDevices;")
     L.append("    }")
     L.append("    bool hasUIDrawables() const override { return true; }")
-    L.append("    bool isTransparent() const override { return true; }")
-    L.append("    bool isBounded(const MDagPath&, const MDagPath&) const override { return false; }")
+    if static_draw:
+        L.append("    // static: opaque unless something drawn is see-through; culled on the")
+        L.append("    // box of the last drawing, until an input changes (then unbounded")
+        L.append("    // until the next prepareForDraw measures the new drawing).")
+        L.append("    bool isTransparent() const override { return m_transparent; }")
+        L.append("    bool isBounded(const MDagPath& objPath, const MDagPath&) const override {")
+        L.append("        const %s* n = dynamic_cast<const %s*>(MFnDependencyNode(objPath.node()).userNode());"
+                 % (cls, cls))
+        L.append("        return n && n->m_drawnBoxValid.load(std::memory_order_relaxed)")
+        L.append("               && g_bbox.count(MObjectHandle(objPath.node()).hashCode()) != 0;")
+        L.append("    }")
+        L.append("    MBoundingBox boundingBox(const MDagPath& objPath, const MDagPath&) const override {")
+        L.append("        std::map<unsigned, MBoundingBox>::const_iterator it =")
+        L.append("            g_bbox.find(MObjectHandle(objPath.node()).hashCode());")
+        L.append("        return it == g_bbox.end() ? MBoundingBox() : it->second;")
+        L.append("    }")
+    else:
+        L.append("    bool isTransparent() const override { return true; }")
+        L.append("    bool isBounded(const MDagPath&, const MDagPath&) const override { return false; }")
     L.append("    MUserData* prepareForDraw(const MDagPath& objPath,")
     L.append("                              const MDagPath& cameraPath,")
     L.append("                              const MHWRender::MFrameContext& frameContext,")
@@ -1563,7 +1691,11 @@ def _generate_locator_cpp(spec, for_port=False):
     L.append("                        const MUserData* userData) override;")
     L.append("private:")
     L.append("    %s(const MObject& obj)" % draw_cls)
-    L.append("        : MHWRender::MPxDrawOverride(obj, NULL, true) {}")
+    if static_draw:
+        L.append("        : MHWRender::MPxDrawOverride(obj, NULL, false) {}")
+        L.append("    bool m_transparent = false;")
+    else:
+        L.append("        : MHWRender::MPxDrawOverride(obj, NULL, true) {}")
     L.append("};")
     L.append("")
     # ---- prepareForDraw ------------------------------------------------------
@@ -1768,7 +1900,16 @@ def _generate_locator_cpp(spec, for_port=False):
     L.append("    // is the same key boundingBox() looks up.")
     L.append("    { const unsigned _bbHash = MObjectHandle(objPath.node()).hashCode();")
     L.append("      MBoundingBox _bb; const bool _anyBB = _drawnBounds(*data, _bb);")
-    L.append("      _setBBox(_bbHash, _bb, _anyBB); }")
+    if static_draw:
+        L.append("      _setBBox(_bbHash, _bb, _anyBB);")
+        L.append("      m_transparent = _anyTranslucent(*data);")
+        L.append("      %s* _self = dynamic_cast<%s*>(MFnDependencyNode(objPath.node()).userNode());"
+                 % (cls, cls))
+        L.append("      if (_self) _self->m_drawnBoxValid = true;")
+        L.append("      _ensureStaticStarted();")
+        L.append("      g_staticNodes[_bbHash] = MObjectHandle(objPath.node()); }")
+    else:
+        L.append("      _setBBox(_bbHash, _bb, _anyBB); }")
     L.append("    data->selected = inp.selected;")
     L.append("    data->selColor = MColor(inp.selColor[0], inp.selColor[1], inp.selColor[2], inp.selColor[3]);")
     L.append("    return data;")
@@ -1921,12 +2062,30 @@ def _generate_locator_cpp(spec, for_port=False):
     L.append("    for (size_t ci = 0; ci < d->cmds.size(); ++ci) {")
     L.append("        const int i = d->cmds[ci].index;")
     L.append("        switch (d->cmds[ci].slot) {")
-    L.append("            case 0: {  // line")
-    L.append("                MPoint a = d->lineStart[i], b = d->lineEnd[i];")
-    L.append("                if (d->lineWorld[i]) { a = a * wInv; b = b * wInv; }")
-    L.append("                dm.setColor(hlAll ? _selTint(d->selColor, d->lineColor[i]) : d->lineColor[i]);")
-    L.append("                dm.line(a, b);")
-    L.append("            } break;")
+    if static_draw:
+        L.append("            case 0: {  // lines: one kLines mesh per run of same-coloured segments")
+        L.append("                const MColor c0 = hlAll ? _selTint(d->selColor, d->lineColor[i]) : d->lineColor[i];")
+        L.append("                MPointArray run;")
+        L.append("                size_t cj = ci;")
+        L.append("                for (; cj < d->cmds.size() && d->cmds[cj].slot == 0; ++cj) {")
+        L.append("                    const int j = d->cmds[cj].index;")
+        L.append("                    const MColor cc = hlAll ? _selTint(d->selColor, d->lineColor[j]) : d->lineColor[j];")
+        L.append("                    if (!(cc == c0)) break;")
+        L.append("                    MPoint a = d->lineStart[j], b = d->lineEnd[j];")
+        L.append("                    if (d->lineWorld[j]) { a = a * wInv; b = b * wInv; }")
+        L.append("                    run.append(a); run.append(b);")
+        L.append("                }")
+        L.append("                dm.setColor(c0);")
+        L.append("                dm.mesh(MHWRender::MUIDrawManager::kLines, run);")
+        L.append("                ci = cj - 1;")
+        L.append("            } break;")
+    else:
+        L.append("            case 0: {  // line")
+        L.append("                MPoint a = d->lineStart[i], b = d->lineEnd[i];")
+        L.append("                if (d->lineWorld[i]) { a = a * wInv; b = b * wInv; }")
+        L.append("                dm.setColor(hlAll ? _selTint(d->selColor, d->lineColor[i]) : d->lineColor[i]);")
+        L.append("                dm.line(a, b);")
+        L.append("            } break;")
     L.append("            case 1: {  // point")
     L.append("                dm.setColor(hlAll ? _selTint(d->selColor, d->pointColor[i]) : d->pointColor[i]);")
     L.append("                dm.setPointSize(_pointPx(d->pointSize[i])); dm.point(d->pointPos[i]);")
@@ -1973,6 +2132,8 @@ def _generate_locator_cpp(spec, for_port=False):
              % (cls, cls, draw_cls))
     L.append("}")
     L.append("MStatus uninitializePlugin(MObject obj) {")
+    if static_draw:
+        L.append("    _stopStatic();  // the selection callback of the static drawing")
     if needs_hover:
         L.append("    _stopHover();  // tear down the hover timer + scene callbacks")
     elif svars:

@@ -101,6 +101,32 @@ from mpynode._common.draw.draw_buffers import (
 _HUGE_EXTENT = 1e29
 
 
+
+# Node sources a static drawing's verdict reads besides the expression (which
+# already recompiles through setInternalValue / ensure_expr_code).
+_SOURCE_PLUGS = frozenset(("_initSource", "_methodsSource", "_metadata"))
+
+def _value_fingerprint(value):
+    """A comparable stand-in for an input value; TypeError for a type with none.
+
+    Arrays are hashed (an input mesh's points can be large); anything this does
+    not know -- an MObject, a geometry wrapper -- raises, so a node with such an
+    input rebuilds its drawing every refresh, as before.
+    """
+    if value is None or isinstance(value, (bool, int, float, str, bytes)):
+        return (type(value).__name__, value)
+    if isinstance(value, np.ndarray):
+        import hashlib
+
+        arr = np.ascontiguousarray(value)
+        return ("ndarray", arr.dtype.str, arr.shape,
+                hashlib.blake2b(arr.tobytes(), digest_size=16).digest())
+    if isinstance(value, (list, tuple)):
+        return (type(value).__name__, tuple(_value_fingerprint(v) for v in value))
+    if isinstance(value, dict):
+        return ("dict", tuple(sorted((str(k), _value_fingerprint(v)) for k, v in value.items())))
+    raise TypeError("no fingerprint for %s" % type(value).__name__)
+
 class MPyLocator(omui.MPxLocatorNode):
     NODE_NAME              = "mPyLocator"
     NODE_ID                = om.MTypeId(0x00135702)
@@ -133,6 +159,19 @@ class MPyLocator(omui.MPxLocatorNode):
         # Object-space extent of the LAST drawing (see boundingBox); None until
         # the gizmo has drawn once.
         self._draw_bounds = None
+        # Static drawing (_common.draw.static_draw): the sources it was judged
+        # on, the verdict, and the last harvest with the values it was built
+        # from. A static expression re-runs only when one of those changes.
+        self._static_sig = None
+        self._static_ok  = False
+        # bumped by setDependentsDirty when Init, Methods or the metadata change,
+        # so their text is read only then, not on every refresh
+        self._sources_epoch  = 0
+        self._sources_seen   = None
+        self._sources_text   = ("", "", "")
+        self._static_key     = None
+        self._static_harvest = None
+        self._static_bounds  = None
 
     @staticmethod
     def creator():
@@ -287,6 +326,7 @@ class MPyLocator(omui.MPxLocatorNode):
 
         # Read stored variables for self.X access.
         stored_vars = {}
+        sv_str      = ""
         try:
             sv_str = fn_node.findPlug(
                 MPyLocator._stored_vars_data_attr, True
@@ -355,6 +395,17 @@ class MPyLocator(omui.MPxLocatorNode):
         if self._expr_code is None:
             self._draw_bounds = None       # nothing drawn -> locator default box
             return dict(_EMPTY)
+
+        # A STATIC drawing depends on nothing but these inputs, the stored vars
+        # and the node's sources: while all of them stay the same, the last
+        # harvest IS this frame's drawing. The draw override still redoes the
+        # camera-dependent work (culling, text size, selection tint) each
+        # refresh, on these unchanged commands.
+        static_key = self._static_draw_key(fn_node, input_map, input_values, stored_vars, sv_str)
+        if (static_key is not None and static_key == self._static_key
+                and self._static_harvest is not None):
+            self._draw_bounds = self._static_bounds
+            return self._static_harvest
 
         # Capture stderr + broadcast to the UI Log panel via the Qt-free
         # log_bus, matching every other node type.
@@ -429,7 +480,7 @@ class MPyLocator(omui.MPxLocatorNode):
         # nothing and never re-runs the user expression.
         self._draw_bounds = command_bounds(commands)
 
-        return {
+        harvest = {
             "commands":       commands,
             "auto_highlight": bool(ah),
             "auto_refresh":   bool(ar),
@@ -438,6 +489,65 @@ class MPyLocator(omui.MPxLocatorNode):
             # ``DrawMesh(..., precise_hover=True)``; the two compose.
             "precise_hover": bool(locals_out.get("precise_hover")),
         }
+        # Only a drawing that RAN is kept: a failed run (a plug not there yet
+        # mid scene-load) must be retried on the next refresh, not frozen.
+        self._static_key     = static_key
+        self._static_harvest = harvest if static_key is not None else None
+        self._static_bounds  = self._draw_bounds
+        return harvest
+
+    def _static_draw_key(self, fn_node, input_map, input_values, stored_vars, sv_str):
+        """What a static drawing is built from, or None to build it every time.
+
+        The verdict (``static_draw.analyse``) is redone only when a source it
+        reads changes: the expression, Init, Methods, the input names, the
+        stored var names, or the metadata (``dynamic_draw`` forces a rebuild
+        on every refresh). The key adds the stored vars' plug text and the
+        input VALUES, so any change to them rebuilds the drawing.
+        """
+        def plug_text(name):
+            try:
+                if fn_node.hasAttribute(name):
+                    return fn_node.findPlug(name, True).asString() or ""
+            except Exception:
+                pass
+            return ""
+
+        if self._sources_seen != self._sources_epoch:
+            self._sources_text = (plug_text("_initSource"), plug_text("_methodsSource"),
+                                  plug_text("_metadata"))
+            self._sources_seen = self._sources_epoch
+        init_src, methods_src, meta_raw = self._sources_text
+        try:
+            sig = (self._expr_str, init_src, methods_src,
+                   tuple(sorted(input_map)), tuple(sorted(stored_vars)), meta_raw)
+        except Exception:
+            return None
+        if sig != self._static_sig:
+            from mpynode._common.draw import static_draw
+
+            try:
+                import json as _json
+
+                meta  = _json.loads(sig[5]) if sig[5].strip() else {}
+                force = bool(meta.get("dynamic_draw")) if isinstance(meta, dict) else False
+            except Exception:
+                force = False
+            try:
+                verdict = static_draw.analyse(sig[0], sig[1], sig[2], inputs=sig[3],
+                                              stored_vars=sig[4], force_dynamic=force)
+                self._static_ok = verdict.static
+            except Exception:
+                self._static_ok = False
+            self._static_sig     = sig
+            self._static_key     = None
+            self._static_harvest = None
+        if not self._static_ok:
+            return None
+        try:
+            return (id(self._expr_code), sv_str, _value_fingerprint(input_values))
+        except TypeError:
+            return None  # an input value with no stable fingerprint: rebuild
 
     # NOTE: mPyLocator has NO compute() for user OUTPUTS. MPxLocatorNode (a DAG
     # shape) does not dispatch compute() for runtime-added output plugs --
@@ -540,6 +650,11 @@ class MPyLocator(omui.MPxLocatorNode):
         # animated input dirties whether or not anything reads it -- a full
         # expression run per frame on a node meant to be idle (Mesh Maze's
         # int solutionSteps after Convert to C++, measured 2026-09-14).
+        try:
+            if om.MFnAttribute(plug.attribute()).name in _SOURCE_PLUGS:
+                self._sources_epoch += 1  # a static drawing re-reads them, then decides again
+        except Exception:
+            pass
         if dirty_affects.api2_dirty_gate(self, plug):
             return
         try:

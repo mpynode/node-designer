@@ -20,7 +20,8 @@ that a ``.mpn`` template never stores):
     live plug). Declare defaults via ``add_input_attr`` to carry them in the .mpn.
   * ``allow_file_read`` -- approximated as ``mpy_type == "mPyFile"`` (the live
     ``texture/2d`` classification path cannot fire without a live node).
-``needs_hover`` (mPyLocator) IS reproduced via the pure ``detect_needs_hover``.
+``needs_hover`` and ``draw_mode`` (mPyLocator) ARE reproduced via the pure
+``apply_locator_draw_flags`` (``_common.draw.static_draw``).
 """
 from __future__ import annotations
 
@@ -32,7 +33,7 @@ from mpynode.native.spec.spec_extractor import (
     normalize_attr,
     _summarize_var,
     assess_portability,
-    detect_needs_hover,
+    apply_locator_draw_flags,
     _PRESET_CAPTURE_TYPES,
     _GEO_GENERATOR_TYPES,
     _IMAGE_READ_BASE_TYPES,
@@ -219,9 +220,9 @@ def spec_from_mpn_payload(payload: dict) -> dict:
                 _b64.b64encode(bytes(_emb)).decode("ascii")
     spec["portability"] = port
 
-    # mPyLocator: reproduce needs_hover from the draw expression (pure). The live
+    # mPyLocator: reproduce needs_hover and draw_mode from the sources (pure). The live
     # per-input baked default cannot be reproduced (no live plug) -- documented.
-    if mpy_type == "mPyLocator" and detect_needs_hover(compute, init):
-        spec["needs_hover"] = True
+    if mpy_type == "mPyLocator":
+        apply_locator_draw_flags(spec, compute, init, methods_src, inputs, variables)
 
     return spec

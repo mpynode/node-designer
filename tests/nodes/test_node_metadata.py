@@ -742,6 +742,64 @@ class TestMetadataMixinOnAllWrappers(unittest.TestCase):
             )
 
 
+
+class TestDynamicDrawFlag(unittest.TestCase):
+    """``dynamic_draw`` (Node Info > Always redraw): kept only when on, so a
+    node that never sets it keeps a byte-identical metadata dict -- the spec,
+    and the port-cache key, of every existing node stays the same."""
+
+    def test_absent_unless_on(self):
+        from mpynode._common.lifecycle import metadata_registry as md
+
+        self.assertNotIn("dynamic_draw", md.coerce({}))
+        self.assertNotIn("dynamic_draw", md.coerce({"dynamic_draw": False}))
+        self.assertIs(md.coerce({"dynamic_draw": True})["dynamic_draw"], True)
+
+    def test_the_flag_alone_is_not_empty(self):
+        from mpynode._common.lifecycle import metadata_registry as md
+
+        self.assertTrue(md.is_empty({}))
+        self.assertFalse(md.is_empty({"dynamic_draw": True}))
+
+    def test_merge_keeps_the_node_flag_and_takes_none_from_defaults(self):
+        from mpynode._common.lifecycle import metadata_registry as md
+
+        self.assertIs(md.merge_metadata({"dynamic_draw": True}, {})["dynamic_draw"], True)
+        self.assertNotIn("dynamic_draw", md.merge_metadata({}, {"dynamic_draw": True}))
+
+
+class _FakeLocator(_FakeNode):
+    pass
+
+
+_FakeLocator.__name__ = "MPyLocator"
+
+
+@unittest.skipIf(_QAPP is None, "no Qt available")
+class TestNodeInfoAlwaysRedraw(unittest.TestCase):
+    def _dialog(self, node):
+        from mpynode.ui.dialogs.node_info import NDNodeInfoDialog
+
+        return NDNodeInfoDialog(node)
+
+    def test_shown_for_a_locator_only(self):
+        loc, plain = self._dialog(_FakeLocator("loc", {})), self._dialog(_FakeNode("plain", {}))
+        self.assertFalse(loc._dynamic_draw_check.isHidden())
+        self.assertTrue(plain._dynamic_draw_check.isHidden())
+
+    def test_round_trip(self):
+        dlg = self._dialog(_FakeLocator("loc", {"dynamic_draw": True}))
+        self.assertTrue(dlg._dynamic_draw_check.isChecked())
+        self.assertIs(dlg.metadata_from_fields()["dynamic_draw"], True)
+        dlg._dynamic_draw_check.setChecked(False)
+        self.assertNotIn("dynamic_draw", dlg.metadata_from_fields())
+
+    def test_never_written_for_another_type(self):
+        dlg = self._dialog(_FakeNode("plain", {}))
+        dlg._dynamic_draw_check.setChecked(True)
+        self.assertNotIn("dynamic_draw", dlg.metadata_from_fields())
+
+
 def setUpModule():
     _setUpModule__metadata_registry()
 

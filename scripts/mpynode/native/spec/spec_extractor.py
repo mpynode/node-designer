@@ -20,6 +20,8 @@ from __future__ import annotations
 import json
 import re
 
+from mpynode._common.draw import static_draw as _static_draw
+
 SCHEMA_VERSION = 1
 
 # mPy maya nodeType -> target C++ MPx base + porting note + heaviness.
@@ -346,15 +348,39 @@ def detect_needs_hover(compute: str, init: str = "") -> bool:
     """True if a locator draw expression uses passive hover / idle auto-refresh /
     the live wall clock.
 
-    Scans for ``self.hovered`` / ``self.precise_hover`` / ``self.auto_refresh`` /
-    ``self.wallclock`` in real code (``_self_attr_refs`` skips comments + string
-    literals, so a stray mention doesn't trigger it). Drives
-    ``spec['needs_hover']`` -> the Qt hover service in codegen + Qt linkage in the
-    build. (Residual false-negative: ``getattr(self, 'hovered')`` -- not used by
-    the shipped locators.)
+    Read off the code by ``_common.draw.static_draw`` (comments and strings do
+    not count; ``getattr(self, "hovered")`` does): ``self.hovered`` /
+    ``self.precise_hover`` / ``self.wallclock``, or ``self.auto_refresh`` SET ON
+    -- ``self.auto_refresh = False`` asks for no idle refresh, so it no longer
+    pulls the hover service into the build. Drives ``spec['needs_hover']`` ->
+    the Qt hover service in codegen + Qt linkage in the build. A source that
+    does not parse falls back to the token scan for the same names.
     """
+    analysis = _static_draw.analyse(compute or "", init or "")
+    if analysis.parsed:
+        return analysis.needs_hover
     refs = _self_attr_refs("%s\n%s" % (compute or "", init or ""))
     return bool(refs & _HOVER_MARKERS)
+
+
+def apply_locator_draw_flags(spec: dict, compute: str, init: str, methods: str,
+                             inputs, stored_vars) -> None:
+    """Set an mPyLocator spec's ``needs_hover`` and ``draw_mode`` -- each ONLY
+    when on, so every other spec stays byte-identical (and keeps its port-cache
+    key). ``draw_mode == "static"``: the drawing depends on its inputs alone
+    and needs no camera (``_common.draw.static_draw``), so the compiled draw
+    override stays clean until an input changes. The node's ``dynamic_draw``
+    metadata (Node Info > Always redraw) keeps it dynamic."""
+    force = bool((spec.get("metadata") or {}).get("dynamic_draw"))
+    analysis = _static_draw.analyse(compute or "", init or "", methods or "",
+                                    inputs      = list(inputs or ()),
+                                    stored_vars = list(stored_vars or ()),
+                                    force_dynamic=force)
+    needs_hover = analysis.needs_hover if analysis.parsed else detect_needs_hover(compute, init)
+    if needs_hover:
+        spec["needs_hover"] = True
+    if analysis.draw_mode == "static":
+        spec["draw_mode"] = "static"
 
 
 # Scalar input families whose live plug value can be baked as the C++ default.
@@ -1287,7 +1313,8 @@ def extract_spec(node: str) -> dict:
     #      to a type-zero default, which drew the compiled wireframe at width 0
     #      (invisible). Driven inputs are skipped; their default is irrelevant.
     #  (2) flag needs_hover when the draw expression uses passive hover / idle
-    #      auto-refresh -> Qt hover service in codegen + Qt linkage in build.
+    #      auto-refresh -> Qt hover service in codegen + Qt linkage in build;
+    #      draw_mode "static" when the drawing depends on its inputs alone.
     if mpy_type == "mPyLocator":
         for n, entry in inputs.items():
             if not _input_wants_default_capture(entry):
@@ -1317,8 +1344,7 @@ def extract_spec(node: str) -> dict:
                     entry["default_value"] = [float(c) for c in val[0]]
                 continue
             entry["default_value"] = val
-        if detect_needs_hover(compute, init):
-            spec["needs_hover"] = True
+        apply_locator_draw_flags(spec, compute, init, methods_src, inputs, variables)
     return spec
 
 

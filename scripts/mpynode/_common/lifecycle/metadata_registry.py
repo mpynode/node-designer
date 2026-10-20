@@ -61,6 +61,14 @@ _PLUG = "_metadata"
 FIELDS      = ("authors", "version", "license", "description", "type_id")
 _STR_FIELDS = ("version", "license", "description", "type_id")
 
+# On/off flags, kept ONLY when on: a node that never sets one keeps a
+# byte-identical metadata dict, hence the same spec and port-cache key.
+#
+# ``dynamic_draw`` (mPyLocator, Node Info > Always redraw) forces the drawing to
+# be rebuilt on every refresh even when ``_common.draw.static_draw`` finds it
+# static -- the way out when that analysis cannot see what the drawing reads.
+_FLAG_FIELDS = ("dynamic_draw",)
+
 # Removed field folded into ``license`` on read -- see ``coerce``.
 _LEGACY_INTO_LICENSE = "copyright"
 
@@ -113,6 +121,9 @@ def coerce(meta: Dict[str, Any] | None) -> Dict[str, Any]:
                           else legacy)
 
     out["type_id"] = _canon_type_id(out["type_id"])
+    for k in _FLAG_FIELDS:
+        if meta.get(k):
+            out[k] = True
     return out
 
 
@@ -137,7 +148,8 @@ def _canon_type_id(raw: str) -> str:
 def is_empty(meta: Dict[str, Any] | None) -> bool:
     """True if a (coerced) metadata dict carries no information."""
     c = coerce(meta)
-    return not c["authors"] and not any(c[k] for k in _STR_FIELDS)
+    return (not c["authors"] and not any(c[k] for k in _STR_FIELDS)
+            and not any(c.get(k) for k in _FLAG_FIELDS))
 
 
 def merge_metadata(node_meta: Dict[str, Any] | None,
@@ -150,6 +162,10 @@ def merge_metadata(node_meta: Dict[str, Any] | None,
     out["authors"] = node["authors"] or base["authors"]
     for k in _STR_FIELDS:
         out[k] = node[k] if k in _NO_DEFAULT_FIELDS else (node[k] or base[k])
+    # a flag belongs to the node: there is no global default to fall back to
+    for k in _FLAG_FIELDS:
+        if node.get(k):
+            out[k] = True
     return out
 
 

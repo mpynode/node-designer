@@ -157,6 +157,7 @@ locator drives the rig).
 | `self.X` | Type | Notes |
 |---|---|---|
 | `self.time` | `TimeFloat` | Current frame (has `.fps` / `.asSeconds()`). |
+| `self.wallclock` | `float` | Seconds since the epoch (`time.time()`): the timeline-independent animation clock, the same in the compiled node. |
 | `self.selected` | `bool` | Viewport selection state (shape **or** its parent transform). |
 | `self.is_lead` | `bool` | `True` iff this locator is the lead selection. |
 | `self.hovered` | `bool` | `True` while the cursor is over this locator (from the cursor-ray `hover_tracker`). |
@@ -168,16 +169,16 @@ locator drives the rig).
 |---|---|---|---|
 | `self.precise_hover` | `bool` | `False` | Opt the whole node into precise ray-vs-drawn-triangle hover instead of bounding-box hover. One patch at a time via `DrawMesh(..., precise_hover=True)`; the two compose. |
 | `self.auto_highlight` | `bool` / `None` | `True` | Override the automatic selection tint (when selected, per-buffer colors take `selection_color`'s RGB and keep their own alpha, so translucent drawing stays translucent). |
-| `self.auto_refresh` | truthy / `None` | `False` (off) | Opt into a redraw timer so time-driven animation advances without a time-input plug. The value is treated as a **boolean flag** — any truthy value enables a fixed **30 fps** (`1/30 s`) redraw; falsy/`None` disables it. The interval is not user-configurable. |
+| `self.auto_refresh` | truthy / `None` | `False` (off) | Opt into the shared idle-redraw timer so time-driven animation advances without a time-input plug. The value is treated as a **boolean flag**: any truthy value enables it, falsy/`None` disables it. The timer ticks at most at **30 fps**, and each request waits twice the main-thread CPU the previous one cost (`draw_refresh.throttle_step`), so idle animation takes at most about half the main thread. Setting it truthy makes the drawing dynamic (see Re-evaluation); `= False` keeps a static drawing static. |
 
 > ⚠️ The wrapper docstring describes `auto_refresh` as "redraw interval in
 > seconds" and `selection_color` as `(r, g, b)`. The live bridge coerces
-> `auto_refresh` to a `bool` (fixed-rate 30 fps timer via
-> `mpynode._common.draw_refresh`) and reports `selection_color` as
+> `auto_refresh` to a `bool` (the throttled timer in
+> `mpynode._common.draw.draw_refresh`) and reports `selection_color` as
 > `(r, g, b, a)`. The behavior documented here matches the code.
 
 User INPUT plugs added with `add_input_attr(...)` are readable as `self.<name>`
-and feed the draw. The numpy buffer helpers live in `_common/draw_buffers.py`.
+and feed the draw. The numpy buffer helpers live in `_common/draw/draw_buffers.py`.
 
 ---
 
@@ -225,14 +226,43 @@ omr2.MDrawRegistry.registerDrawOverrideCreator(
 
 ## Re-evaluation
 
-By default Maya only calls `prepareForDraw` when the node is dirty — which for a
-vanilla locator means "on selection-state change." Camera tumble, hover, and
-frame changes without a time-input plug do **not** re-run the expression. Set
-`self.auto_refresh = True` to enable the opt-in 30 fps timer
-(`mpynode._common.draw_refresh`), which fires `setGeometryDrawDirty` on every
-tick so the expression re-runs and animation advances smoothly. The timer is
-crash-safe (per-node + scene-event teardown on delete / file-new / file-open /
-Maya-exit).
+The interpreted draw override is always dirty (`isAlwaysDirty=True`): VP2 calls
+`prepareForDraw` on every viewport refresh -- tumble, playback frame, selection
+change. Whether the expression re-runs then depends on the drawing, as
+`_common/draw/static_draw.py` reads it off the sources:
+
+| Drawing | The expression re-runs |
+|---|---|
+| **dynamic**: reads `time`, `wallclock`, `hovered`, `selected`, `is_lead` or `selection_color`; sets `auto_refresh` on; writes a stored var (a tween); calls `time` / `datetime` / `random` / `cmds`; draws `world_space` items; reads a `self.<name>` that is not an input, a stored var, an Init name or a method; or **Node Info ▸ Always redraw** is on | on every refresh |
+| **static**: everything else -- the result depends on the inputs, the stored vars it only reads and the Init / Methods code | only when an input VALUE, the stored vars, the expression, Init, Methods or the metadata changed; otherwise the last draw commands are reused |
+
+The camera-dependent work (back-face culling, text size, screen-space items) and
+the selection tint run after the expression, on every refresh, in both cases.
+
+A static drawing goes stale when it reads something the analysis cannot see:
+another node, the scene, an Init global that a method changes. Turn on
+**Node Info ▸ Always redraw** (`dynamic_draw` metadata) for such a node.
+
+**Compiled.** A static drawing that needs no camera (no `DrawText`,
+`cull_backfaces=True` or screen-space item) compiles with
+`spec["draw_mode"] == "static"`:
+
+- its draw override stays clean until an input changes. A `setAttr` reaches
+  it through `setDependentsDirty`; a keyed or driven input under the
+  Evaluation Manager reaches it through `preEvaluation`; a selection change
+  reaches it through a selection callback;
+- it is culled on the box of the last drawing;
+- it draws opaque unless something it draws is translucent;
+- each run of same-coloured lines is one `MUIDrawManager::mesh(kLines)`.
+
+Every other locator compiles as before and rebuilds its drawing on every
+refresh.
+
+`self.auto_refresh = True` enables the opt-in idle timer
+(`mpynode._common.draw.draw_refresh`). It calls `setGeometryDrawDirty`, at most
+30 times a second and throttled by its own main-thread cost, so the expression
+re-runs and animation advances. The timer is crash-safe: per-node and
+scene-event teardown on delete / file-new / file-open / Maya-exit.
 
 ---
 
@@ -298,8 +328,9 @@ tier (compiled `@maya_command` helpers) is available like other node types.
 
 - Wrapper: `scripts/mpynode/wrappers/mpy_locator.py`
 - Bridge (node + draw override): `scripts/mpynode/_api2/mpy_locator.py`
-- Draw-buffer helpers: `scripts/mpynode/_common/draw_buffers.py`
-- Auto-refresh timer: `scripts/mpynode/_common/draw_refresh.py`
+- Draw-buffer helpers: `scripts/mpynode/_common/draw/draw_buffers.py`
+- Auto-refresh timer: `scripts/mpynode/_common/draw/draw_refresh.py`
+- Static drawing analysis: `scripts/mpynode/_common/draw/static_draw.py`
 - Plug-in registration: `plug-ins/mpynode_api2.py`
 - Input typing: [`_input_type_contract.md`](_input_type_contract.md)
 - Sibling specialty node: [`mPyConstraint.md`](mPyConstraint.md)

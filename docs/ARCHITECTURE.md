@@ -148,7 +148,7 @@ tree, `New Node ▸` and `native_type -> wrapper_class` all read it.
 | Node type | Maya base | API | MTypeId | What it is |
 |---|---|---|---|---|
 | `mPyNode` | `MPxNode` | 2 | `0x00135700` | Generic Python expression node. Pinned first in `New Node ▸`. |
-| `mPyLocator` | `MPxLocatorNode` + a bundled `MPxDrawOverride` | 2 | `0x00135702` | Viewport-drawn locator. Compute is DRAW code (`self.draw = …`); no DG user outputs. |
+| `mPyLocator` | `MPxLocatorNode` + a bundled `MPxDrawOverride` | 2 | `0x00135702` | Viewport-drawn locator. Compute is DRAW code (`self.draw = …`); no DG user outputs. A static drawing (`_common/draw/static_draw.py`) re-runs only when its inputs change, and compiles with `draw_mode = "static"`. |
 | `mPyConstraint` | `MPxNode` | 2 | `0x00135703` | Scriptable constraint, five preset target/rest inputs. Deliberately not `MPxConstraint`, which hijacks `compute()`. |
 | `mPyIkSolver` | `MPxIkSolverNode` | 1 | `0x00135713` | Custom IK solve in Python. |
 | `mPyDeformer` | `MPxDeformerNode` | 1 | `0x00135716` | The canonical deformer. `envelope` is inherited. |

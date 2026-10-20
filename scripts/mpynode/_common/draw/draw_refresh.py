@@ -1,12 +1,10 @@
 """Auto-refresh timer for MPyLocator (Qt-free helper).
 
-By default Maya only calls MPxDrawOverride.prepareForDraw when a node
-is dirty -- which for a vanilla mPyLocator means "on selection state
-change" (the only event that invalidates the locator's draw cache
-when nothing about the DG is changing). Camera tumble, mouse hover,
-frame change without a time-input plug -- none of those re-evaluate
-the expression. The sphere "doesn't pulse" because the expression
-never re-runs.
+A locator drawing animated by ``self.wallclock`` has no input that changes,
+so nothing marks it dirty while Maya sits idle: no viewport refresh happens,
+and the sphere "doesn't pulse". (When a refresh does happen, the interpreted
+override, which is always dirty, re-runs a dynamic drawing's expression; a
+static one, see ``static_draw``, re-runs only when its inputs change.)
 
 This module enables an OPT-IN idle-refresh service: ONE shared 30 fps
 timer that calls ``MRenderer.setGeometryDrawDirty(node_obj)`` for every

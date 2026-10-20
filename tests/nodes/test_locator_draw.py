@@ -1524,6 +1524,80 @@ class TestLocatorDuplicateNameCollision(unittest.TestCase):
         )
 
 
+
+# Every run of the probe expressions below appends here, so a test can count
+# how often the expression really ran.
+_RUNS = []
+
+_PROBE = (
+    "import numpy as np\n"
+    "from tests.nodes import test_locator_draw as _probe\n"
+    "from mpynode._common.draw.draw_types import DrawPoints\n"
+    "_probe._RUNS.append(1)\n"
+    "self.draw = DrawPoints(np.zeros((1, 3)) + float(self.size), color=(1, 1, 1))\n"
+)
+
+
+class TestStaticDrawingIsReused(unittest.TestCase):
+    """A static drawing (``_common.draw.static_draw``) re-runs only when an
+    input, a stored var or a source changes; a dynamic one runs every refresh.
+    The compiled static node keeps the same staleness, so the two agree."""
+
+    def setUp(self):
+        import maya.cmds as mc
+
+        mc.file(new=True, force=True)
+        del _RUNS[:]
+
+    def _locator(self, name, expression):
+        import maya.api.OpenMaya as om
+        from mpynode.wrappers.mpy_locator import MPyLocator
+
+        loc = MPyLocator.create(name=name)
+        loc.add_input_attr("size", "float")
+        loc.set_compute_expression(expression)
+        sel = om.MSelectionList()
+        sel.add(loc.get_name())
+        return loc, om.MFnDependencyNode(sel.getDependNode(0)).userNode()
+
+    def test_static_runs_once_per_input_change(self):
+        import maya.cmds as mc
+
+        loc, mpx = self._locator("staticProbe", _PROBE)
+        for _ in range(3):
+            out = mpx.evaluateDrawItems(time_value=0.0)
+        self.assertEqual(len(_RUNS), 1)
+        # selection is not read by the drawing: no rebuild
+        mpx.evaluateDrawItems(time_value=5.0, selected=True)
+        self.assertEqual(len(_RUNS), 1)
+        mc.setAttr(loc.get_name() + ".size", 2.0)
+        out = mpx.evaluateDrawItems(time_value=0.0)
+        mpx.evaluateDrawItems(time_value=0.0)
+        self.assertEqual(len(_RUNS), 2)
+        np.testing.assert_allclose(out["commands"][0]["buffer"]["positions"], [[2.0, 2.0, 2.0]])
+
+    def test_dynamic_runs_every_time(self):
+        loc, mpx = self._locator("dynamicProbe", _PROBE + "t = self.time\n")
+        for _ in range(3):
+            mpx.evaluateDrawItems(time_value=0.0)
+        self.assertEqual(len(_RUNS), 3)
+
+    def test_always_redraw_metadata_forces_every_run(self):
+        loc, mpx = self._locator("forcedProbe", _PROBE)
+        loc.set_metadata({"dynamic_draw": True})
+        for _ in range(3):
+            mpx.evaluateDrawItems(time_value=0.0)
+        self.assertEqual(len(_RUNS), 3)
+
+    def test_an_expression_edit_rebuilds(self):
+        loc, mpx = self._locator("editProbe", _PROBE)
+        mpx.evaluateDrawItems(time_value=0.0)
+        loc.set_compute_expression(_PROBE.replace("color=(1, 1, 1)", "color=(1, 0, 0)"))
+        out = mpx.evaluateDrawItems(time_value=0.0)
+        self.assertEqual(len(_RUNS), 2)
+        np.testing.assert_allclose(out["commands"][0]["buffer"]["colors"][0][:3], [1.0, 0.0, 0.0])
+
+
 def setUpModule():
     _setUpModule__phase29()
     _setUpModule__phase29_2()

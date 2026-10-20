@@ -154,7 +154,8 @@ addition); `tobytes`/`tostring`, `dump`/`dumps`, `getfield`/`setfield`.
 | geometry (mesh/curve/surface) | `try_lower_geo_compute` | fills the typed geo buffer; the flagship GoL mPyMesh lowers here. |
 | deformer | `try_lower_deform` | `getPoints`/`setPoints` in-place mutate idiom. |
 | transform | `try_lower_transform` | `asMatrix()` frame math. |
-| locator / iksolver | (assessed, SP-4d) | draw/solve idioms stay on the AI-porter path; no deterministic template yet. |
+| locator | `try_lower_locator` | the `self.draw = ...` subset in `kernels/locator_draw_cpp.py` (Animated Text lowers); anything else goes to the AI porter. |
+| iksolver | (assessed, SP-4d) | solve idioms stay on the AI-porter path; no deterministic template yet. |
 
 Supported I/O, single and multi: numeric scalars
 (`float/double/long/bool/enum/doubleAngle/doubleLinear/time`) → scalar /
