@@ -59,9 +59,6 @@ clang++ -std=c++17 -O3 -ffp-contract=off -arch arm64 -bundle \
   -I"$MAYA/include" \
   -L"$MAYA/Maya.app/Contents/MacOS" \
   -lOpenMaya -lOpenMayaAnim -lOpenMayaUI -lOpenMayaRender -lFoundation \
-  -F"$MAYA/Maya.app/Contents/Frameworks" \
-  -framework QtCore -framework QtGui -framework QtWidgets \
-  -Wl,-rpath,"$MAYA/Maya.app/Contents/Frameworks" \
   -o "$PLUGIN_DIR/MPyLocator_Circular_Text.bundle" "$HERE/source/circularText.cpp"
 echo "Built: $PLUGIN_DIR/MPyLocator_Circular_Text.bundle"
 lipo -info "$PLUGIN_DIR/MPyLocator_Circular_Text.bundle"

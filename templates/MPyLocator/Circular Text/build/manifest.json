@@ -1,12 +1,12 @@
 {
   "manifest_version": 1,
-  "porter_recipe_version": "36",
+  "porter_recipe_version": "47",
   "provider": "claude_cli",
-  "model": "",
+  "model": "claude-opus-5-5[1m]",
   "strict": false,
   "plugin_name": "MPyLocator_Circular_Text",
-  "bundle": "G:\\My Drive\\claude\\projects\\MPyNode\\templates\\MPyLocator\\Circular Text\\MPyLocator_Circular_Text.mll",
-  "created": 1790407282.9240012,
+  "bundle": "C:\\Users\\eric.vignola\\mpynode_scratch\\static-draw-2026-10-19\\tree\\out\\Circular Text\\2025\\MPyLocator_Circular_Text.mll",
+  "created": 1792465952.0561047,
   "nodes": [
     {
       "source_node": "circularText",
@@ -14,8 +14,8 @@
       "type_id": "0x000792d9",
       "type_id_source": "derived",
       "base": "MPxLocatorNode",
-      "spec_hash": "48bdaf3613d6fcb536c3690ad25453f230464b5f175392b9d6fc6ebf762abde7",
-      "port_cache_key": "48bdaf3613d6fcb536c3690ad25453f230464b5f175392b9d6fc6ebf762abde7",
+      "spec_hash": "b7736e816d026d040759854a084f94639e0542c7fe3c68336dc008ff66f9b454",
+      "port_cache_key": "b7736e816d026d040759854a084f94639e0542c7fe3c68336dc008ff66f9b454",
       "cache": "hit",
       "build_status": "compiled",
       "build_reason": "",
@@ -380,7 +380,7 @@
           "reads_embedded_image": false,
           "uses_mesh_intersector": false
         },
-        "needs_hover": true
+        "draw_mode": "static"
       }
     }
   ]

@@ -45,52 +45,6 @@ if not exist "%MAYA%\include\maya" (
   echo   or set MAYA:     set "MAYA=C:\path\to\maya" 1>&2
   exit /b 1
 )
-set "QTINC=%MPYNODE_QT_INCLUDE%"
-if not "%QTINC%"=="" if not exist "%QTINC%\QtGui\QCursor" (
-  echo build.bat: MPYNODE_QT_INCLUDE is set to "%QTINC%" but that has no QtGui\QCursor 1>&2
-  echo   point it at the directory that CONTAINS QtGui\, or unset it 1>&2
-  exit /b 1
-)
-if "%QTINC%"=="" if exist "%MAYA%\include\QtGui\QCursor" set "QTINC=%MAYA%\include"
-if "%QTINC%"=="" if exist "%MAYA%\include\qt\QtGui\QCursor" set "QTINC=%MAYA%\include\qt"
-if "%QTINC%"=="" if exist "%MAYA%\include\Qt\QtGui\QCursor" set "QTINC=%MAYA%\include\Qt"
-if "%QTINC%"=="" (
-  for /d %%D in ("%MAYA%\include\*") do (
-    if exist "%%~fD\QtGui\QCursor" set "QTINC=%%~fD"
-  )
-)
-set "_QTZIP="
-set "_QTCACHE="
-if "%QTINC%"=="" (
-  for %%D in ("%MAYA%\include\qt_*-include.zip") do set "_QTZIP=%%~fD"
-)
-if "%QTINC%"=="" if not "%_QTZIP%"=="" (
-  for %%D in ("%_QTZIP%") do set "_QTCACHE=%LOCALAPPDATA%\mpynode\qt_include\%%~nD"
-)
-if "%QTINC%"=="" if not "%_QTCACHE%"=="" (
-  if not exist "%_QTCACHE%\QtGui\QCursor" (
-    echo build.bat: extracting the devkit Qt headers once into "%_QTCACHE%" ...
-    if not exist "%_QTCACHE%" mkdir "%_QTCACHE%"
-    if exist "%SystemRoot%\System32\tar.exe" (
-      "%SystemRoot%\System32\tar.exe" -xf "%_QTZIP%" -C "%_QTCACHE%"
-    ) else (
-      powershell -NoProfile -ExecutionPolicy Bypass -Command "Expand-Archive -LiteralPath '%_QTZIP%' -DestinationPath '%_QTCACHE%' -Force"
-    )
-  )
-  if exist "%_QTCACHE%\QtGui\QCursor" set "QTINC=%_QTCACHE%"
-)
-if "%QTINC%"=="" (
-  echo build.bat: this plugin has a hover locator, whose C++ includes the Maya 1>&2
-  echo   Qt headers -- but none were found under "%MAYA%\include". 1>&2
-  echo   The devkit ships them as an UNEXTRACTED archive, e.g. 1>&2
-  echo     "%MAYA%\include\qt_6.5.3_vc14-include.zip" 1>&2
-  echo   which this script extracts by itself into 1>&2
-  echo     "%LOCALAPPDATA%\mpynode\qt_include\<archive name>" 1>&2
-  echo   so either that archive is missing or the extraction failed. 1>&2
-  echo   Fix: extract it anywhere so "<dir>\QtGui\QCursor" exists, then 1>&2
-  echo     set MPYNODE_QT_INCLUDE=^<dir^> 1>&2
-  exit /b 1
-)
 set "HERE=%~dp0"
 REM The plug-in lands in a folder named after the Maya version, never with the
 REM version in its file name: Maya records the file name in every scene that
@@ -123,7 +77,7 @@ REM (Google Drive, OneDrive) that write hangs forever. A copy is fine.
 set "LINKTMP=%TEMP%\mpynode_link_%RANDOM%_%RANDOM%"
 if exist "%LINKTMP%" rd /s /q "%LINKTMP%"
 mkdir "%LINKTMP%"
-cl /nologo /LD /std:c++17 /O2 /fp:precise /EHsc /MD /bigobj /utf-8 /D NT_PLUGIN /D REQUIRE_IOSTREAM /D _BOOL /D WIN32 /D _WINDOWS /D _CRT_SECURE_NO_WARNINGS /I "%MAYA%\include" /Zc:__cplusplus /permissive- /I "%QTINC%" /FI nd_msvc_stdext_compat.h "%HERE%source\circularText.cpp" /Fo"%HERE%circularText.obj" /link /LIBPATH:"%MAYA%\lib" OpenMaya.lib OpenMayaAnim.lib OpenMayaUI.lib OpenMayaRender.lib Foundation.lib Qt6Core.lib Qt6Gui.lib Qt6Widgets.lib /IMPLIB:"%LINKTMP%\MPyLocator_Circular_Text.lib" /OUT:"%LINKTMP%\MPyLocator_Circular_Text.mll" /EXPORT:initializePlugin /EXPORT:uninitializePlugin
+cl /nologo /LD /std:c++17 /O2 /fp:precise /EHsc /MD /bigobj /utf-8 /D NT_PLUGIN /D REQUIRE_IOSTREAM /D _BOOL /D WIN32 /D _WINDOWS /D _CRT_SECURE_NO_WARNINGS /I "%MAYA%\include" "%HERE%source\circularText.cpp" /Fo"%HERE%circularText.obj" /link /LIBPATH:"%MAYA%\lib" OpenMaya.lib OpenMayaAnim.lib OpenMayaUI.lib OpenMayaRender.lib Foundation.lib /IMPLIB:"%LINKTMP%\MPyLocator_Circular_Text.lib" /OUT:"%LINKTMP%\MPyLocator_Circular_Text.mll" /EXPORT:initializePlugin /EXPORT:uninitializePlugin
 if errorlevel 1 exit /b 1
 copy /Y "%LINKTMP%\MPyLocator_Circular_Text.mll" "%PLUGIN_DIR%\MPyLocator_Circular_Text.mll" >nul
 if errorlevel 1 exit /b 1
